@@ -10,6 +10,7 @@ import {
   Bell,
   Menu,
   X,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { fadeUp } from "../../lib/motion";
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { to: "/student/profile", icon: UserCircle, label: "My Profile", end: false },
   { to: "/student/documents", icon: FileText, label: "Documents", end: false },
   { to: "/student/status", icon: Activity, label: "Application Status", end: false },
+  { to: "/student/settings", icon: Settings, label: "Settings", end: false },
 ];
 
 export function StudentLayout({ children }: { children: ReactNode }) {

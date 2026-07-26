@@ -13,6 +13,7 @@ import { StudentDashboard } from "../features/student/StudentDashboard";
 import { StudentProfile } from "../features/student/StudentProfile";
 import { StudentDocuments } from "../features/student/StudentDocuments";
 import { StudentStatus } from "../features/student/StudentStatus";
+import { StudentSettings } from "../features/student/StudentSettings";
 import { DonorDashboard } from "../features/donor/DonorDashboard";
 import { AdminDashboard } from "../features/admin/AdminDashboard";
 import { AmbassadorDashboard } from "../features/ambassador/AmbassadorDashboard";
@@ -62,6 +63,7 @@ export function App() {
             <Route path="/student/profile" element={<Protected roles={["student"]}><StudentProfile /></Protected>} />
             <Route path="/student/documents" element={<Protected roles={["student"]}><StudentDocuments /></Protected>} />
             <Route path="/student/status" element={<Protected roles={["student"]}><StudentStatus /></Protected>} />
+            <Route path="/student/settings" element={<Protected roles={["student"]}><StudentSettings /></Protected>} />
 
             <Route path="/donor" element={<Protected roles={["donor"]}><DonorDashboard /></Protected>} />
             <Route path="/admin" element={<Protected roles={["admin"]}><AdminDashboard /></Protected>} />

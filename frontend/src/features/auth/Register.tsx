@@ -34,11 +34,22 @@ const ROLES = [
 export function Register() {
   const { register } = useAuth();
   const nav = useNavigate();
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    email: string;
+    full_name: string;
+    password: string;
+    role: string;
+    date_of_birth?: string;
+    guardian_name?: string;
+    guardian_phone?: string;
+  }>({
     email: "",
     full_name: "",
     password: "",
     role: "student",
+    date_of_birth: "",
+    guardian_name: "",
+    guardian_phone: "",
   });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -135,6 +146,55 @@ export function Register() {
             required
           />
         </motion.div>
+        {form.role === "student" && (
+          <>
+            <motion.div variants={fadeUp}>
+              <TextField
+                label="Date of Birth"
+                name="date_of_birth"
+                type="date"
+                value={form.date_of_birth || ""}
+                onChange={(v) => update("date_of_birth", v)}
+                required
+              />
+            </motion.div>
+            {form.date_of_birth && (new Date().getFullYear() - new Date(form.date_of_birth).getFullYear()) < 18 && (
+              <motion.div
+                variants={fadeUp}
+                className="card"
+                style={{
+                  background: "rgba(245, 158, 11, 0.08)",
+                  borderColor: "rgba(245, 158, 11, 0.3)",
+                  marginBottom: "var(--space-4)",
+                  padding: "var(--space-3)",
+                }}
+              >
+                <div style={{ color: "var(--amber)", fontSize: "var(--step--1)", fontWeight: 600, marginBottom: "var(--space-2)" }}>
+                  🛡️ Guardian Consent Required (Under 18)
+                </div>
+                <p style={{ fontSize: "var(--step--2)", color: "var(--on-surface-muted)", marginBottom: "var(--space-3)" }}>
+                  Applicants under 18 years of age must provide guardian details and upload a signed guardian consent document in their document vault.
+                </p>
+                <TextField
+                  label="Guardian Full Name"
+                  name="guardian_name"
+                  placeholder="Parent or Legal Guardian Name"
+                  value={form.guardian_name || ""}
+                  onChange={(v) => update("guardian_name", v)}
+                  required
+                />
+                <TextField
+                  label="Guardian Phone Number"
+                  name="guardian_phone"
+                  placeholder="+250 78X XXX XXX"
+                  value={form.guardian_phone || ""}
+                  onChange={(v) => update("guardian_phone", v)}
+                  required
+                />
+              </motion.div>
+            )}
+          </>
+        )}
         <motion.div variants={fadeUp}>
           <Button type="submit" block loading={busy}>
             <UserPlus size={18} /> Create account
