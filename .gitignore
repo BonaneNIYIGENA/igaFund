@@ -1,0 +1,22 @@
+# python
+__pycache__/
+*__pycache__/
+*.pyc
+.venv/
+venv/
+*.db
+.env
+# node
+node_modules/
+dist/
+.vite/
+# coverage
+htmlcov/
+coverage/
+.coverage
+
+backend/__pycache__/
+backend/.pytest_cache/
+backend/.venv/
+
+Bonane_NIYIGENA_[Assignment2]_ [06292026].pdf
