@@ -5,6 +5,7 @@ import { endpoints, type Profile } from "@/lib/api";
 import { stagger } from "@/lib/motion";
 import { AppShell } from "@/app/shell/AppShell";
 import { StudentCard } from "@/features/browse/StudentCard";
+import { StudentPanel } from "@/features/browse/StudentPanel";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, NativeSelect } from "@/components/ui/Field";
 import { EmptyState, ErrorState, SkeletonCard } from "@/components/ui/Feedback";
@@ -19,6 +20,7 @@ const SORTS = [
 export function DonorBrowse() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewing, setViewing] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [level, setLevel] = useState("all");
@@ -156,11 +158,18 @@ export function DonorBrowse() {
             className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
           >
             {visible.map((p) => (
-              <StudentCard key={p.id} profile={p} to={`/students/${p.id}`} />
+              <StudentCard key={p.id} profile={p} to={`/students/${p.id}`} onOpen={setViewing} />
             ))}
           </motion.div>
         )}
       </div>
+
+      <StudentPanel
+        profileId={viewing}
+        open={viewing !== null}
+        onOpenChange={(o) => !o && setViewing(null)}
+        onFunded={load}
+      />
     </AppShell>
   );
 }

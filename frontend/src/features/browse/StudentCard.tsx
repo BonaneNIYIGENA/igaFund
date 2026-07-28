@@ -12,10 +12,12 @@ import { cn } from "@/lib/cn";
 export function StudentCard({
   profile,
   to,
+  onOpen,
   className,
 }: {
   profile: Profile;
   to: string;
+  onOpen?: (id: number) => void;
   className?: string;
 }) {
   const percent = fundingPercent(profile.funded_amount, profile.funding_goal);
@@ -26,6 +28,7 @@ export function StudentCard({
     <motion.article variants={fadeUp} className={cn("h-full", className)}>
       <Link
         to={to}
+        onClick={onOpen ? (e) => { e.preventDefault(); onOpen(profile.id); } : undefined}
         className="group flex h-full flex-col rounded-lg border border-line bg-white p-5 shadow-sm transition-[box-shadow,transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-forest-200 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700"
       >
         <div className="flex items-start gap-3.5">

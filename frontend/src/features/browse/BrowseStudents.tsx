@@ -9,6 +9,7 @@ import { Logo } from "@/components/ui/Logo";
 import { Input, NativeSelect, Label } from "@/components/ui/Field";
 import { EmptyState, ErrorState, SkeletonCard } from "@/components/ui/Feedback";
 import { StudentCard } from "./StudentCard";
+import { StudentPanel } from "./StudentPanel";
 import { useAuth, HOME_FOR_ROLE } from "@/features/auth/AuthContext";
 
 const LEVELS = ["all", "S4", "S5", "S6", "Year 1", "Year 2", "Year 3", "Year 4", "TVET"];
@@ -18,6 +19,7 @@ export function BrowseStudents() {
   const { user } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewing, setViewing] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [level, setLevel] = useState("all");
@@ -179,12 +181,24 @@ export function BrowseStudents() {
               className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
             >
               {visible.map((profile) => (
-                <StudentCard key={profile.id} profile={profile} to={`/students/${profile.id}`} />
+                <StudentCard
+                key={profile.id}
+                profile={profile}
+                to={`/students/${profile.id}`}
+                onOpen={setViewing}
+              />
               ))}
             </motion.div>
           )}
         </div>
       </main>
+
+      <StudentPanel
+        profileId={viewing}
+        open={viewing !== null}
+        onOpenChange={(o) => !o && setViewing(null)}
+        onFunded={load}
+      />
     </div>
   );
 }
