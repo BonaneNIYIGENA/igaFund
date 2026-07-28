@@ -18,9 +18,15 @@ class Document(db.Model):
     profile_id = db.Column(db.Integer, db.ForeignKey("student_profiles.id"), nullable=False, index=True)
     doc_type = db.Column(db.String(30), nullable=False)
     original_filename = db.Column(db.String(255), nullable=False)
+    # Cloudinary secure URL, or a local path when storage is not configured.
     file_path = db.Column(db.String(500), nullable=False)
+    storage_public_id = db.Column(db.String(255))
     verified = db.Column(db.Boolean, default=False)
     uploaded_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    @property
+    def extension(self):
+        return (self.original_filename.rsplit(".", 1)[-1] or "").lower()
 
     profile = db.relationship("StudentProfile", back_populates="documents")
 

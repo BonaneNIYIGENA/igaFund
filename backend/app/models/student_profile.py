@@ -39,6 +39,7 @@ class StudentProfile(db.Model):
 
     # adult visual media (18+ only, with consent)
     video_url = db.Column(db.String(500))
+    photo_url = db.Column(db.String(500))
     media_consent = db.Column(db.Boolean, default=False)
 
     # workflow
@@ -46,6 +47,8 @@ class StudentProfile(db.Model):
     submitted_at = db.Column(db.DateTime)
     reviewed_at = db.Column(db.DateTime)
     review_note = db.Column(db.Text)
+    # BR4: why an already-approved profile was reopened for a new review cycle
+    edit_request_reason = db.Column(db.Text)
 
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
@@ -78,9 +81,12 @@ class StudentProfile(db.Model):
             "is_minor": self.is_minor(),
             "full_name": self.user.full_name if (self.user and not self.is_minor()) else "Verified Student",
         }
-        # Adults (>= 18) with explicit media consent can display intro video publicly
-        if not self.is_minor() and self.media_consent and self.video_url:
-            d["video_url"] = self.video_url
+        # NFR3: a minor's likeness is never public, whatever the consent flag says.
+        if not self.is_minor() and self.media_consent:
+            if self.video_url:
+                d["video_url"] = self.video_url
+            if self.photo_url:
+                d["photo_url"] = self.photo_url
 
         if not public:
             d.update({
@@ -91,10 +97,18 @@ class StudentProfile(db.Model):
                 "guardian_phone": self.guardian_phone,
                 "guardian_consent": self.guardian_consent,
                 "video_url": self.video_url,
+                "photo_url": self.photo_url,
                 "media_consent": self.media_consent,
                 "submitted_at": self.submitted_at.isoformat() if self.submitted_at else None,
                 "reviewed_at": self.reviewed_at.isoformat() if self.reviewed_at else None,
                 "review_note": self.review_note,
+                "edit_request_reason": self.edit_request_reason,
+                "ambassador_id": self.ambassador_id,
+                "email": self.user.email if self.user else None,
                 "full_name": self.user.full_name if self.user else None,
+                # BR3 readiness, so reviewers see consent state without a second call
+                "has_guardian_consent_document": bool(
+                    self.documents.filter_by(doc_type="guardian_consent").first()
+                ),
             })
         return d

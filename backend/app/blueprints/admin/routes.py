@@ -1,14 +1,15 @@
 """Admin verification + management endpoints."""
 from datetime import datetime, timezone
+from pathlib import Path
 import io
-from flask import Blueprint, request, jsonify, send_file
+from flask import Blueprint, request, jsonify, send_file, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import Schema, fields, validate, ValidationError
 
 from ...extensions import db
 from ...models import (
     User, Role, StudentProfile, ProfileStatus,
-    AuditLog, Notification, Document,
+    AuditLog, Notification, Document, DocType,
 )
 from ...common.decorators import role_required
 
@@ -21,7 +22,28 @@ class ReviewSchema(Schema):
     note = fields.Str(required=True, validate=validate.Length(min=5))
 
 
-# ── Verification queue ────────────────────────────────────
+def _minor_consent_blockers(profile):
+    """BR3 / NFR3: a minor cannot be published without verified guardian consent."""
+    if not profile.is_minor():
+        return []
+
+    blockers = []
+    if not profile.guardian_consent:
+        blockers.append("The guardian consent checkbox is not confirmed on the profile.")
+    if not profile.guardian_name or not profile.guardian_phone:
+        blockers.append("Guardian name and phone number are incomplete.")
+
+    consent_doc = Document.query.filter_by(
+        profile_id=profile.id, doc_type=DocType.GUARDIAN_CONSENT.value
+    ).first()
+    if not consent_doc:
+        blockers.append("No signed guardian consent form has been uploaded.")
+    elif not consent_doc.verified:
+        blockers.append("The uploaded guardian consent form has not been marked as verified.")
+
+    return blockers
+
+
 
 @admin_bp.get("/profiles")
 @role_required(Role.ADMIN.value)
@@ -61,11 +83,22 @@ def approve_profile(profile_id):
     except ValidationError as err:
         return jsonify({"errors": err.messages}), 400
 
+    # BR3 is enforced here, at the moment of publication — not only at submit,
+    # because approval is what makes a profile publicly visible.
+    blockers = _minor_consent_blockers(profile)
+    if blockers:
+        return jsonify({
+            "error": "This student is a minor and cannot be approved yet.",
+            "code": "guardian_consent_incomplete",
+            "blockers": blockers,
+        }), 422
+
     admin_id = int(get_jwt_identity())
 
     profile.status = ProfileStatus.APPROVED.value
     profile.reviewed_at = datetime.now(timezone.utc)
     profile.review_note = data["note"]
+    profile.edit_request_reason = None
 
     db.session.add(AuditLog(
         actor_id=admin_id,
@@ -166,7 +199,6 @@ def promote_ambassador(user_id):
     return jsonify({"user": user.to_dict(), "ticket": ticket.to_dict()}), 200
 
 
-# ── Stats ─────────────────────────────────────────────────
 
 @admin_bp.get("/stats")
 @role_required(Role.ADMIN.value)
@@ -189,6 +221,7 @@ def stats():
 def export_pdf():
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import letter
+    from reportlab.lib import colors
 
     total = StudentProfile.query.count()
     pending = StudentProfile.query.filter_by(status=ProfileStatus.PENDING.value).count()
@@ -201,24 +234,62 @@ def export_pdf():
 
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
-    c.setFont("Helvetica-Bold", 16)
-    c.drawString(50, 750, "igaFund System Analytics Report")
-    
-    c.setFont("Helvetica", 12)
-    c.drawString(50, 720, f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}")
-    
-    c.drawString(50, 680, "User Statistics:")
-    c.drawString(70, 660, f"- Total Registered Users: {users}")
-    
-    c.drawString(50, 620, "Profile Statistics:")
-    c.drawString(70, 600, f"- Total Profiles Submitted: {total}")
-    c.drawString(70, 580, f"- Approved: {approved}")
-    c.drawString(70, 560, f"- Pending: {pending}")
-    c.drawString(70, 540, f"- Rejected: {rejected}")
-    
-    c.drawString(50, 500, "Financial Statistics:")
-    c.drawString(70, 480, f"- Total Funds Raised: {total_funds:,.2f} RWF")
-    
+
+    forest = colors.HexColor("#12312A")
+    sage = colors.HexColor("#6E8279")
+    amber = colors.HexColor("#E8A13A")
+
+    logo = Path(__file__).resolve().parents[3] / "frontend" / "public" / "logo.png"
+    if logo.exists():
+        try:
+            c.drawImage(str(logo), 50, 726, width=40, height=40, mask="auto",
+                        preserveAspectRatio=True)
+        except Exception:
+            current_app.logger.warning("Report logo could not be embedded")
+
+    c.setFillColor(forest)
+    c.setFont("Helvetica-Bold", 20)
+    c.drawString(102, 748, "igaFund")
+    c.setFont("Helvetica", 11)
+    c.setFillColor(sage)
+    c.drawString(102, 733, "System analytics report")
+
+    c.setStrokeColor(amber)
+    c.setLineWidth(2)
+    c.line(50, 716, 562, 716)
+
+    c.setFillColor(sage)
+    c.setFont("Helvetica", 9)
+    c.drawString(50, 702, f"Generated {datetime.now(timezone.utc).strftime('%d %B %Y at %H:%M UTC')}")
+
+    def section(title, rows, top):
+        c.setFillColor(forest)
+        c.setFont("Helvetica-Bold", 13)
+        c.drawString(50, top, title)
+        c.setFont("Helvetica", 11)
+        y = top - 22
+        for label, value in rows:
+            c.setFillColor(sage)
+            c.drawString(64, y, label)
+            c.setFillColor(forest)
+            c.drawRightString(400, y, str(value))
+            y -= 18
+        return y - 14
+
+    y = section("Users", [("Registered users", users)], 664)
+    y = section("Profiles", [
+        ("Submitted in total", total),
+        ("Verified and published", approved),
+        ("Awaiting review", pending),
+        ("Changes requested", rejected),
+    ], y)
+    section("Funding", [("Routed to institutions", f"{total_funds:,.0f} RWF")], y)
+
+    c.setFillColor(sage)
+    c.setFont("Helvetica-Oblique", 8)
+    c.drawString(50, 60, "Every amount shown was routed directly to a registered institution account.")
+    c.drawString(50, 48, "No contribution is ever held in a personal account.")
+
     c.showPage()
     c.save()
     

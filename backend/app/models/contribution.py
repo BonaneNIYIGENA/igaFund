@@ -14,7 +14,9 @@ class Contribution(db.Model):
     amount = db.Column(db.Float, nullable=False)
     currency = db.Column(db.String(5), default="RWF")
     receipt_ref = db.Column(db.String(100))  # simulated receipt number
-    proof_image_url = db.Column(db.String(500))  # evidence of payment picture uploaded by donor
+    # Payment evidence is mandatory (FR4.3); the link points at cloud storage.
+    proof_image_url = db.Column(db.String(500))
+    proof_public_id = db.Column(db.String(255))
     ticket_number = db.Column(db.String(50))  # official transaction ticket number
     message = db.Column(db.Text)  # encouraging message from donor
     is_anonymous = db.Column(db.Boolean, default=False)  # hide donor name flag
