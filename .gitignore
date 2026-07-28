@@ -25,3 +25,6 @@ Bonane_NIYIGENA_[Assignment2]_ [06292026].pdf
 
 # locally stored uploads
 backend/uploads/
+
+# editor config (local only)
+.vscode/
