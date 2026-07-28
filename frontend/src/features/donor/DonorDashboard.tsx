@@ -156,7 +156,7 @@ export function DonorDashboard() {
                       <li key={c.id} className="py-3.5 first:pt-0 last:pb-0">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-forest-900">
+                            <p className="truncate text-sm font-medium text-ink">
                               {c.student_name ?? "A student"}
                             </p>
                             <p className="truncate text-xs text-muted">

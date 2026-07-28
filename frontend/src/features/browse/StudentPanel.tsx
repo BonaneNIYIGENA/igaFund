@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Building2,
-  ExternalLink,
+  Link as LinkIcon,
   GraduationCap,
   HeartHandshake,
   MessageSquareQuote,
@@ -21,6 +21,7 @@ import { RoutingRail, type RailStep } from "@/components/ui/RoutingRail";
 import { Alert, ErrorState, Skeleton } from "@/components/ui/Feedback";
 import { useAuth } from "@/features/auth/AuthContext";
 import { ContributeDialog } from "@/features/donor/ContributeDialog";
+import { FollowButton } from "@/features/donor/FollowButton";
 import {
   SidePanel,
   SidePanelBody,
@@ -142,8 +143,9 @@ export function StudentPanel({
                         {profile.institution.name}
                       </p>
                     )}
-                    <div className="mt-3">
+                    <div className="mt-3 flex items-center gap-2.5">
                       <VerifiedMark />
+                      <FollowButton profileId={profile.id} size="sm" />
                     </div>
                   </div>
                 </div>
@@ -168,7 +170,7 @@ export function StudentPanel({
 
                 <div>
                   <h3 className="font-display text-lg">Where your money goes</h3>
-                  <div className="mt-3 rounded-lg border border-line bg-white p-5">
+                  <div className="mt-3 rounded-lg border border-line bg-surface p-5">
                     <RoutingRail steps={routing} />
                   </div>
                 </div>
@@ -178,7 +180,7 @@ export function StudentPanel({
                     <p className="text-xs font-semibold uppercase tracking-wide text-faint">
                       Paid directly to
                     </p>
-                    <p className="mt-1.5 font-medium text-forest-900">{profile.institution.name}</p>
+                    <p className="mt-1.5 font-medium text-ink">{profile.institution.name}</p>
                     <p className="text-sm text-muted">{profile.institution.location}</p>
                     <Badge tone="forest" className="mt-3" icon={ShieldCheck}>
                       Registered institution
@@ -194,7 +196,7 @@ export function StudentPanel({
                         .filter((c) => c.message)
                         .slice(0, 5)
                         .map((c) => (
-                          <li key={c.id} className="rounded-md border border-line bg-white p-4">
+                          <li key={c.id} className="rounded-md border border-line bg-surface p-4">
                             <div className="flex items-start gap-2.5">
                               <MessageSquareQuote
                                 className="mt-0.5 size-4 shrink-0 text-forest-500"
@@ -218,11 +220,15 @@ export function StudentPanel({
 
           {profile && (
             <SidePanelFooter className="sm:justify-between">
-              <Button variant="ghost" asChild>
-                <Link to={`/students/${profile.id}`}>
-                  <ExternalLink aria-hidden />
-                  Open full page
-                </Link>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  const url = `${window.location.origin}/students/${profile.id}`;
+                  navigator.clipboard?.writeText(url).then(() => toast.success("Link copied"));
+                }}
+              >
+                <LinkIcon aria-hidden />
+                Copy link
               </Button>
 
               {complete ? (

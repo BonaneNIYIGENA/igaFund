@@ -6,6 +6,7 @@ import { fadeUp } from "@/lib/motion";
 import { fundingPercent } from "@/lib/format";
 import { FundingProgress } from "@/components/ui/Progress";
 import { Avatar } from "@/components/ui/Menu";
+import { FollowButton } from "@/features/donor/FollowButton";
 import { cn } from "@/lib/cn";
 
 /** A verified student in the donor pool. */
@@ -29,12 +30,12 @@ export function StudentCard({
       <Link
         to={to}
         onClick={onOpen ? (e) => { e.preventDefault(); onOpen(profile.id); } : undefined}
-        className="group flex h-full flex-col rounded-lg border border-line bg-white p-5 shadow-sm transition-[box-shadow,transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-forest-200 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700"
+        className="group flex h-full flex-col rounded-lg border border-line bg-surface p-5 shadow-sm transition-[box-shadow,transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-forest-200 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700"
       >
         <div className="flex items-start gap-3.5">
           <Avatar name={anonymous ? "?" : (profile.full_name ?? "?")} src={profile.photo_url} size="md" />
           <div className="min-w-0 flex-1">
-            <h3 className="truncate font-semibold leading-tight text-forest-900">
+            <h3 className="truncate font-semibold leading-tight text-ink">
               {profile.full_name ?? "Verified Student"}
             </h3>
             <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
@@ -45,13 +46,16 @@ export function StudentCard({
               </span>
             </p>
           </div>
-          <span
-            className="grid size-7 shrink-0 place-items-center rounded-full bg-forest-100 text-forest-700"
-            title="Verified by igaFund"
-          >
-            <ShieldCheck className="size-4" aria-hidden />
-            <span className="sr-only-focusable">Verified by igaFund</span>
-          </span>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <FollowButton profileId={profile.id} size="sm" />
+            <span
+              className="grid size-7 shrink-0 place-items-center rounded-full bg-forest-100 text-forest-700"
+              title="Verified by igaFund"
+            >
+              <ShieldCheck className="size-4" aria-hidden />
+              <span className="sr-only-focusable">Verified by igaFund</span>
+            </span>
+          </div>
         </div>
 
         {profile.institution && (
