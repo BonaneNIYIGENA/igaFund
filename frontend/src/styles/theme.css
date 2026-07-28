@@ -1,0 +1,430 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+/*
+  igaFund design tokens.
+
+  The palette carries the product thesis: forest green = verified/growth,
+  amber = money in motion, clay = refusal. Surfaces are pale mint so the
+  product reads calm and human rather than corporate — these are students
+  and community ambassadors, not enterprise buyers.
+*/
+
+@theme {
+  /* ── surfaces ─────────────────────────────────────────── */
+  --color-canvas: #edf6f1;
+  --color-surface: #ffffff;
+  --color-sunk: #e3f0e9;
+  --color-raised: #f7fcf9;
+
+  /* ── forest ink ───────────────────────────────────────── */
+  --color-forest-950: #0b1f1a;
+  --color-forest-900: #12312a;
+  --color-forest-800: #163f31;
+  --color-forest-700: #1e5945;
+  --color-forest-600: #2f7d5b;
+  --color-forest-500: #479a73;
+  --color-forest-400: #6fb795;
+  --color-forest-300: #9dd0b6;
+  --color-forest-200: #c6e5d5;
+  --color-forest-100: #ddf0e6;
+  --color-forest-50: #eff9f4;
+
+  /* ── sage (muted text + borders) ──────────────────────── */
+  --color-sage-700: #4e6459;
+  --color-sage-600: #6e8279;
+  --color-sage-500: #8ba299;
+  --color-sage-300: #b9cec4;
+  --color-sage-200: #d3e3da;
+  --color-sage-100: #e6f0ea;
+
+  /* ── amber: money in motion ───────────────────────────── */
+  --color-amber-700: #a8681c;
+  --color-amber-600: #c98325;
+  --color-amber-500: #e8a13a;
+  --color-amber-300: #f2c583;
+  --color-amber-100: #fbeacd;
+  --color-amber-50: #fdf6e9;
+
+  /* ── clay: refusal / danger ───────────────────────────── */
+  --color-clay-700: #8e3f30;
+  --color-clay-600: #a3493a;
+  --color-clay-500: #b85541;
+  --color-clay-200: #eccec7;
+  --color-clay-100: #f6e3df;
+
+  /* ── semantic ─────────────────────────────────────────── */
+  --color-ink: #12312a;
+  --color-body: #2b3b35;
+  --color-muted: #6e8279;
+  --color-faint: #8ba299;
+  --color-line: #d3e3da;
+  --color-line-strong: #b9cec4;
+
+  --color-success: #2f7d5b;
+  --color-success-soft: #ddf0e6;
+  --color-warning: #c98325;
+  --color-warning-soft: #fbeacd;
+  --color-danger: #b85541;
+  --color-danger-soft: #f6e3df;
+  --color-info: #1e5945;
+  --color-info-soft: #eff9f4;
+
+  /* Brand-green text/icons sitting directly on an adaptive surface (not
+     inside a fixed-tint chip) — flips to a lighter green in dark mode so
+     it never goes dark-on-dark. Fixed-tint chips (Badge, StatTile amber/
+     forest cards) pair their own bg+text and must NOT use this token. */
+  --color-accent-ink: var(--color-forest-700);
+
+  /* Same reasoning as accent-ink, for the warning/danger alert tones: their
+     -soft backgrounds are adaptive (flip dark in dark mode), so the text
+     sitting on them must flip too instead of staying pinned to a fixed
+     ramp step that goes dark-on-dark. */
+  --color-warning-ink: var(--color-amber-700);
+  --color-danger-ink: var(--color-clay-700);
+
+  /* A highlight patch (unread row, selected state) that must read on any
+     surface. Deliberately not a semantic canvas/surface token — its whole
+     job is to stand out from whichever one it sits on. */
+  --color-highlight: #fbeacd;
+
+  /* ── type ─────────────────────────────────────────────── */
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Space Grotesk", ui-monospace, monospace;
+
+  /* ── radii: generous, matching the soft reference ─────── */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-2xl: 36px;
+
+  /* ── shadows tinted forest, never neutral black ───────── */
+  --shadow-xs: 0 1px 2px rgba(18, 49, 42, 0.05);
+  --shadow-sm: 0 2px 8px rgba(18, 49, 42, 0.06);
+  --shadow-md: 0 8px 24px -6px rgba(18, 49, 42, 0.1), 0 2px 6px rgba(18, 49, 42, 0.04);
+  --shadow-lg: 0 18px 40px -12px rgba(18, 49, 42, 0.16), 0 4px 10px rgba(18, 49, 42, 0.05);
+  --shadow-xl: 0 32px 64px -16px rgba(18, 49, 42, 0.2), 0 8px 16px rgba(18, 49, 42, 0.06);
+  --shadow-lift: 0 12px 28px -8px rgba(30, 89, 69, 0.24);
+
+  /* ── motion ───────────────────────────────────────────── */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+/*
+  Dark mode overrides the semantic tokens only — the brand ramp (forest,
+  amber, clay, sage) stays fixed so accent colors and always-dark brand
+  panels (Card tone="ink", the auth hero) look identical in both themes.
+  The toggle sets data-theme on <html>; ThemeProvider picks the initial
+  value from localStorage, falling back to the OS preference.
+*/
+:root[data-theme="dark"] {
+  --color-canvas: #0e1613;
+  --color-surface: #16211d;
+  /* Noticeably lighter than surface — sunk also carries every hover state
+     (menu items, table rows, buttons), and the earlier value sat only a
+     few points above surface, making hovers nearly invisible in dark mode. */
+  --color-sunk: #253730;
+  --color-raised: #1c2925;
+
+  --color-ink: #eaf3ee;
+  --color-body: #c9d9d0;
+  --color-muted: #8fa69a;
+  --color-faint: #6c8579;
+  --color-line: #2a3833;
+  --color-line-strong: #3a4a43;
+
+  --color-success-soft: #17342a;
+  --color-warning-soft: #3a2c14;
+  --color-danger-soft: #3a2320;
+  --color-info-soft: #16261f;
+
+  --color-accent-ink: var(--color-forest-300);
+  --color-warning-ink: var(--color-amber-300);
+  --color-danger-ink: var(--color-clay-200);
+  --color-highlight: #2e2410;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px -6px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 18px 40px -12px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 32px 64px -16px rgba(0, 0, 0, 0.6), 0 8px 16px rgba(0, 0, 0, 0.35);
+  --shadow-lift: 0 12px 28px -8px rgba(0, 0, 0, 0.5);
+
+  color-scheme: dark;
+}
+
+/* ── base ───────────────────────────────────────────────── */
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-canvas);
+    color: var(--color-body);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    color: var(--color-ink);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin: 0;
+    font-weight: 600;
+  }
+
+  /* Money, ticket numbers and any figure that must align in a column. */
+  .figure {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-forest-700);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  ::selection {
+    background: var(--color-forest-200);
+    color: var(--color-forest-900);
+  }
+
+  img {
+    max-width: 100%;
+    display: block;
+  }
+}
+
+/* ── scrollbar ──────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-sage-300);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-sage-500);
+  background-clip: content-box;
+}
+
+/* ── utilities ──────────────────────────────────────────── */
+
+@utility grain {
+  /* Very light paper tooth so large mint fields don't read as flat plastic. */
+  position: relative;
+}
+
+@layer utilities {
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Screen-reader-only, used for skip links and icon-button labels. */
+  .sr-only-focusable:not(:focus):not(:focus-within) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+}
+
+/* ── overlay choreography ───────────────────────────────
+   Radix drives these via data-state. Exits run at ~60% of
+   entrance duration so dismissal feels responsive.        */
+
+@keyframes iga-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes iga-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes iga-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes iga-slide-down-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+}
+
+@keyframes iga-zoom-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes iga-zoom-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.97);
+  }
+}
+
+@keyframes iga-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes iga-pop-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes iga-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes iga-slide-out-right {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@layer utilities {
+  [data-state="open"].anim-overlay {
+    animation: iga-fade-in 200ms var(--ease-out-soft);
+  }
+  [data-state="closed"].anim-overlay {
+    animation: iga-fade-out 130ms var(--ease-out-soft);
+  }
+
+  [data-state="open"].anim-sheet {
+    animation: iga-slide-up 260ms var(--ease-out-soft);
+  }
+  [data-state="closed"].anim-sheet {
+    animation: iga-slide-down-out 160ms var(--ease-out-soft);
+  }
+
+  [data-state="open"].anim-popover {
+    animation: iga-pop-in 160ms var(--ease-out-soft);
+  }
+  [data-state="closed"].anim-popover {
+    animation: iga-pop-out 110ms var(--ease-out-soft);
+  }
+
+  [data-state="open"].anim-drawer {
+    animation: iga-slide-in-right 260ms var(--ease-out-soft);
+  }
+  [data-state="closed"].anim-drawer {
+    animation: iga-slide-out-right 170ms var(--ease-out-soft);
+  }
+
+  @media (min-width: 640px) {
+    [data-state="open"].anim-sheet {
+      animation: iga-zoom-in 200ms var(--ease-out-soft);
+    }
+    [data-state="closed"].anim-sheet {
+      animation: iga-zoom-out 130ms var(--ease-out-soft);
+    }
+  }
+}
+
+/* ── reduced motion ─────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

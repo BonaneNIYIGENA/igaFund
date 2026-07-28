@@ -1,0 +1,3 @@
+FLASK_APP=wsgi.py
+FLASK_CONFIG=dev
+FLASK_DEBUG=1
