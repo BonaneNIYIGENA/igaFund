@@ -1,34 +1,70 @@
 # igaFund — Requirements Traceability Matrix
 
-This document maps all Functional Requirements (FR1–FR7) and Business Rules (BR1–BR10) from the SRS specification (`Bonane_NIYIGENA_[Assignment2]_ [06292026].pdf`) to their corresponding API endpoints, frontend components, and automated test cases.
+Maps every Functional Requirement (FR1–FR7) and Business Rule (BR1–BR10) from the SRS
+(`Bonane_NIYIGENA_[Assignment2]_ [06292026].pdf`) to the API endpoint, frontend screen and
+automated test that satisfies it.
+
+Endpoints are given exactly as registered; every path below is prefixed with `/api`.
 
 ---
 
 ## 1. Functional Requirements (FR1 – FR7)
 
-| Requirement ID | Description | Backend Implementation | Frontend Component | Automated Test Verification |
+| ID | Description | Backend endpoint | Frontend | Tests |
 |---|---|---|---|---|
-| **FR1: Auth & User Management** | User registration (Student & Donor self-service; Admin DB-seeded; Ambassador promoted from verified students). | `app/blueprints/auth/routes.py` (`/auth/register`, `/auth/login`), `admin/routes.py` (`/promote-ambassador`) | `src/features/auth/Register.tsx`, `AuthContext.tsx` | `tests/test_auth.py::test_register_and_login_flow`, `src/features/auth/auth.test.tsx` |
-| **FR2: Student Profile Management** | Create and update student funding profiles, including bio, academic level, and funding goal. | `app/blueprints/profiles/routes.py` (`/profiles/me`) | `src/features/student/StudentProfile.tsx` | `tests/test_profiles.py::test_create_and_get_profile` |
-| **FR3: Document Upload & Storage** | Upload verification documents (student IDs, transcripts, recommendation letters). | `app/blueprints/profiles/routes.py` (`/profiles/documents`) | `src/features/student/StudentDocuments.tsx` | `tests/test_profiles.py::test_document_upload_and_delete` |
-| **FR4: Ambassador Assistance** | Promoted ambassadors onboard and submit student profiles from rural communities. | `app/blueprints/profiles/routes.py` (`/profiles/ambassador/enroll`) | `src/features/ambassador/AmbassadorDashboard.tsx` | `tests/test_profiles.py::test_ambassador_enroll_student` |
-| **FR5: Admin Verification Engine** | Admin queue to review pending student applications, approve/reject with mandatory note, promote verified students to ambassadors. | `app/blueprints/admin/routes.py` (`/admin/profiles/<id>/approve`, `/promote-ambassador`) | `src/features/admin/AdminDashboard.tsx` | `tests/test_profiles.py::test_admin_approve_profile` |
-| **FR6: Donor Portal & Proof of Funds** | Donors browse approved profiles, contribute funds directly to schools, and upload payment evidence pictures. | `app/blueprints/contributions/routes.py` (`/contributions/`) | `src/features/donor/DonorDashboard.tsx` | `tests/test_contributions.py::test_create_contribution` |
-| **FR7: Process Ticketing System** | Auto-generation of official timestamped Verification/Transaction Tickets (e.g. `TICK-20260721-XXXX`) for every completed process. | `app/blueprints/tickets/routes.py` (`/tickets/`) | `src/components/TicketsView.tsx` | `tests/test_contributions.py::test_ticket_generation` |
+| **FR1.1–1.4** Registration | Students and donors self-register; admins are seeded; ambassadors are promoted. | `POST /auth/register` (`blueprints/auth/routes.py`), `POST /admin/users/<id>/promote-ambassador` | `features/auth/Register.tsx` | `test_auth.py::test_register_and_login_flow`, `auth.test.tsx` |
+| **FR1.5** Login & access control | JWT login with role claim; each role lands on its own home. | `POST /auth/login`, `POST /auth/refresh`, `GET /auth/me`, `common/decorators.py::role_required` | `features/auth/Login.tsx`, `features/auth/guard.tsx` | `test_auth.py::test_login_*`, `test_auth.py::test_rbac_denies_non_admin` |
+| **FR1.6** Password recovery | Signed, 30-minute reset token emailed to the user. | `POST /auth/password-reset/request`, `POST /auth/password-reset/confirm` | `ForgotPassword.tsx`, `ResetPassword.tsx` | `test_auth.py::test_password_reset_flow` |
+| **FR2.1** Profile creation | Student self-creates, or an ambassador creates on their behalf. | `POST /profiles/` | `student/StudentProfile.tsx`, `ambassador/AmbassadorEnroll.tsx` | `test_profiles.py::test_create_profile`, `::test_ambassador_can_submit_the_profile_they_enrolled` |
+| **FR2.2** Document upload | Transcript, ID, recommendation, guardian consent. | `POST /profiles/<id>/documents`, `GET /profiles/<id>/documents`, `DELETE /profiles/<id>/documents/<doc_id>` | `student/StudentDocuments.tsx`, `ambassador/AmbassadorDocuments.tsx` | `test_profiles.py::test_document_is_served_only_to_authorised_viewers` |
+| **FR2.2b** Document review access | Reviewers open the actual file through a JWT-guarded route (no public URL — NFR2). | `GET /profiles/<id>/documents/<doc_id>/file`, `POST /profiles/<id>/documents/<doc_id>/verify` | `features/documents/DocumentViewer.tsx` | `test_profiles.py::test_document_is_served_only_to_authorised_viewers` |
+| **FR2.3** Profile edits | Editable while draft or rejected; approved profiles need a change request (BR4). | `PUT /profiles/<id>`, `POST /profiles/<id>/request-edit` | `student/StudentProfile.tsx` | `test_profiles.py::test_cannot_edit_submitted_profile`, `::test_rejected_profile_can_be_fixed_and_resubmitted`, `::test_approved_profile_is_locked_until_change_requested` |
+| **FR2.4** Funding progress | Raised vs goal, supporters and their messages. | `GET /profiles/`, `GET /contributions/profile/<id>` | `student/StudentDashboard.tsx`, `components/ui/Progress.tsx` | `test_contributions.py::test_make_contribution_and_anonymity` |
+| **FR2.5** Status notifications | In-app notification on submission, approval, rejection and funding. | `GET /notifications/`, `POST /notifications/<id>/read`, `POST /notifications/read-all` | `app/shell/NotificationCenter.tsx` (all four roles) | covered via `test_profiles.py::test_admin_approve` |
+| **FR2.6** Student dashboard | Status, funding, next action, verification journey. | `GET /profiles/`, `GET /tickets/` | `student/StudentDashboard.tsx`, `student/StudentStatus.tsx` | `test_profiles.py::test_list_own_profiles` |
+| **FR3.1** Administrative review | Approve or reject with a mandatory note. | `GET /admin/profiles`, `GET /admin/profiles/<id>`, `POST /admin/profiles/<id>/approve`, `POST /admin/profiles/<id>/reject` | `admin/AdminQueue.tsx`, `admin/ReviewDialog.tsx` | `test_profiles.py::test_admin_approve`, `::test_admin_reject` |
+| **FR3.2** Guardian consent verification | Consent flag, guardian contact and a *verified* consent document all required. | `admin/routes.py::_minor_consent_blockers` | `admin/ReviewDialog.tsx` | `test_profiles.py::test_minor_cannot_be_approved_without_verified_consent` |
+| **FR3.3** RBAC | Each role reaches only its own data. | `common/decorators.py::role_required`, per-route ownership checks | `features/auth/guard.tsx` | `test_profiles.py::test_non_admin_cannot_approve`, `::test_ambassador_cannot_touch_other_ambassadors_profiles` |
+| **FR3.4** Admin dashboard & audit | Queue, analytics, institutions, audit trail. | `GET /admin/stats`, `GET /audit/`, `GET /institutions/`, `POST /institutions/` | `admin/AdminDashboard.tsx`, `AdminAnalytics.tsx`, `AdminInstitutions.tsx`, `AdminAudit.tsx` | `test_audit.py::test_list_audit_logs_as_admin`, `test_institutions.py` |
+| **FR4.1** Browse verified profiles | Public list and public detail, both approved-only. | `GET /profiles/public`, `GET /profiles/public/<id>` | `browse/BrowseStudents.tsx`, `browse/StudentDetail.tsx`, `donor/DonorBrowse.tsx` | `test_contributions.py::test_public_profiles_endpoint`, `::test_public_profile_detail_is_reachable_and_masked` |
+| **FR4.2** Direct institution payment | Contribution bound to the student's registered institution. | `POST /contributions/` | `donor/ContributeDialog.tsx` | `test_contributions.py::test_make_contribution_and_anonymity` |
+| **FR4.3** Payment evidence | Donor records a link to their payment slip with the contribution. | `POST /contributions/` (`proof_image_url`) | `donor/ContributeDialog.tsx` | `test_contributions.py::test_make_contribution_and_anonymity` |
+| **FR4.4/4.5** Donation tracking & donor dashboard | History, receipts, suggested students. | `GET /contributions/my`, `GET /tickets/` | `donor/DonorDashboard.tsx`, `DonorGiving.tsx`, `DonorReceipts.tsx` | `test_contributions.py::test_make_contribution_and_anonymity` |
+| **FR5.1** Email notifications | SMTP when configured, console in development. | `common/mailer.py::send_email` (wired to password reset) | — | `test_auth.py::test_password_reset_flow` |
+| **FR5.2** System alerts | In-app alerts for pending actions and milestones. | `models/notification.py`, emitted on submit / approve / reject / fund | `app/shell/NotificationCenter.tsx` | covered via approval tests |
+| **FR6.1–6.3** Offline capture & sync | Enrolments captured offline are queued and replayed in order on reconnect. | replays to `POST /profiles/` | `lib/offline.ts`, `app/App.tsx::OfflineSync`, `ambassador/AmbassadorEnroll.tsx` | manual; see `docs/testing/` |
+| **FR7.1/7.2** Analytics | Verification outcomes, applications over time, funds routed per institution. | `GET /admin/stats`, `GET /admin/profiles?status=all` | `admin/AdminAnalytics.tsx` | `test_profiles.py::test_admin_approve` (data source) |
+| **FR7.3** Report export | PDF summary of users, profiles and funds. | `GET /admin/export-pdf` | `admin/AdminDashboard.tsx`, `AdminAnalytics.tsx` | manual |
 
 ---
 
 ## 2. Business Rules (BR1 – BR10)
 
-| Business Rule ID | Rule Summary | Enforcement Mechanism | Automated Test ID |
+| ID | Rule | Enforced by | Test |
 |---|---|---|---|
-| **BR1: Approved Visibility Gate** | Only admin-approved student profiles appear in public donor directory. | `StudentProfile.status == 'approved'` filter in `contributions/routes.py` | `test_contributions.py::test_only_approved_profiles_visible` |
-| **BR2: Direct School Routing & Proof** | Contributions route directly to partner institutions with uploaded payment slip picture. | `Institution.bank_reference` + `proof_image_url` in `Contribution` model | `test_contributions.py::test_institution_bank_routing_recorded` |
-| **BR3: Minor Consent Gate** | Minor students (<18) must have explicit guardian name, phone, and consent. | `guardian_consent` validation in `profiles/schemas.py` | `test_profiles.py::test_minor_profile_requires_guardian_consent` |
-| **BR4: PII Privacy Protection** | Minor student full names and contact info are masked from public/donor view. | `StudentProfile.to_dict(public=True)` masks PII to "Verified Student" | `test_profiles.py::test_public_profile_pii_masking` |
-| **BR5: Ambassador Ownership** | Ambassadors can only manage profiles they explicitly enrolled. | `ambassador_id == current_user.id` check in profile routes | `test_profiles.py::test_ambassador_access_control` |
-| **BR6: Audit Logging** | All admin approval, rejection, and ambassador promotion actions are logged in an append-only audit trail. | `AuditLog` model inserted inside `admin/routes.py` db transaction | `test_profiles.py::test_admin_action_creates_audit_log` |
-| **BR7: Mandatory Review Note** | Rejection or approval by admin requires a review note of min length 5 chars. | `ReviewSchema` validation in `admin/routes.py` | `test_profiles.py::test_review_note_validation` |
-| **BR8: Process Ticket Generation** | Every completed milestone issues an official timestamped Process Ticket. | `create_process_ticket` called upon approval, promotion, and funding | `test_contributions.py::test_process_ticket_generated` |
-| **BR9: Secure Password Hashing** | Passwords must use Bcrypt with cost factor 12. | `flask_bcrypt` configured in `extensions.py` | `test_auth.py::test_password_hashing_bcrypt` |
-| **BR10: Offline Draft Support** | Draft profiles captured offline are queued in IndexedDB and synced on reconnect. | Frontend `lib/offline.ts` IndexedDB queue + sync service | `auth.test.tsx::offline_queue_sync` |
+| **BR1** | Only approved profiles are publicly browsable. | `status == approved` filter in `profiles/routes.py::list_public_profiles` and `get_public_profile` | `test_contributions.py::test_public_profiles_endpoint`, `::test_public_profile_detail_is_reachable_and_masked` |
+| **BR2** | Contributions route only to the student's registered institution. | `Contribution.institution_id` taken from the profile; contribution refused when no institution is set (`contributions/routes.py`) | `test_contributions.py::test_make_contribution_and_anonymity` |
+| **BR3** | Minors need signed, verified guardian consent before publication. | `profiles/routes.py::submit_profile` at submission **and** `admin/routes.py::_minor_consent_blockers` at approval | `test_profiles.py::test_minor_needs_guardian_consent`, `::test_minor_cannot_be_approved_without_verified_consent` |
+| **BR4** | Approved profiles are immutable; changes reopen a review cycle. | `PUT /profiles/<id>` returns 409 `edit_request_required`; `POST /profiles/<id>/request-edit` sets status back to pending with a stated reason | `test_profiles.py::test_approved_profile_is_locked_until_change_requested` |
+| **BR5** | Ambassadors manage only students they enrolled. | `profiles/routes.py::_can_manage` (`ambassador_id == current user`) | `test_profiles.py::test_ambassador_can_submit_the_profile_they_enrolled`, `::test_ambassador_cannot_touch_other_ambassadors_profiles` |
+| **BR6** | Donors see published information only, never confidential records. | `StudentProfile.to_dict(public=True)` masks PII; `contributions/routes.py` withholds receipt refs, proof images and donor ids from bystanders | `test_contributions.py::test_other_donors_cannot_read_receipt_references`, `::test_contribution_records_are_not_public` |
+| **BR7** | Every administrative action carries a mandatory written note. | `ReviewSchema` (min 5 chars) in `admin/routes.py` | `test_profiles.py::test_approve_needs_note` |
+| **BR8** | Roles comply with platform policy. | RBAC decorator plus per-route ownership checks | `test_profiles.py::test_non_admin_cannot_approve` |
+| **BR9** | Immutable audit records for verification and financial activity. | `AuditLog` written inside the approval/rejection/promotion transaction; no update or delete route exists | `test_audit.py::test_list_audit_logs_as_admin` |
+| **BR10** | Submitted information passes an administrative verification layer. | No profile reaches `approved` without an admin decision | `test_profiles.py::test_admin_approve` |
+
+---
+
+## 3. Known gaps
+
+Recorded honestly rather than claimed as covered.
+
+| Requirement | Status | What is missing |
+|---|---|---|
+| **FR5.1** email on status change | Partial | `send_email` is wired to password reset only. Approval, rejection and funding raise in-app notifications but do not send mail. |
+| **FR1.4** full user management | Partial | Only ambassador promotion exists. There is no user list, role editor, or account suspension (BR10 mentions suspension). |
+| **NFR4** audit completeness | Partial | Administrative decisions are logged. Authentication events, financial transaction attempts and document access are not, and there is no `ip_address` column or audit PDF export. |
+| **FR4.3** receipt upload | Partial | The donor supplies a link to their payment slip; there is no file upload endpoint for contribution evidence. |
+| **FR7.1** funding over time | Partial | Charts use profile creation dates. Month-by-month *funding* totals need a reporting endpoint exposing per-contribution timestamps. |
+| **§5.4** session security | Not implemented | No 24-hour inactivity timeout, token revocation on sign-out, admin concurrent-session limit, or login rate limiting. |
+| **FR6.2** local encrypted storage | Partial | The IndexedDB queue is not encrypted at rest; it stores drafts in plain form with a client id for replay safety. |
