@@ -90,6 +90,26 @@ export function parsePhone(stored: string | null | undefined) {
 
 export const PASSWORD_MIN = 8;
 
+export type PasswordCheck = {
+  hasLength: boolean;
+  hasLower: boolean;
+  hasUpper: boolean;
+  hasDigit: boolean;
+  hasSymbol: boolean;
+};
+
+/** Returns booleans for each NFR1 composition requirement. */
+export function passwordChecklist(password: string): PasswordCheck {
+  const v = password ?? "";
+  return {
+    hasLength: v.length >= PASSWORD_MIN,
+    hasLower: /[a-z]/.test(v),
+    hasUpper: /[A-Z]/.test(v),
+    hasDigit: /\d/.test(v),
+    hasSymbol: /[^A-Za-z0-9]/.test(v),
+  };
+}
+
 export type Strength = {
   score: 0 | 1 | 2 | 3 | 4;
   label: string;
@@ -102,7 +122,7 @@ const COMMON = [
   "iloveyou", "abc12345", "password1", "11111111", "igafund",
 ];
 
-/** Length first, character variety second — a long passphrase scores well without needing a symbol, which is how people actually pick strong secrets. */
+/** Length first, character variety second — but NFR1 composition is mandatory. */
 export function passwordStrength(password: string): Strength {
   const value = password ?? "";
 
@@ -133,13 +153,16 @@ export function passwordStrength(password: string): Strength {
     return { score: 1, label: "Too easy to guess", hint: "Repeating one character isn't a password.", acceptable: false };
   }
 
+  const checks = passwordChecklist(value);
+  const allComposition = checks.hasLength && checks.hasLower && checks.hasUpper && checks.hasDigit && checks.hasSymbol;
+
   let points = 0;
   if (value.length >= 8) points += 1;
   if (value.length >= 12) points += 1;
   if (value.length >= 16) points += 1;
-  if (/[a-z]/.test(value) && /[A-Z]/.test(value)) points += 1;
-  if (/\d/.test(value)) points += 1;
-  if (/[^A-Za-z0-9]/.test(value)) points += 1;
+  if (checks.hasLower && checks.hasUpper) points += 1;
+  if (checks.hasDigit) points += 1;
+  if (checks.hasSymbol) points += 1;
   if (new Set(value).size >= Math.min(8, value.length)) points += 1;
 
   const score = Math.min(4, Math.max(1, Math.round((points / 7) * 4))) as 1 | 2 | 3 | 4;
@@ -151,13 +174,26 @@ export function passwordStrength(password: string): Strength {
     4: { label: "Very strong", hint: "Excellent password." },
   };
 
-  return { score, ...meta[score], acceptable: score >= 2 };
+  // NFR1: all four character classes are mandatory for acceptance.
+  return { score, ...meta[score], acceptable: allComposition };
 }
 
 export function validatePassword(password: string): string {
-  const strength = passwordStrength(password);
-  if (strength.acceptable) return "";
-  return strength.score === 0 ? strength.hint : `${strength.label} — ${strength.hint}`;
+  const checks = passwordChecklist(password);
+  if (!password) return `At least ${PASSWORD_MIN} characters.`;
+  if (password.length < PASSWORD_MIN) return `${PASSWORD_MIN - password.length} more character${PASSWORD_MIN - password.length === 1 ? "" : "s"} needed.`;
+
+  const missing: string[] = [];
+  if (!checks.hasUpper) missing.push("an uppercase letter");
+  if (!checks.hasLower) missing.push("a lowercase letter");
+  if (!checks.hasDigit) missing.push("a digit");
+  if (!checks.hasSymbol) missing.push("a special character");
+  if (missing.length > 0) return `Add ${missing.join(" and ")}.`;
+
+  const lower = password.toLowerCase();
+  if (COMMON.some((c) => lower.includes(c))) return "This contains a common password. Choose something else.";
+
+  return "";
 }
 
 

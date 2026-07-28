@@ -112,6 +112,9 @@ export type User = {
   email: string;
   role: Role;
   full_name: string;
+  is_suspended?: boolean;
+  notify_email?: boolean;
+  created_at?: string;
 };
 
 export type Institution = {
@@ -264,11 +267,24 @@ export const endpoints = {
   myContributions: () => api("/contributions/my"),
   profileContributions: (profileId: number) => api(`/contributions/profile/${profileId}`),
 
+  me: () => api("/auth/me"),
+  updateSettings: (payload: {
+    full_name?: string;
+    email?: string;
+    current_password?: string;
+    new_password?: string;
+    notify_email?: boolean;
+  }) => api("/auth/me", { method: "PUT", body: JSON.stringify(payload) }),
   notifications: () => api("/notifications/"),
   markNotificationRead: (id: number) => api(`/notifications/${id}/read`, { method: "POST" }),
   markAllNotificationsRead: () => api("/notifications/read-all", { method: "POST" }),
 
-  tickets: () => api("/tickets/"),
+  watchProfile: (id: number) => api(`/profiles/${id}/watch`, { method: "POST" }),
+  unwatchProfile: (id: number) => api(`/profiles/${id}/watch`, { method: "DELETE" }),
+  watchedProfiles: () => api("/profiles/watching"),
+
+  // Tickets are the admin-facing process record — no other role can read them.
+  adminTickets: () => api("/tickets/"),
   auditLogs: () => api("/audit/"),
 
   adminProfiles: (status: string) => api(`/admin/profiles?status=${status}`),
@@ -280,4 +296,10 @@ export const endpoints = {
   promoteAmbassador: (userId: number) =>
     api(`/admin/users/${userId}/promote-ambassador`, { method: "POST" }),
   adminStats: () => api("/admin/stats"),
+  adminUsers: (role = "all", search = "", page = 1) =>
+    api(`/admin/users?role=${role}&search=${encodeURIComponent(search)}&page=${page}`),
+  changeUserRole: (userId: number, role: Role) =>
+    api(`/admin/users/${userId}/role`, { method: "PUT", body: JSON.stringify({ role }) }),
+  suspendUser: (userId: number, note: string) =>
+    api(`/admin/users/${userId}/suspend`, { method: "POST", body: JSON.stringify({ note }) }),
 };
