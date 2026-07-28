@@ -4,15 +4,15 @@ from collections import defaultdict, deque
 from functools import wraps
 
 from flask import request, jsonify, current_app
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # In-process counters. A multi-worker deployment should move this to Redis.
 _attempts = defaultdict(deque)
 
 
 def _client_key(scope):
-    forwarded = request.headers.get("X-Forwarded-For", "")
-    ip = forwarded.split(",")[0].strip() if forwarded else (request.remote_addr or "unknown")
-    return f"{scope}:{ip}"
+    """Keys on the peer address only; a client-sent X-Forwarded-For is never trusted."""
+    return f"{scope}:{request.remote_addr or 'unknown'}"
 
 
 def rate_limit(scope, limit, window_seconds):
@@ -57,6 +57,12 @@ def clear_rate_limit(scope=None):
 
 
 def register_security(app):
+    # Forwarded headers are only believed for as many proxy hops as the operator
+    # configured; the default of 0 means remote_addr stays the real peer.
+    hops = app.config.get("TRUSTED_PROXY_HOPS", 0)
+    if hops:
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=hops, x_proto=hops, x_host=hops)
+
     @app.after_request
     def apply_headers(response):
         response.headers.setdefault("X-Content-Type-Options", "nosniff")

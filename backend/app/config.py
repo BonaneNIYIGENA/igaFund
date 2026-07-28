@@ -17,6 +17,9 @@ class BaseConfig:
     ALLOWED_MIMETYPES = {"application/pdf", "image/png", "image/jpeg"}
     CORS_ORIGINS = ["*"]
 
+    # Proxy hops whose X-Forwarded-* headers may be trusted; 0 trusts none.
+    TRUSTED_PROXY_HOPS = int(os.environ.get("TRUSTED_PROXY_HOPS", "0"))
+
     # Cloudinary holds uploads; the database stores only the returned link.
     CLOUDINARY_CLOUD_NAME = os.environ.get("CLOUDINARY_CLOUD_NAME", "")
     CLOUDINARY_API_KEY = os.environ.get("CLOUDINARY_API_KEY", "")
