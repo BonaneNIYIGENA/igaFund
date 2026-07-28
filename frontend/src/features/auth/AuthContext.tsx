@@ -1,19 +1,27 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { api } from "../../lib/api";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { api, type Role, type User } from "@/lib/api";
 
-type User = { id: number; email: string; role: string; full_name: string };
-type RegisterPayload = { email: string; full_name: string; password: string; role: string };
+type RegisterPayload = { email: string; full_name: string; password: string; role: Role };
+
 type AuthValue = {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (payload: RegisterPayload) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (payload: RegisterPayload) => Promise<User>;
   requestReset: (email: string) => Promise<void>;
   confirmReset: (token: string, password: string) => Promise<void>;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthValue | null>(null);
+
+/** Where each role lands after signing in. */
+export const HOME_FOR_ROLE: Record<Role, string> = {
+  student: "/student",
+  donor: "/donor",
+  admin: "/admin",
+  ambassador: "/ambassador",
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -24,7 +32,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (localStorage.getItem("access")) {
       api("/auth/me")
         .then((d) => setUser(d.user))
-        .catch(() => localStorage.removeItem("access"))
+        .catch(() => {
+          localStorage.removeItem("access");
+          localStorage.removeItem("refresh");
+        })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
@@ -35,14 +46,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("access", data.access);
     localStorage.setItem("refresh", data.refresh);
     setUser(data.user);
+    return data.user;
   }
 
   async function login(email: string, password: string) {
-    persist(await api("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }));
+    return persist(await api("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }));
   }
 
   async function register(payload: RegisterPayload) {
-    persist(await api("/auth/register", { method: "POST", body: JSON.stringify(payload) }));
+    return persist(await api("/auth/register", { method: "POST", body: JSON.stringify(payload) }));
   }
 
   async function requestReset(email: string) {
@@ -54,14 +66,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function logout() {
-    localStorage.clear();
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
     setUser(null);
   }
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--surface-sunk, #0a0c10)", color: "var(--primary, #10b981)" }}>
-        <div className="btn__spinner" style={{ width: 32, height: 32 }} />
+      <div className="grid min-h-dvh place-items-center bg-canvas" role="status" aria-label="Loading igaFund">
+        <div className="flex flex-col items-center gap-4">
+          <span className="size-9 animate-spin rounded-full border-[3px] border-forest-200 border-t-forest-700" />
+          <span className="font-display text-lg text-forest-800">igaFund</span>
+        </div>
       </div>
     );
   }

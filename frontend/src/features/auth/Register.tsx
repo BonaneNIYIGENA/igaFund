@@ -1,205 +1,196 @@
-import { FormEvent, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { GraduationCap, HeartHandshake } from "lucide-react";
+import { ApiError, type Role } from "@/lib/api";
 import {
-  UserPlus,
-  AlertCircle,
-  GraduationCap,
-  Users,
-  HeartHandshake,
-  ArrowRight,
-} from "lucide-react";
-import { useAuth } from "./AuthContext";
+  stripEmailInput,
+  stripNameInput,
+  validateEmail,
+  validateName,
+  validatePassword,
+} from "@/lib/validation";
+import { useAuth, HOME_FOR_ROLE } from "./AuthContext";
 import { AuthLayout } from "./AuthLayout";
-import { TextField } from "../../components/ui/TextField";
-import { RoleCard } from "../../components/ui/RoleCard";
-import { Button } from "../../components/ui/Button";
-import { fadeUp } from "../../lib/motion";
+import { Button } from "@/components/ui/Button";
+import { Field, Input } from "@/components/ui/Field";
+import { PasswordField } from "@/components/ui/PasswordField";
+import { Alert } from "@/components/ui/Feedback";
+import { cn } from "@/lib/cn";
 
-const ROLES = [
-  {
-    value: "student",
-    title: "A student",
-    desc: "Build a verified profile and receive funding for your education.",
-    icon: GraduationCap,
-  },
-  {
-    value: "donor",
-    title: "A donor",
-    desc: "Browse verified students and fund their school fees directly.",
-    icon: HeartHandshake,
-  },
+const SIGNUP_ROLES: {
+  value: Extract<Role, "student" | "donor">;
+  label: string;
+  blurb: string;
+  icon: typeof GraduationCap;
+}[] = [
+  { value: "student", label: "A student", blurb: "I need help paying my school fees", icon: GraduationCap },
+  { value: "donor", label: "A donor", blurb: "I want to help pay someone's school fees", icon: HeartHandshake },
 ];
 
 export function Register() {
   const { register } = useAuth();
-  const nav = useNavigate();
-  const [form, setForm] = useState<{
-    email: string;
-    full_name: string;
-    password: string;
-    role: string;
-    date_of_birth?: string;
-    guardian_name?: string;
-    guardian_phone?: string;
-  }>({
-    email: "",
-    full_name: "",
-    password: "",
-    role: "student",
-    date_of_birth: "",
-    guardian_name: "",
-    guardian_phone: "",
-  });
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: string } | null)?.from;
 
-  function update(key: string, value: string) {
-    setForm((f) => ({ ...f, [key]: value }));
+  const [role, setRole] = useState<"student" | "donor">("student");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<{ fullName?: string; email?: string; password?: string }>({});
+  const [formError, setFormError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  function validate() {
+    const next = {
+      fullName: validateName(fullName, "full name"),
+      email: validateEmail(email),
+      password: validatePassword(password),
+    };
+    const cleaned = Object.fromEntries(Object.entries(next).filter(([, v]) => v));
+    setErrors(cleaned);
+    return Object.keys(cleaned).length === 0;
   }
 
-  async function submit(e: FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
-    setBusy(true);
+    setFormError("");
+    if (!validate()) {
+      document.querySelector<HTMLElement>("[aria-invalid='true']")?.focus();
+      return;
+    }
+
+    setLoading(true);
     try {
-      await register(form);
-      nav("/dashboard");
+      const user = await register({ email: email.trim(), full_name: fullName.trim(), password, role });
+      navigate(from ?? HOME_FOR_ROLE[user.role], { replace: true });
     } catch (err) {
-      setError((err as Error).message);
+      if (err instanceof ApiError && err.fields) {
+        setErrors({
+          fullName: err.fields.full_name?.[0],
+          email: err.fields.email?.[0],
+          password: err.fields.password?.[0],
+        });
+      }
+      setFormError(
+        err instanceof ApiError && err.status === 409
+          ? "An account already uses that email. Sign in instead."
+          : err instanceof ApiError && err.status === 429
+            ? "Too many attempts from this device. Wait a few minutes."
+            : err instanceof Error
+              ? err.message
+              : "We couldn't create your account. Try again.",
+      );
     } finally {
-      setBusy(false);
+      setLoading(false);
     }
   }
 
   return (
     <AuthLayout
       title="Create your account"
-      subtitle="Start by telling us how you'll use igaFund."
-      foot={
+      description="It takes about a minute. You can finish your profile afterwards."
+      footer={
         <>
           Already have an account?{" "}
-          <Link to="/login">
-            Sign in <ArrowRight size={12} style={{ verticalAlign: "middle" }} />
+          <Link to="/login" className="font-medium text-forest-700 underline-offset-4 hover:underline">
+            Sign in
           </Link>
         </>
       }
     >
-      <form onSubmit={submit} aria-label="register">
-        {error && (
-          <motion.div className="alert" variants={fadeUp} role="alert">
-            <AlertCircle size={16} /> {error}
-          </motion.div>
+      <form onSubmit={submit} className="space-y-5" noValidate>
+        {formError && (
+          <Alert tone="danger" title="Couldn't create your account">
+            {formError}
+          </Alert>
         )}
-        <motion.p className="eyebrow" variants={fadeUp}>
-          I am…
-        </motion.p>
-        <motion.div
-          className="rolegrid"
-          variants={fadeUp}
-          role="group"
-          aria-label="Choose your role"
-        >
-          {ROLES.map((r) => (
-            <RoleCard
-              key={r.value}
-              icon={r.icon}
-              title={r.title}
-              desc={r.desc}
-              active={form.role === r.value}
-              onSelect={() => update("role", r.value)}
-            />
-          ))}
-        </motion.div>
-        <motion.div variants={fadeUp}>
-          <TextField
-            label="Full name"
-            name="full_name"
-            autoComplete="name"
-            placeholder="Bonane Niyigena"
-            value={form.full_name}
-            onChange={(v) => update("full_name", v)}
-            required
-          />
-        </motion.div>
-        <motion.div variants={fadeUp}>
-          <TextField
-            label="Email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@example.com"
-            value={form.email}
-            onChange={(v) => update("email", v)}
-            required
-          />
-        </motion.div>
-        <motion.div variants={fadeUp}>
-          <TextField
-            label="Password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            placeholder="8+ chars, uppercase, number, symbol"
-            value={form.password}
-            onChange={(v) => update("password", v)}
-            required
-          />
-        </motion.div>
-        {form.role === "student" && (
-          <>
-            <motion.div variants={fadeUp}>
-              <TextField
-                label="Date of Birth"
-                name="date_of_birth"
-                type="date"
-                value={form.date_of_birth || ""}
-                onChange={(v) => update("date_of_birth", v)}
-                required
-              />
-            </motion.div>
-            {form.date_of_birth && (new Date().getFullYear() - new Date(form.date_of_birth).getFullYear()) < 18 && (
-              <motion.div
-                variants={fadeUp}
-                className="card"
-                style={{
-                  background: "rgba(245, 158, 11, 0.08)",
-                  borderColor: "rgba(245, 158, 11, 0.3)",
-                  marginBottom: "var(--space-4)",
-                  padding: "var(--space-3)",
+
+        <fieldset>
+          <legend className="text-sm font-medium text-forest-900">I am…</legend>
+          <div className="mt-2.5 grid gap-2.5 sm:grid-cols-2">
+            {SIGNUP_ROLES.map((option) => {
+              const selected = role === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setRole(option.value)}
+                  className={cn(
+                    "flex cursor-pointer flex-col items-start gap-2 rounded-md border p-4 text-left transition-[border-color,background,box-shadow] duration-200",
+                    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700",
+                    selected
+                      ? "border-forest-600 bg-forest-50 shadow-sm"
+                      : "border-line-strong bg-white hover:border-forest-300 hover:bg-forest-50/60",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "grid size-9 place-items-center rounded-sm transition-colors",
+                      selected ? "bg-forest-700 text-white" : "bg-forest-100 text-forest-700",
+                    )}
+                  >
+                    <option.icon className="size-[18px]" aria-hidden />
+                  </span>
+                  <span className="font-medium text-forest-900">{option.label}</span>
+                  <span className="text-sm leading-snug text-muted">{option.blurb}</span>
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Full name" required error={errors.fullName}>
+            {(props) => (
+              <Input
+                {...props}
+                autoComplete="name"
+                value={fullName}
+                onChange={(e) => {
+                  setFullName(stripNameInput(e.target.value));
+                  setErrors((s) => ({ ...s, fullName: undefined }));
                 }}
-              >
-                <div style={{ color: "var(--amber)", fontSize: "var(--step--1)", fontWeight: 600, marginBottom: "var(--space-2)" }}>
-                  🛡️ Guardian Consent Required (Under 18)
-                </div>
-                <p style={{ fontSize: "var(--step--2)", color: "var(--on-surface-muted)", marginBottom: "var(--space-3)" }}>
-                  Applicants under 18 years of age must provide guardian details and upload a signed guardian consent document in their document vault.
-                </p>
-                <TextField
-                  label="Guardian Full Name"
-                  name="guardian_name"
-                  placeholder="Parent or Legal Guardian Name"
-                  value={form.guardian_name || ""}
-                  onChange={(v) => update("guardian_name", v)}
-                  required
-                />
-                <TextField
-                  label="Guardian Phone Number"
-                  name="guardian_phone"
-                  placeholder="+250 78X XXX XXX"
-                  value={form.guardian_phone || ""}
-                  onChange={(v) => update("guardian_phone", v)}
-                  required
-                />
-              </motion.div>
+                placeholder="Keza Uwase"
+              />
             )}
-          </>
-        )}
-        <motion.div variants={fadeUp}>
-          <Button type="submit" block loading={busy}>
-            <UserPlus size={18} /> Create account
-          </Button>
-        </motion.div>
+          </Field>
+
+          <Field label="Email" required error={errors.email}>
+            {(props) => (
+              <Input
+                {...props}
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(stripEmailInput(e.target.value));
+                  setErrors((s) => ({ ...s, email: undefined }));
+                }}
+                placeholder="you@example.com"
+              />
+            )}
+          </Field>
+        </div>
+
+        <PasswordField
+          value={password}
+          onChange={(v) => {
+            setPassword(v);
+            setErrors((s) => ({ ...s, password: undefined }));
+          }}
+          error={errors.password}
+        />
+
+        <Button type="submit" size="lg" block loading={loading}>
+          Create account
+        </Button>
+
+        <p className="text-center text-xs leading-relaxed text-muted">
+          Administrators are appointed by igaFund, and ambassadors are promoted from verified
+          students.
+        </p>
       </form>
     </AuthLayout>
   );

@@ -1,177 +1,149 @@
-import { useState, FormEvent } from "react";
-import { motion } from "framer-motion";
-import { User, Lock, Bell, Check, Shield } from "lucide-react";
-import { StudentLayout } from "./StudentLayout";
-import { TextField } from "../../components/ui/TextField";
-import { Button } from "../../components/ui/Button";
-import { useAuth } from "../auth/AuthContext";
-import { fadeUp } from "../../lib/motion";
+import { useState } from "react";
+import { toast } from "sonner";
+import { KeyRound, LogOut, Mail, ShieldCheck, UserRound } from "lucide-react";
+import { AppShell } from "@/app/shell/AppShell";
+import { useAuth } from "@/features/auth/AuthContext";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Alert } from "@/components/ui/Feedback";
+import { Avatar, Separator } from "@/components/ui/Menu";
+import { ROLE_LABEL } from "@/app/shell/nav";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/Dialog";
 
 export function StudentSettings() {
-  const { user } = useAuth();
-  const [profile, setProfile] = useState({
-    full_name: user?.full_name || "",
-    email: user?.email || "",
-    phone: "+250 788 123 456",
-  });
-  const [passwords, setPasswords] = useState({
-    current: "",
-    new_pass: "",
-    confirm: "",
-  });
-  const [notifs, setNotifs] = useState({
-    email_funding: true,
-    email_verification: true,
-    sms_alerts: false,
-  });
+  const { user, requestReset, logout } = useAuth();
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [signOutOpen, setSignOutOpen] = useState(false);
 
-  const [savedMsg, setSavedMsg] = useState("");
-  const [busy, setBusy] = useState(false);
+  if (!user) return null;
 
-  function handleSaveProfile(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setTimeout(() => {
-      setBusy(false);
-      setSavedMsg("Profile settings updated successfully!");
-      setTimeout(() => setSavedMsg(""), 3000);
-    }, 600);
-  }
-
-  function handleSavePassword(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setTimeout(() => {
-      setBusy(false);
-      setPasswords({ current: "", new_pass: "", confirm: "" });
-      setSavedMsg("Password updated successfully!");
-      setTimeout(() => setSavedMsg(""), 3000);
-    }, 600);
+  async function sendResetLink() {
+    setSending(true);
+    try {
+      await requestReset(user!.email);
+      setSent(true);
+      toast.success("Reset link sent", { description: `Check ${user!.email}.` });
+    } catch {
+      toast.error("Couldn't send the link", { description: "Try again in a moment." });
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
-    <StudentLayout>
-      <div className="page-header">
-        <div className="page-header__eyebrow">
-          <Shield size={16} /> Account Security & Preferences
-        </div>
-        <h1>Settings</h1>
-        <p>Manage your account credentials, contact information, and security options.</p>
+    <AppShell title="Settings" description="Your account details and security.">
+      <div className="max-w-2xl space-y-5">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Account</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <Avatar name={user.full_name} size="lg" />
+              <div className="min-w-0">
+                <p className="truncate text-lg font-semibold text-forest-900">{user.full_name}</p>
+                <p className="truncate text-sm text-muted">{user.email}</p>
+              </div>
+            </div>
+
+            <Separator className="my-5" />
+
+            <dl className="space-y-4 text-sm">
+              <div className="flex items-start gap-3">
+                <UserRound className="mt-0.5 size-[18px] shrink-0 text-forest-600" aria-hidden />
+                <div>
+                  <dt className="font-medium text-forest-900">Account type</dt>
+                  <dd className="text-muted">{ROLE_LABEL[user.role]}</dd>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Mail className="mt-0.5 size-[18px] shrink-0 text-forest-600" aria-hidden />
+                <div>
+                  <dt className="font-medium text-forest-900">Email</dt>
+                  <dd className="text-muted">
+                    {user.email} — used for sign in and every notification we send you.
+                  </dd>
+                </div>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Security</CardTitle>
+            <CardDescription>
+              Your password is stored hashed with bcrypt. Nobody at igaFund can read it.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {sent && (
+              <Alert tone="success" title="Reset link on its way">
+                Open the link in {user.email} to set a new password. It expires in 30 minutes.
+              </Alert>
+            )}
+
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-line bg-raised p-4">
+              <div className="min-w-0">
+                <p className="font-medium text-forest-900">Change your password</p>
+                <p className="text-sm text-muted">We'll email you a secure link.</p>
+              </div>
+              <Button variant="secondary" loading={sending} onClick={sendResetLink}>
+                <KeyRound aria-hidden />
+                Send reset link
+              </Button>
+            </div>
+
+            <p className="flex items-start gap-2 text-sm text-muted">
+              <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
+              Your documents and guardian details are never shown to donors, and your session ends
+              automatically when your sign-in expires.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-clay-200">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 p-5 pt-5 sm:p-6 sm:pt-6">
+            <div className="min-w-0">
+              <p className="font-medium text-forest-900">Sign out</p>
+              <p className="text-sm text-muted">You'll need your password to sign back in.</p>
+            </div>
+            <Button variant="dangerSoft" onClick={() => setSignOutOpen(true)}>
+              <LogOut aria-hidden />
+              Sign out
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
-      {savedMsg && (
-        <motion.div
-          className="alert"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{ background: "var(--success-soft)", borderColor: "rgba(16, 185, 129, 0.3)", color: "var(--emerald)", marginBottom: "var(--space-6)" }}
-        >
-          <Check size={18} /> {savedMsg}
-        </motion.div>
-      )}
-
-      <div style={{ display: "grid", gap: "var(--space-6)", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
-        {/* Personal Details */}
-        <motion.div className="card" variants={fadeUp} initial="hidden" animate="show">
-          <div className="card__header">
-            <h2 className="card__title" style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
-              <User size={20} color="var(--primary)" /> Profile Info
-            </h2>
-          </div>
-          <form onSubmit={handleSaveProfile}>
-            <TextField
-              label="Full Name"
-              value={profile.full_name}
-              onChange={(v) => setProfile({ ...profile, full_name: v })}
-            />
-            <TextField
-              label="Email Address"
-              type="email"
-              value={profile.email}
-              onChange={(v) => setProfile({ ...profile, email: v })}
-            />
-            <TextField
-              label="Phone Number"
-              value={profile.phone}
-              onChange={(v) => setProfile({ ...profile, phone: v })}
-            />
-            <Button type="submit" loading={busy} style={{ marginTop: "var(--space-4)" }}>
-              Save Profile Changes
+      <Dialog open={signOutOpen} onOpenChange={setSignOutOpen}>
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>Sign out of igaFund?</DialogTitle>
+            <DialogDescription>
+              Any unsaved changes on this device stay queued until you sign back in.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody className="pb-4" />
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setSignOutOpen(false)}>
+              Stay signed in
             </Button>
-          </form>
-        </motion.div>
-
-        {/* Change Password */}
-        <motion.div className="card" variants={fadeUp} initial="hidden" animate="show">
-          <div className="card__header">
-            <h2 className="card__title" style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
-              <Lock size={20} color="var(--amber)" /> Change Password
-            </h2>
-          </div>
-          <form onSubmit={handleSavePassword}>
-            <TextField
-              label="Current Password"
-              type="password"
-              value={passwords.current}
-              onChange={(v) => setPasswords({ ...passwords, current: v })}
-              required
-            />
-            <TextField
-              label="New Password"
-              type="password"
-              value={passwords.new_pass}
-              onChange={(v) => setPasswords({ ...passwords, new_pass: v })}
-              required
-            />
-            <TextField
-              label="Confirm New Password"
-              type="password"
-              value={passwords.confirm}
-              onChange={(v) => setPasswords({ ...passwords, confirm: v })}
-              required
-            />
-            <Button type="submit" variant="secondary" loading={busy} style={{ marginTop: "var(--space-4)" }}>
-              Update Password
+            <Button variant="danger" onClick={logout}>
+              Sign out
             </Button>
-          </form>
-        </motion.div>
-
-        {/* Notification Preferences */}
-        <motion.div className="card" variants={fadeUp} initial="hidden" animate="show" style={{ gridColumn: "1 / -1" }}>
-          <div className="card__header">
-            <h2 className="card__title" style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
-              <Bell size={20} color="var(--primary)" /> Notification Preferences
-            </h2>
-          </div>
-          <div style={{ display: "grid", gap: "var(--space-4)" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", cursor: "pointer" }}>
-              <input
-                type="checkbox"
-                checked={notifs.email_funding}
-                onChange={(e) => setNotifs({ ...notifs, email_funding: e.target.checked })}
-                style={{ width: 18, height: 18, accentColor: "var(--primary)" }}
-              />
-              <div>
-                <div style={{ fontWeight: 600, fontSize: "var(--step-0)" }}>Funding Alert Emails</div>
-                <div style={{ fontSize: "var(--step--1)", color: "var(--on-surface-muted)" }}>Receive email notifications whenever a donor contributes to your tuition goal.</div>
-              </div>
-            </label>
-
-            <label style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", cursor: "pointer" }}>
-              <input
-                type="checkbox"
-                checked={notifs.email_verification}
-                onChange={(e) => setNotifs({ ...notifs, email_verification: e.target.checked })}
-                style={{ width: 18, height: 18, accentColor: "var(--primary)" }}
-              />
-              <div>
-                <div style={{ fontWeight: 600, fontSize: "var(--step-0)" }}>Admin Review & Verification Updates</div>
-                <div style={{ fontSize: "var(--step--1)", color: "var(--on-surface-muted)" }}>Get instant updates when admins review your documents or approve your profile.</div>
-              </div>
-            </label>
-          </div>
-        </motion.div>
-      </div>
-    </StudentLayout>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AppShell>
   );
 }

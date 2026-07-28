@@ -1,94 +1,98 @@
-import { FormEvent, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { LogIn, AlertCircle, ArrowRight } from "lucide-react";
-import { useAuth } from "./AuthContext";
+import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ApiError } from "@/lib/api";
+import { stripEmailInput } from "@/lib/validation";
+import { useAuth, HOME_FOR_ROLE } from "./AuthContext";
 import { AuthLayout } from "./AuthLayout";
-import { TextField } from "../../components/ui/TextField";
-import { Button } from "../../components/ui/Button";
-import { fadeUp } from "../../lib/motion";
+import { Button } from "@/components/ui/Button";
+import { Field, Input } from "@/components/ui/Field";
+import { PasswordField } from "@/components/ui/PasswordField";
+import { Alert } from "@/components/ui/Feedback";
 
 export function Login() {
   const { login } = useAuth();
-  const nav = useNavigate();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: string } | null)?.from;
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  async function submit(e: FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
+    setLoading(true);
     setError("");
-    setBusy(true);
     try {
-      await login(email, password);
-      nav("/dashboard");
+      const user = await login(email, password);
+      navigate(from ?? HOME_FOR_ROLE[user.role], { replace: true });
     } catch (err) {
-      setError((err as Error).message);
+      setError(
+        err instanceof ApiError && err.status === 401
+          ? "That email and password don't match. Check them and try again."
+          : err instanceof Error
+            ? err.message
+            : "Sign in failed. Try again.",
+      );
     } finally {
-      setBusy(false);
+      setLoading(false);
     }
   }
 
   return (
     <AuthLayout
       title="Welcome back"
-      subtitle="Sign in to continue building futures."
-      foot={
+      description="Sign in to pick up where you left off."
+      footer={
         <>
-          New here?{" "}
-          <Link to="/register">
-            Create an account <ArrowRight size={12} style={{ verticalAlign: "middle" }} />
+          New to igaFund?{" "}
+          <Link to="/register" className="font-medium text-forest-700 underline-offset-4 hover:underline">
+            Create an account
           </Link>
         </>
       }
     >
-      <form onSubmit={submit} aria-label="login">
+      <form onSubmit={submit} className="space-y-5" noValidate>
         {error && (
-          <motion.div className="alert" variants={fadeUp} role="alert">
-            <AlertCircle size={16} /> {error}
-          </motion.div>
+          <Alert tone="danger" title="Couldn't sign you in">
+            {error}
+          </Alert>
         )}
-        <motion.div variants={fadeUp}>
-          <TextField
-            label="Email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={setEmail}
-            required
-          />
-        </motion.div>
-        <motion.div variants={fadeUp}>
-          <TextField
-            label="Password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={setPassword}
-            required
-          />
-        </motion.div>
-        <motion.div
-          variants={fadeUp}
-          style={{ textAlign: "right", marginBottom: "var(--space-4)" }}
-        >
+
+        <Field label="Email">
+          {(props) => (
+            <Input
+              {...props}
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(stripEmailInput(e.target.value))}
+              placeholder="you@example.com"
+            />
+          )}
+        </Field>
+
+        <PasswordField
+          value={password}
+          onChange={setPassword}
+          autoComplete="current-password"
+          showMeter={false}
+        />
+
+        <div className="flex justify-end">
           <Link
             to="/forgot-password"
-            style={{ fontSize: "var(--step--1)" }}
+            className="text-sm font-medium text-forest-700 underline-offset-4 hover:underline"
           >
-            Forgot password?
+            Forgot your password?
           </Link>
-        </motion.div>
-        <motion.div variants={fadeUp}>
-          <Button type="submit" block loading={busy}>
-            <LogIn size={18} /> Sign in
-          </Button>
-        </motion.div>
+        </div>
+
+        <Button type="submit" size="lg" block loading={loading}>
+          Sign in
+        </Button>
       </form>
     </AuthLayout>
   );

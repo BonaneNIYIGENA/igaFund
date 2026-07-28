@@ -1,63 +1,95 @@
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Send, AlertCircle, MailCheck } from "lucide-react";
+import { MailCheck } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { AuthLayout } from "./AuthLayout";
-import { TextField } from "../../components/ui/TextField";
-import { Button } from "../../components/ui/Button";
-import { fadeUp } from "../../lib/motion";
+import { Button } from "@/components/ui/Button";
+import { Field, Input } from "@/components/ui/Field";
+import { Alert } from "@/components/ui/Feedback";
 
 export function ForgotPassword() {
   const { requestReset } = useAuth();
   const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  async function submit(e: FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
+    setLoading(true);
     setError("");
-    setBusy(true);
     try {
       await requestReset(email);
       setSent(true);
     } catch (err) {
-      setError((err as Error).message);
+      setError(err instanceof Error ? err.message : "We couldn't send the reset link.");
     } finally {
-      setBusy(false);
+      setLoading(false);
     }
+  }
+
+  if (sent) {
+    return (
+      <AuthLayout
+        title="Check your email"
+        description="If an account uses that address, a reset link is on its way."
+        footer={
+          <Link to="/login" className="font-medium text-forest-700 underline-offset-4 hover:underline">
+            Back to sign in
+          </Link>
+        }
+      >
+        <div className="rounded-lg border border-forest-200 bg-forest-50 p-6">
+          <span className="grid size-11 place-items-center rounded-full bg-forest-100 text-forest-700">
+            <MailCheck className="size-5" aria-hidden />
+          </span>
+          <p className="mt-4 font-medium text-forest-900">Sent to {email}</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted">
+            The link expires in 30 minutes. If nothing arrives, check your spam folder or try a
+            different address.
+          </p>
+          <Button variant="secondary" className="mt-5" onClick={() => setSent(false)}>
+            Use a different email
+          </Button>
+        </div>
+      </AuthLayout>
+    );
   }
 
   return (
     <AuthLayout
       title="Reset your password"
-      subtitle="We'll send a reset link to your email."
-      foot={<><Link to="/login">Back to sign in</Link></>}
+      description="Enter your email and we'll send you a link to set a new one."
+      footer={
+        <>
+          Remembered it?{" "}
+          <Link to="/login" className="font-medium text-forest-700 underline-offset-4 hover:underline">
+            Sign in
+          </Link>
+        </>
+      }
     >
-      {sent ? (
-        <motion.div className="notice" variants={fadeUp}>
-          <p style={{ margin: 0, display: "flex", gap: "0.5rem", alignItems: "center" }}>
-            <MailCheck size={18} /> If that email exists, a reset link is on its way.
-          </p>
-        </motion.div>
-      ) : (
-        <form onSubmit={submit} aria-label="forgot-password">
-          {error && (
-            <motion.div className="alert" variants={fadeUp} role="alert">
-              <AlertCircle size={16} /> {error}
-            </motion.div>
+      <form onSubmit={submit} className="space-y-5" noValidate>
+        {error && <Alert tone="danger">{error}</Alert>}
+
+        <Field label="Email">
+          {(props) => (
+            <Input
+              {...props}
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
           )}
-          <motion.div variants={fadeUp}>
-            <TextField label="Email" name="email" type="email" autoComplete="email" value={email} onChange={setEmail} required />
-          </motion.div>
-          <motion.div variants={fadeUp}>
-            <Button type="submit" block loading={busy}>
-              <Send size={18} /> Send reset link
-            </Button>
-          </motion.div>
-        </form>
-      )}
+        </Field>
+
+        <Button type="submit" size="lg" block loading={loading}>
+          Send reset link
+        </Button>
+      </form>
     </AuthLayout>
   );
 }

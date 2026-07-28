@@ -1,209 +1,226 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import {
-  Activity,
   FileText,
+  HeartHandshake,
+  Receipt,
   Send,
-  Search,
-  CheckCircle2,
-  XCircle,
-  Clock,
+  ShieldCheck,
+  UserRound,
 } from "lucide-react";
-import { api, Profile, NotificationItem } from "../../lib/api";
-import { stagger, fadeUp } from "../../lib/motion";
-import { StudentLayout } from "./StudentLayout";
-
-type Step = {
-  title: string;
-  desc: string;
-  state: "done" | "active" | "pending";
-  date?: string;
-};
-
-function buildTimeline(profile: Profile | null): Step[] {
-  if (!profile) {
-    return [
-      { title: "Create Profile", desc: "Fill in your personal and academic information.", state: "active" },
-      { title: "Upload Documents", desc: "Provide your ID, transcript, and other verification documents.", state: "pending" },
-      { title: "Submit for Review", desc: "Send your completed application to our team.", state: "pending" },
-      { title: "Admin Review", desc: "An admin will verify your identity and documents.", state: "pending" },
-      { title: "Published", desc: "Your verified profile becomes visible to donors.", state: "pending" },
-    ];
-  }
-
-  const s = profile.status;
-  return [
-    {
-      title: "Profile Created",
-      desc: "Your personal and academic details are saved.",
-      state: "done",
-      date: profile.created_at ? new Date(profile.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : undefined,
-    },
-    {
-      title: "Documents Uploaded",
-      desc: `${profile.document_count} document${profile.document_count !== 1 ? "s" : ""} on file.`,
-      state: profile.document_count > 0 ? "done" : (s === "draft" ? "active" : "done"),
-    },
-    {
-      title: "Submitted for Review",
-      desc: s === "draft" ? "Complete your profile and documents, then submit." : "Your application has been sent to our team.",
-      state: s === "draft" ? (profile.document_count > 0 ? "active" : "pending") : "done",
-      date: profile.submitted_at ? new Date(profile.submitted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : undefined,
-    },
-    {
-      title: "Admin Review",
-      desc: s === "pending"
-        ? "An admin is currently reviewing your application."
-        : s === "approved"
-        ? "Your application was approved."
-        : s === "rejected"
-        ? profile.review_note ?? "Your application was not approved."
-        : "Waiting for submission.",
-      state: s === "pending" ? "active" : (s === "approved" || s === "rejected") ? "done" : "pending",
-      date: profile.reviewed_at ? new Date(profile.reviewed_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : undefined,
-    },
-    {
-      title: s === "rejected" ? "Action Required" : "Published to Donors",
-      desc: s === "approved"
-        ? "Congratulations! Donors can now find and fund your education."
-        : s === "rejected"
-        ? "Please update your profile and resubmit."
-        : "Once approved, your profile will be visible to donors.",
-      state: s === "approved" ? "done" : s === "rejected" ? "active" : "pending",
-    },
-  ];
-}
+import { ApiError, endpoints, type TicketItem } from "@/lib/api";
+import { formatDateTime } from "@/lib/format";
+import { AppShell } from "@/app/shell/AppShell";
+import { useMyProfile, journeyFor } from "./useMyProfile";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { StatusBadge } from "@/components/ui/Badge";
+import { RoutingRail, type RailStep } from "@/components/ui/RoutingRail";
+import { Alert, EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedback";
 
 export function StudentStatus() {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { profile, loading, error, reload } = useMyProfile();
+  const [tickets, setTickets] = useState<TicketItem[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      api("/profiles/").then((d) => d.profiles?.[0] ?? null),
-      api("/notifications/").then((d) => d.notifications ?? []).catch(() => []),
-    ])
-      .then(([p, n]) => {
-        setProfile(p);
-        setNotifications(n);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    endpoints
+      .tickets()
+      .then((res) => setTickets(res.tickets ?? []))
+      .catch(() => setTickets([]));
+  }, [profile]);
 
-  const timeline = buildTimeline(profile);
-
-  const statusConfig = {
-    draft: { icon: <FileText size={18} />, label: "Draft", color: "var(--on-surface-muted)" },
-    pending: { icon: <Clock size={18} />, label: "Under Review", color: "var(--warning)" },
-    approved: { icon: <CheckCircle2 size={18} />, label: "Approved", color: "var(--success)" },
-    rejected: { icon: <XCircle size={18} />, label: "Rejected", color: "var(--danger)" },
-  };
-
-  const currentStatus = profile ? statusConfig[profile.status] : null;
-
-  if (loading) {
-    return (
-      <StudentLayout>
-        <div className="empty-state">
-          <div className="btn__spinner" style={{ width: 24, height: 24, borderColor: "var(--primary)", borderTopColor: "transparent", margin: "0 auto" }} />
-        </div>
-      </StudentLayout>
-    );
+  async function submitForReview() {
+    if (!profile) return;
+    setSubmitting(true);
+    try {
+      await endpoints.submitProfile(profile.id);
+      toast.success("Sent for review", {
+        description: "A reviewer will look at your profile shortly. We'll notify you.",
+      });
+      await reload();
+    } catch (err) {
+      // The API tells us precisely what is missing — pass that straight through.
+      toast.error("Not ready yet", {
+        description: err instanceof ApiError ? err.message : "Try again in a moment.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
+  const j = journeyFor(profile);
+  const journey: RailStep[] = [
+    {
+      key: "created",
+      label: "Profile created",
+      detail: profile ? formatDateTime(profile.created_at) : undefined,
+      icon: UserRound,
+      state: j.created,
+    },
+    {
+      key: "documents",
+      label: "Documents uploaded",
+      detail: profile ? `${profile.document_count} on file` : undefined,
+      icon: FileText,
+      state: j.documents,
+    },
+    {
+      key: "submitted",
+      label: "Sent for review",
+      detail: profile?.submitted_at ? formatDateTime(profile.submitted_at) : undefined,
+      icon: Send,
+      state: j.submitted,
+    },
+    {
+      key: "reviewed",
+      label: profile?.status === "rejected" ? "Changes requested" : "Verified by igaFund",
+      detail: profile?.reviewed_at ? formatDateTime(profile.reviewed_at) : undefined,
+      icon: ShieldCheck,
+      state: j.reviewed,
+    },
+    {
+      key: "funded",
+      label: "Donors fund your fees",
+      detail:
+        profile && profile.funded_amount > 0
+          ? "Funding has started"
+          : "Once verified, you appear in the donor pool",
+      icon: HeartHandshake,
+      state: j.funded,
+    },
+  ];
+
+  const readyToSubmit =
+    profile && (profile.status === "draft" || profile.status === "rejected") && profile.document_count > 0;
+
   return (
-    <StudentLayout>
-      <motion.div variants={stagger} initial="hidden" animate="show">
-        <motion.div className="page-header" variants={fadeUp}>
-          <p className="page-header__eyebrow">
-            <Activity size={14} /> Application Status
-          </p>
-          <h1>Track your progress</h1>
-          <p>See exactly where your application stands in the verification process.</p>
-        </motion.div>
-
-        {/* Current status badge */}
-        {currentStatus && (
-          <motion.div className="card" variants={fadeUp} style={{ marginBottom: "var(--space-5)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)" }}>
-              <div style={{
-                width: 48,
-                height: 48,
-                borderRadius: "50%",
-                display: "grid",
-                placeItems: "center",
-                background: `${currentStatus.color}15`,
-                color: currentStatus.color,
-              }}>
-                {currentStatus.icon}
-              </div>
-              <div>
-                <div style={{ fontSize: "var(--step--1)", color: "var(--on-surface-muted)", marginBottom: 2 }}>
-                  Current Status
+    <AppShell
+      title="Progress"
+      description="Every step of your application, and the official record behind it."
+      actions={profile ? <StatusBadge status={profile.status} size="md" /> : undefined}
+    >
+      {error ? (
+        <ErrorState description={error} onRetry={reload} />
+      ) : loading ? (
+        <Skeleton className="h-96 w-full rounded-lg" />
+      ) : !profile ? (
+        <EmptyState
+          icon={UserRound}
+          title="Nothing to track yet"
+          description="Create your funding profile and this page will show you exactly where it stands."
+          action={
+            <Button asChild>
+              <Link to="/student/profile">Create my profile</Link>
+            </Button>
+          }
+        />
+      ) : (
+        <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr] xl:grid-cols-[1fr_22rem] lg:items-start">
+          <div className="space-y-5">
+            {profile.status === "rejected" && profile.review_note && (
+              <Alert tone="danger" title="A reviewer asked for changes">
+                {profile.review_note}
+                <div className="mt-3.5">
+                  <Button size="sm" asChild>
+                    <Link to="/student/profile">Update my profile</Link>
+                  </Button>
                 </div>
-                <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--step-2)", color: currentStatus.color }}>
-                  {currentStatus.label}
-                </div>
-              </div>
-              {profile && profile.funding_goal > 0 && (
-                <div style={{ marginLeft: "auto", textAlign: "right" }}>
-                  <div style={{ fontSize: "var(--step--1)", color: "var(--on-surface-muted)", marginBottom: 2 }}>
-                    Funding
-                  </div>
-                  <div className="tabular" style={{ fontWeight: 700, fontSize: "var(--step-1)" }}>
-                    {(profile.funded_amount ?? 0).toLocaleString()} / {profile.funding_goal.toLocaleString()} RWF
-                  </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
+              </Alert>
+            )}
 
-        {/* Timeline */}
-        <motion.div className="card" variants={fadeUp} style={{ marginBottom: "var(--space-5)" }}>
-          <div className="card__header">
-            <h2 className="card__title">Application Timeline</h2>
-          </div>
-          <div className="timeline">
-            {timeline.map((step, i) => (
-              <div key={i} className={`timeline__step timeline__step--${step.state}`}>
-                <div className="timeline__dot" />
-                <div className="timeline__title">{step.title}</div>
-                <div className="timeline__desc">{step.desc}</div>
-                {step.date && <div className="timeline__date">{step.date}</div>}
-              </div>
-            ))}
-          </div>
-        </motion.div>
+            {profile.status === "approved" && (
+              <Alert tone="success" title="You're verified and live">
+                Donors can find and fund you now. Share your profile link with anyone who might help.
+              </Alert>
+            )}
 
-        {/* Recent notifications */}
-        {notifications.length > 0 && (
-          <motion.div className="card" variants={fadeUp}>
-            <div className="card__header">
-              <h2 className="card__title">Recent Notifications</h2>
-            </div>
-            <div className="doc-list">
-              {notifications.slice(0, 5).map((n) => (
-                <div key={n.id} className="doc-item" style={{ opacity: n.read ? 0.6 : 1 }}>
-                  <div className="doc-item__icon" style={{
-                    background: n.type === "success" ? "var(--success-soft)" : n.type === "warning" ? "var(--warning-soft)" : "var(--primary-soft)",
-                    color: n.type === "success" ? "var(--success)" : n.type === "warning" ? "var(--warning)" : "var(--primary)",
-                  }}>
-                    {n.type === "success" ? <CheckCircle2 size={16} /> : n.type === "warning" ? <XCircle size={16} /> : <Activity size={16} />}
-                  </div>
-                  <div className="doc-item__info">
-                    <div className="doc-item__name">{n.message}</div>
-                    <div className="doc-item__type">
-                      {n.created_at ? new Date(n.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
+            {profile.edit_request_reason && profile.status === "pending" && (
+              <Alert tone="info" title="Change request under review">
+                You asked for: “{profile.edit_request_reason}”
+              </Alert>
+            )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Your journey</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RoutingRail steps={journey} />
+
+                {readyToSubmit && (
+                  <div className="mt-6 rounded-md border border-amber-300 bg-amber-50 p-5">
+                    <p className="font-medium text-forest-900">Ready to send for review?</p>
+                    <p className="mt-1 text-sm leading-relaxed text-muted">
+                      Check your profile and documents once more. While it's under review you won't
+                      be able to change them.
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2.5">
+                      <Button variant="fund" loading={submitting} onClick={submitForReview}>
+                        <Send aria-hidden />
+                        Send for review
+                      </Button>
+                      <Button variant="secondary" asChild>
+                        <Link to="/student/profile">Check my profile first</Link>
+                      </Button>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </motion.div>
-    </StudentLayout>
+                )}
+
+                {profile.status === "draft" && profile.document_count === 0 && (
+                  <div className="mt-6 rounded-md bg-sunk p-5">
+                    <p className="font-medium text-forest-900">Upload your documents first</p>
+                    <p className="mt-1 text-sm text-muted">
+                      A reviewer needs your transcript and ID before they can verify you.
+                    </p>
+                    <Button className="mt-4" asChild>
+                      <Link to="/student/documents">Upload documents</Link>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Official record</CardTitle>
+              <CardDescription>
+                Every completed step issues a numbered, timestamped ticket.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {tickets.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted">
+                  Tickets appear here as milestones complete.
+                </p>
+              ) : (
+                <ul className="space-y-3">
+                  {tickets.slice(0, 6).map((ticket) => (
+                    <li key={ticket.id} className="rounded-md border border-line bg-raised p-4">
+                      <div className="flex items-start gap-2.5">
+                        <Receipt className="mt-0.5 size-4 shrink-0 text-forest-600" aria-hidden />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium leading-snug text-forest-900">
+                            {ticket.title}
+                          </p>
+                          <p className="figure mt-1 text-xs text-forest-700">
+                            {ticket.ticket_number}
+                          </p>
+                          <p className="mt-1 text-xs text-faint">
+                            {formatDateTime(ticket.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </AppShell>
   );
 }

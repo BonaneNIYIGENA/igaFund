@@ -1,11 +1,15 @@
-import { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "./AuthContext";
+import type { ReactNode } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth, HOME_FOR_ROLE } from "./AuthContext";
+import type { Role } from "@/lib/api";
 
-// Restrict a route to authenticated users, optionally by role.
-export function Protected({ children, roles }: { children: ReactNode; roles?: string[] }) {
+/** Route guard. */
+export function Protected({ children, roles }: { children: ReactNode; roles?: Role[] }) {
   const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
-  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
+  const location = useLocation();
+
+  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
+  if (roles && !roles.includes(user.role)) return <Navigate to={HOME_FOR_ROLE[user.role]} replace />;
+
   return <>{children}</>;
 }

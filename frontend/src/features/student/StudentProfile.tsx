@@ -1,436 +1,530 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { CloudOff, Lock, Save, ShieldAlert } from "lucide-react";
+import { ApiError, endpoints, type Institution, type Profile } from "@/lib/api";
+import { saveDraftOffline } from "@/lib/offline";
 import {
-  UserCircle,
-  GraduationCap,
-  Shield,
-  Save,
-  Send,
-  AlertCircle,
-  CheckCircle2,
-} from "lucide-react";
-import { api, Profile } from "../../lib/api";
-import { stagger, fadeUp } from "../../lib/motion";
-import { StudentLayout } from "./StudentLayout";
-import { TextField } from "../../components/ui/TextField";
-import { Button } from "../../components/ui/Button";
-import { saveDraftOffline } from "../../lib/offline";
+  composePhone, parsePhone, sanitizeText, stripNameInput,
+  validateAmount, validateName, validatePhone, type Country, DEFAULT_COUNTRY,
+} from "@/lib/validation";
+import { AppShell } from "@/app/shell/AppShell";
+import { useMyProfile, editability } from "./useMyProfile";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
+import { Field, Input, NativeSelect, Textarea } from "@/components/ui/Field";
+import { PhoneField } from "@/components/ui/PhoneField";
+import { Alert, ErrorState, Skeleton } from "@/components/ui/Feedback";
+import { StatusBadge } from "@/components/ui/Badge";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/Dialog";
 
-function calculateAge(dobStr: string): number | null {
-  if (!dobStr) return null;
-  const dob = new Date(dobStr);
-  if (isNaN(dob.getTime())) return null;
-  const today = new Date();
-  let age = today.getFullYear() - dob.getFullYear();
-  const m = today.getMonth() - dob.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
-    age--;
-  }
+const LEVELS = ["S4", "S5", "S6", "Year 1", "Year 2", "Year 3", "Year 4", "TVET"];
+
+type FormState = {
+  bio: string;
+  date_of_birth: string;
+  phone: string;
+  institution_id: string;
+  academic_level: string;
+  field_of_study: string;
+  funding_goal: string;
+  guardian_name: string;
+  guardian_phone: string;
+  guardian_consent: boolean;
+};
+
+const EMPTY: FormState = {
+  bio: "",
+  date_of_birth: "",
+  phone: "",
+  institution_id: "",
+  academic_level: "S6",
+  field_of_study: "",
+  funding_goal: "",
+  guardian_name: "",
+  guardian_phone: "",
+  guardian_consent: false,
+};
+
+function ageFrom(dob: string) {
+  if (!dob) return null;
+  const birth = new Date(dob);
+  if (Number.isNaN(birth.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const m = now.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age -= 1;
   return age;
 }
 
 export function StudentProfile() {
-  const nav = useNavigate();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const { profile, loading, error, reload } = useMyProfile();
+  const navigate = useNavigate();
 
-  const [institutions, setInstitutions] = useState<Array<{ id: number; name: string; location: string }>>([]);
-  const [form, setForm] = useState({
-    bio: "",
-    date_of_birth: "",
-    phone: "",
-    institution_id: "",
-    academic_level: "",
-    field_of_study: "",
-    funding_goal: "",
-    guardian_name: "",
-    guardian_phone: "",
-    guardian_consent: false,
-    video_url: "",
-    media_consent: false,
-  });
+  const [form, setForm] = useState<FormState>(EMPTY);
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+  const [formError, setFormError] = useState("");
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [requestReason, setRequestReason] = useState("");
+  const [requesting, setRequesting] = useState(false);
+  const [phoneCountry, setPhoneCountry] = useState<Country>(DEFAULT_COUNTRY);
+  const [guardianCountry, setGuardianCountry] = useState<Country>(DEFAULT_COUNTRY);
+
+  const { canEdit, reason, needsRequest } = editability(profile);
 
   useEffect(() => {
-    Promise.all([
-      api("/profiles/").then((d) => d.profiles?.[0]),
-      api("/profiles/institutions").then((d) => d.institutions ?? []).catch(() => []),
-    ])
-      .then(([p, insts]) => {
-        setInstitutions(insts);
-        if (p) {
-          setProfile(p);
-          setForm({
-            bio: p.bio ?? "",
-            date_of_birth: p.date_of_birth ?? "",
-            phone: p.phone ?? "",
-            institution_id: p.institution?.id?.toString() ?? "",
-            academic_level: p.academic_level ?? "",
-            field_of_study: p.field_of_study ?? "",
-            funding_goal: p.funding_goal?.toString() ?? "",
-            guardian_name: p.guardian_name ?? "",
-            guardian_phone: p.guardian_phone ?? "",
-            guardian_consent: p.guardian_consent ?? false,
-            video_url: p.video_url ?? "",
-            media_consent: p.media_consent ?? false,
-          });
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    endpoints
+      .institutions()
+      .then((res) => setInstitutions(res.institutions ?? []))
+      .catch(() => setInstitutions([]));
   }, []);
 
-  function update(key: string, value: string | boolean) {
+  useEffect(() => {
+    if (!profile) return;
+    const own = parsePhone(profile.phone);
+    const guardian = parsePhone(profile.guardian_phone);
+    setPhoneCountry(own.country);
+    setGuardianCountry(guardian.country);
+    setForm({
+      bio: profile.bio ?? "",
+      date_of_birth: profile.date_of_birth ?? "",
+      phone: own.digits,
+      institution_id: profile.institution?.id ? String(profile.institution.id) : "",
+      academic_level: profile.academic_level ?? "S6",
+      field_of_study: profile.field_of_study ?? "",
+      funding_goal: profile.funding_goal ? String(profile.funding_goal) : "",
+      guardian_name: profile.guardian_name ?? "",
+      guardian_phone: guardian.digits,
+      guardian_consent: profile.guardian_consent ?? false,
+    });
+  }, [profile]);
+
+  const age = ageFrom(form.date_of_birth);
+  const isMinor = age !== null && age < 18;
+
+  function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+    setErrors((e) => ({ ...e, [key]: undefined }));
   }
 
-  async function save(e: FormEvent) {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setSaving(true);
+  function validate() {
+    const next: Partial<Record<keyof FormState, string>> = {};
+    if (!form.bio.trim()) next.bio = "Tell donors a little about yourself.";
+    else if (form.bio.trim().length < 40)
+      next.bio = "Write at least a couple of sentences — donors read this first.";
+    if (!form.date_of_birth) next.date_of_birth = "We need your date of birth to apply the right rules.";
+    if (!form.institution_id) next.institution_id = "Choose the school that will receive the funds.";
 
-    const payload = {
-      ...form,
-      funding_goal: parseFloat(form.funding_goal) || 0,
-      date_of_birth: form.date_of_birth || undefined,
-      institution_id: form.institution_id ? parseInt(form.institution_id, 10) : undefined,
+    const goalError = validateAmount(form.funding_goal, { min: 1000, label: "amount" });
+    if (goalError) next.funding_goal = goalError;
+
+    const phoneError = validatePhone(form.phone, phoneCountry);
+    if (phoneError) next.phone = phoneError;
+
+    if (isMinor) {
+      const guardianNameError = validateName(form.guardian_name, "guardian name");
+      if (guardianNameError) next.guardian_name = guardianNameError;
+      const guardianPhoneError = validatePhone(form.guardian_phone, guardianCountry, true);
+      if (guardianPhoneError) next.guardian_phone = guardianPhoneError;
+      if (!form.guardian_consent)
+        next.guardian_consent = "Your guardian must consent before your profile can be published.";
+    }
+
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  }
+
+  function payload() {
+    return {
+      bio: sanitizeText(form.bio, 1500).trim(),
+      date_of_birth: form.date_of_birth,
+      phone: composePhone(phoneCountry, form.phone),
+      institution_id: form.institution_id ? Number(form.institution_id) : null,
+      academic_level: form.academic_level,
+      field_of_study: sanitizeText(form.field_of_study, 120).trim(),
+      funding_goal: Number(form.funding_goal),
+      guardian_name: form.guardian_name.trim(),
+      guardian_phone: composePhone(guardianCountry, form.guardian_phone),
+      guardian_consent: form.guardian_consent,
     };
+  }
 
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setFormError("");
+
+    if (!validate()) {
+      // Send focus to the first thing that needs attention.
+      const firstInvalid = document.querySelector<HTMLElement>("[aria-invalid='true']");
+      firstInvalid?.focus();
+      firstInvalid?.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
+
+    setSaving(true);
     try {
       if (profile) {
-        const res = await api(`/profiles/${profile.id}`, {
-          method: "PUT",
-          body: JSON.stringify(payload),
-        });
-        setProfile(res.profile);
+        await endpoints.updateProfile(profile.id, payload());
+        toast.success("Profile saved");
       } else {
-        const res = await api("/profiles/", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-        setProfile(res.profile);
+        await endpoints.createProfile(payload());
+        toast.success("Profile created", { description: "Next, upload your documents." });
       }
-      setSuccess("Profile saved successfully!");
-      setTimeout(() => setSuccess(""), 3000);
-    } catch (err: any) {
-      if (err.message === "Failed to fetch" || err.message.includes("NetworkError")) {
-        const url = profile ? `/profiles/${profile.id}` : "/profiles/";
-        const method = profile ? "PUT" : "POST";
-        await saveDraftOffline(url, method, payload).catch(console.error);
-        setSuccess("You are offline. Draft saved and will sync automatically when internet is restored.");
-        setTimeout(() => setSuccess(""), 5000);
+      await reload();
+      if (!profile) navigate("/student/documents");
+    } catch (err) {
+      // Offline: keep the work rather than losing it, and sync on reconnect.
+      if (!navigator.onLine) {
+        await saveDraftOffline("/profiles/", profile ? "PUT" : "POST", payload());
+        toast.info("Saved on this device", {
+          description: "You're offline. It will submit itself when you're back online.",
+        });
       } else {
-        setError(err.message);
+        setFormError(err instanceof ApiError ? err.message : "We couldn't save your profile.");
       }
     } finally {
       setSaving(false);
     }
   }
 
-  async function submitForReview() {
-    if (!profile) return;
-    setError("");
-    setSubmitting(true);
+  async function submitEditRequest() {
+    if (requestReason.trim().length < 10) return;
+    setRequesting(true);
     try {
-      const res = await api(`/profiles/${profile.id}/submit`, { method: "POST" });
-      setProfile(res.profile);
-      setSuccess("Profile submitted for review!");
+      await endpoints.requestEdit(profile!.id, requestReason.trim());
+      toast.success("Change request sent", {
+        description: "Your profile is back with a reviewer. It's paused from the donor pool.",
+      });
+      setRequestOpen(false);
+      setRequestReason("");
+      await reload();
     } catch (err) {
-      setError((err as Error).message);
+      toast.error("Couldn't send the request", {
+        description: err instanceof Error ? err.message : undefined,
+      });
     } finally {
-      setSubmitting(false);
+      setRequesting(false);
     }
   }
 
-  const isDraft = !profile || profile.status === "draft";
-  const isReadOnly = profile && profile.status !== "draft";
-  const age = calculateAge(form.date_of_birth);
-  const isMinor = age === null || age < 18;
-
-  if (loading) {
-    return (
-      <StudentLayout>
-        <div className="empty-state">
-          <div className="btn__spinner" style={{ width: 24, height: 24, borderColor: "var(--primary)", borderTopColor: "transparent", margin: "0 auto" }} />
-        </div>
-      </StudentLayout>
-    );
-  }
-
   return (
-    <StudentLayout>
-      <motion.div variants={stagger} initial="hidden" animate="show">
-        <motion.div className="page-header" variants={fadeUp}>
-          <p className="page-header__eyebrow">
-            <UserCircle size={14} /> My Profile
-          </p>
-          <h1>{profile ? "Edit your profile" : "Create your profile"}</h1>
-          <p>
-            {isDraft
-              ? "Fill in your information below. You can save as draft and complete it later."
-              : "Your profile has been submitted and cannot be edited."}
-          </p>
-        </motion.div>
+    <AppShell
+      title={profile ? "My profile" : "Create your profile"}
+      description={
+        profile
+          ? "This is what donors read when they find you."
+          : "Tell donors who you are and what you're working towards."
+      }
+      actions={profile ? <StatusBadge status={profile.status} size="md" /> : undefined}
+    >
+      {error ? (
+        <ErrorState description={error} onRetry={reload} />
+      ) : loading ? (
+        <Skeleton className="h-[32rem] w-full rounded-lg" />
+      ) : (
+        <div className="space-y-5">
+          {!canEdit && (
+            <Alert tone={needsRequest ? "info" : "warning"} title={needsRequest ? "Profile locked" : "Under review"}>
+              {reason}
+              {needsRequest && (
+                <div className="mt-3.5">
+                  <Button size="sm" onClick={() => setRequestOpen(true)}>
+                    <Lock aria-hidden />
+                    Request a change
+                  </Button>
+                </div>
+              )}
+            </Alert>
+          )}
 
-        {/* Status banner */}
-        {profile && profile.status !== "draft" && (
-          <motion.div variants={fadeUp}>
-            <div className={`notice${profile.status === "rejected" ? "" : ""}`} style={{ marginBottom: "var(--space-5)" }}>
-              <p style={{ display: "flex", alignItems: "center", gap: "0.5rem", margin: 0 }}>
-                {profile.status === "pending" && <><AlertCircle size={16} /> Your profile is under review.</>}
-                {profile.status === "approved" && <><CheckCircle2 size={16} /> Your profile is verified and visible to donors.</>}
-                {profile.status === "rejected" && <><AlertCircle size={16} /> {profile.review_note}</>}
-              </p>
-            </div>
-          </motion.div>
-        )}
+          {profile?.status === "rejected" && profile.review_note && (
+            <Alert tone="danger" title="A reviewer asked for changes">
+              {profile.review_note}
+            </Alert>
+          )}
 
-        {error && (
-          <motion.div className="alert" variants={fadeUp} style={{ marginBottom: "var(--space-4)" }}>
-            <AlertCircle size={16} /> {error}
-          </motion.div>
-        )}
+          {formError && (
+            <Alert tone="danger" title="Couldn't save">
+              {formError}
+            </Alert>
+          )}
 
-        {success && (
-          <motion.div className="notice" variants={fadeUp} style={{ marginBottom: "var(--space-4)" }}>
-            <p style={{ display: "flex", alignItems: "center", gap: "0.5rem", margin: 0 }}>
-              <CheckCircle2 size={16} /> {success}
-            </p>
-          </motion.div>
-        )}
+          <form onSubmit={save} noValidate>
+            <fieldset disabled={!canEdit} className="disabled:opacity-60">
+              <div className="grid items-start gap-5 lg:grid-cols-2">
+                <div className="space-y-5">
+                  <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">About you</CardTitle>
+                  <CardDescription>
+                    Donors read this before anything else. Write it in your own words.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <Field
+                    label="Your story"
+                    required
+                    error={errors.bio}
+                    hint={`${form.bio.length} characters — aim for 3 or 4 sentences.`}
+                  >
+                    {(props) => (
+                      <Textarea
+                        {...props}
+                        rows={6}
+                        maxLength={1500}
+                        value={form.bio}
+                        onChange={(e) => set("bio", e.target.value)}
+                        placeholder="What are you studying, what do you want to do with it, and what is standing in the way?"
+                      />
+                    )}
+                  </Field>
 
-        <form onSubmit={save}>
-          {/* Section 1: Personal */}
-          <motion.div className="card" variants={fadeUp} style={{ marginBottom: "var(--space-5)" }}>
-            <div className="form-section">
-              <h3 className="form-section__title">
-                <span className="form-section__number">1</span>
-                Personal Information
-              </h3>
-              <div className="form-row form-row--2">
-                <div>
-                  <TextField
-                    label="Date of birth"
-                    name="date_of_birth"
-                    type="date"
-                    value={form.date_of_birth}
-                    onChange={(v) => update("date_of_birth", v)}
-                  />
-                  {form.date_of_birth && age !== null && (
-                    age < 18 ? (
-                      <span className="badge badge--pending" style={{ marginTop: "var(--space-1)" }}>
-                        <Shield size={12} /> Minor Student ({age} yrs old)
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <Field label="Date of birth" required error={errors.date_of_birth}>
+                      {(props) => (
+                        <Input
+                          {...props}
+                          type="date"
+                          max={new Date().toISOString().slice(0, 10)}
+                          value={form.date_of_birth}
+                          onChange={(e) => set("date_of_birth", e.target.value)}
+                        />
+                      )}
+                    </Field>
+
+                    <PhoneField
+                      country={phoneCountry}
+                      digits={form.phone}
+                      onCountryChange={setPhoneCountry}
+                      onDigitsChange={(v) => set("phone", v)}
+                      error={errors.phone}
+                      hint="Kept private. Reviewers only."
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {isMinor && (
+                <Card className="border-amber-300 bg-amber-50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <ShieldAlert className="size-[18px] text-amber-700" aria-hidden />
+                      Guardian consent
+                    </CardTitle>
+                    <CardDescription>
+                      You're {age}. Rwandan law requires a guardian's written consent before we can
+                      publish your profile, and your name and photo stay hidden from donors.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    <div className="grid gap-5 sm:grid-cols-2">
+                      <Field label="Guardian's full name" required error={errors.guardian_name}>
+                        {(props) => (
+                          <Input
+                            {...props}
+                            value={form.guardian_name}
+                            onChange={(e) => set("guardian_name", stripNameInput(e.target.value))}
+                          />
+                        )}
+                      </Field>
+                      <PhoneField
+                        label="Guardian's phone"
+                        required
+                        country={guardianCountry}
+                        digits={form.guardian_phone}
+                        onCountryChange={setGuardianCountry}
+                        onDigitsChange={(v) => set("guardian_phone", v)}
+                        error={errors.guardian_phone}
+                      />
+                    </div>
+
+                    <label className="flex cursor-pointer items-start gap-3 rounded-md border border-amber-300 bg-white p-4">
+                      <input
+                        type="checkbox"
+                        checked={form.guardian_consent}
+                        onChange={(e) => set("guardian_consent", e.target.checked)}
+                        aria-invalid={Boolean(errors.guardian_consent)}
+                        className="mt-0.5 size-[18px] shrink-0 cursor-pointer accent-[var(--color-forest-700)]"
+                      />
+                      <span className="text-sm">
+                        <span className="font-medium text-forest-900">
+                          My guardian has agreed to this profile being published.
+                        </span>
+                        <span className="mt-0.5 block text-muted">
+                          You'll also need to upload their signed consent form on the documents page.
+                        </span>
                       </span>
-                    ) : (
-                      <span className="badge badge--approved" style={{ marginTop: "var(--space-1)" }}>
-                        <CheckCircle2 size={12} /> Adult Student ({age} yrs old)
-                      </span>
-                    )
+                    </label>
+                    {errors.guardian_consent && (
+                      <p role="alert" className="text-sm text-clay-600">
+                        {errors.guardian_consent}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+                </div>
+
+                <div className="space-y-5">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Studies and funding</CardTitle>
+                  <CardDescription>
+                    Contributions are paid to the school you choose here — never to you directly.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <Field label="Academic level" required>
+                      {(props) => (
+                        <NativeSelect
+                          {...props}
+                          value={form.academic_level}
+                          onChange={(e) => set("academic_level", e.target.value)}
+                        >
+                          {LEVELS.map((l) => (
+                            <option key={l} value={l}>
+                              {l}
+                            </option>
+                          ))}
+                        </NativeSelect>
+                      )}
+                    </Field>
+
+                    <Field label="Field of study" hint="For example: Nursing, Software engineering">
+                      {(props) => (
+                        <Input
+                          {...props}
+                          value={form.field_of_study}
+                          onChange={(e) =>
+                            set("field_of_study", e.target.value.replace(/[^\p{L}\s,'&-]/gu, "").slice(0, 120))
+                          }
+                        />
+                      )}
+                    </Field>
+                  </div>
+
+                  <Field
+                    label="School or university"
+                    required
+                    error={errors.institution_id}
+                    hint="Only registered institutions can receive funds. Ask an admin if yours is missing."
+                  >
+                    {(props) => (
+                      <NativeSelect
+                        {...props}
+                        value={form.institution_id}
+                        onChange={(e) => set("institution_id", e.target.value)}
+                      >
+                        <option value="">Choose your institution</option>
+                        {institutions.map((i) => (
+                          <option key={i.id} value={i.id}>
+                            {i.name} — {i.location}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    )}
+                  </Field>
+
+                  <Field
+                    label="Funding goal in RWF"
+                    required
+                    error={errors.funding_goal}
+                    hint="The total fees you need for this academic year."
+                  >
+                    {(props) => (
+                      <Input
+                        {...props}
+                        inputMode="numeric"
+                        value={form.funding_goal}
+                        onChange={(e) => set("funding_goal", e.target.value.replace(/\D/g, "").slice(0, 10))}
+                        className="figure text-lg font-semibold"
+                      />
+                    )}
+                  </Field>
+                </CardContent>
+              </Card>
+
+                  {canEdit && (
+                    <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                      <Button type="submit" size="lg" loading={saving}>
+                        <Save aria-hidden />
+                        {profile ? "Save changes" : "Create my profile"}
+                      </Button>
+                    </div>
+                  )}
+
+                  {!navigator.onLine && (
+                    <p className="flex items-center gap-2 text-sm text-muted">
+                      <CloudOff className="size-4" aria-hidden />
+                      You're offline. Saving will queue your changes until you reconnect.
+                    </p>
                   )}
                 </div>
-                <TextField
-                  label="Phone number"
-                  name="phone"
-                  type="tel"
-                  placeholder="+250 7XX XXX XXX"
-                  value={form.phone}
-                  onChange={(v) => update("phone", v)}
-                />
               </div>
-              <div className="field" style={{ marginTop: "var(--space-4)" }}>
-                <label className="field__label" htmlFor="bio">
-                  Bio — tell your story
-                </label>
-                <textarea
-                  id="bio"
-                  className="field__textarea"
-                  placeholder="Share a bit about yourself, your dreams, and why education matters to you..."
-                  value={form.bio}
-                  onChange={(e) => update("bio", e.target.value)}
-                  disabled={!!isReadOnly}
+            </fieldset>
+          </form>
+        </div>
+      )}
+
+      <Dialog open={requestOpen} onOpenChange={setRequestOpen}>
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>Request a change</DialogTitle>
+            <DialogDescription>
+              Approved profiles are locked so donors can trust what they read. Tell the reviewer what
+              needs to change and they'll reopen it.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody className="pb-6">
+            <Alert tone="warning" className="mb-5">
+              While it's under review your profile is paused and won't appear to new donors.
+            </Alert>
+            <Field
+              label="What needs to change, and why?"
+              required
+              hint="At least 10 characters."
+              error={
+                requestReason.length > 0 && requestReason.trim().length < 10
+                  ? "Give the reviewer a little more detail."
+                  : undefined
+              }
+            >
+              {(props) => (
+                <Textarea
+                  {...props}
                   rows={4}
+                  value={requestReason}
+                  onChange={(e) => setRequestReason(e.target.value)}
+                  placeholder="I transferred to a different school, so my institution and goal need updating."
                 />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Section 2: Academic */}
-          <motion.div className="card" variants={fadeUp} style={{ marginBottom: "var(--space-5)" }}>
-            <div className="form-section">
-              <h3 className="form-section__title">
-                <span className="form-section__number">2</span>
-                Academic Details
-              </h3>
-              <div className="form-row form-row--2">
-                <div className="field">
-                  <label className="field__label" htmlFor="institution_id">
-                    Educational Institution
-                  </label>
-                  <select
-                    id="institution_id"
-                    className="field__select"
-                    value={form.institution_id}
-                    onChange={(e) => update("institution_id", e.target.value)}
-                    disabled={!!isReadOnly}
-                  >
-                    <option value="">Select institution</option>
-                    {institutions.map((inst) => (
-                      <option key={inst.id} value={inst.id}>
-                        {inst.name} ({inst.location})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="field">
-                  <label className="field__label" htmlFor="academic_level">
-                    Academic level
-                  </label>
-                  <select
-                    id="academic_level"
-                    className="field__select"
-                    value={form.academic_level}
-                    onChange={(e) => update("academic_level", e.target.value)}
-                    disabled={!!isReadOnly}
-                  >
-                    <option value="">Select level</option>
-                    <option value="S1">Senior 1</option>
-                    <option value="S2">Senior 2</option>
-                    <option value="S3">Senior 3</option>
-                    <option value="S4">Senior 4</option>
-                    <option value="S5">Senior 5</option>
-                    <option value="S6">Senior 6</option>
-                    <option value="Year 1">University Year 1</option>
-                    <option value="Year 2">University Year 2</option>
-                    <option value="Year 3">University Year 3</option>
-                    <option value="Year 4">University Year 4</option>
-                    <option value="TVET">TVET</option>
-                  </select>
-                </div>
-              </div>
-              <div className="form-row form-row--2">
-                <TextField
-                  label="Field of study"
-                  name="field_of_study"
-                  placeholder="e.g. Computer Science"
-                  value={form.field_of_study}
-                  onChange={(v) => update("field_of_study", v)}
-                />
-                <TextField
-                  label="Funding goal (RWF)"
-                  name="funding_goal"
-                  type="number"
-                  placeholder="e.g. 500000"
-                  value={form.funding_goal}
-                  onChange={(v) => update("funding_goal", v)}
-                />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Section 3: Age-Dependent Verification (Guardian for Minors, Video for Adults) */}
-          <motion.div className="card" variants={fadeUp} style={{ marginBottom: "var(--space-5)" }}>
-            <div className="form-section">
-              {isMinor ? (
-                <>
-                  <h3 className="form-section__title">
-                    <span className="form-section__number">3</span>
-                    Guardian Verification (Required for Minors under 18)
-                  </h3>
-                  <div className="notice notice--warn" style={{ marginBottom: "var(--space-4)" }}>
-                    <p style={{ display: "flex", alignItems: "center", gap: "0.5rem", margin: 0 }}>
-                      <AlertCircle size={16} /> Under Rwandan protection rules, students under 18 require guardian consent. Personal visual media is restricted for minor privacy.
-                    </p>
-                  </div>
-                  <div className="form-row form-row--2">
-                    <TextField
-                      label="Guardian name"
-                      name="guardian_name"
-                      placeholder="Full name of guardian"
-                      value={form.guardian_name}
-                      onChange={(v) => update("guardian_name", v)}
-                    />
-                    <TextField
-                      label="Guardian phone"
-                      name="guardian_phone"
-                      type="tel"
-                      placeholder="+250 7XX XXX XXX"
-                      value={form.guardian_phone}
-                      onChange={(v) => update("guardian_phone", v)}
-                    />
-                  </div>
-                  <label style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", cursor: "pointer", marginTop: "var(--space-3)" }}>
-                    <input
-                      type="checkbox"
-                      checked={form.guardian_consent}
-                      onChange={(e) => update("guardian_consent", e.target.checked)}
-                      disabled={!!isReadOnly}
-                      style={{ width: 18, height: 18, accentColor: "var(--primary)" }}
-                    />
-                    <span style={{ fontSize: "var(--step--1)" }}>
-                      I confirm that my guardian has given consent for my educational funding profile to be verified and listed on igaFund.
-                    </span>
-                  </label>
-                </>
-              ) : (
-                <>
-                  <h3 className="form-section__title">
-                    <span className="form-section__number">3</span>
-                    Intro Video & Visual Media Consent (Adult Students 18+)
-                  </h3>
-                  <div className="notice" style={{ marginBottom: "var(--space-4)" }}>
-                    <p style={{ display: "flex", alignItems: "center", gap: "0.5rem", margin: 0 }}>
-                      <CheckCircle2 size={16} /> As an adult student (18+), you can share a short video introduction to present your story to potential donors.
-                    </p>
-                  </div>
-                  <TextField
-                    label="Intro video URL (YouTube, Vimeo, or video link)"
-                    name="video_url"
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    value={form.video_url}
-                    onChange={(v) => update("video_url", v)}
-                  />
-                  <label style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", cursor: "pointer", marginTop: "var(--space-3)" }}>
-                    <input
-                      type="checkbox"
-                      checked={form.media_consent}
-                      onChange={(e) => update("media_consent", e.target.checked)}
-                      disabled={!!isReadOnly}
-                      style={{ width: 18, height: 18, accentColor: "var(--primary)" }}
-                    />
-                    <span style={{ fontSize: "var(--step--1)" }}>
-                      I consent to displaying my introduction video and story on the public igaFund donor portal.
-                    </span>
-                  </label>
-                </>
               )}
-            </div>
-          </motion.div>
-
-          {/* Actions */}
-          {isDraft && (
-            <motion.div variants={fadeUp} style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
-              <Button type="submit" loading={saving}>
-                <Save size={16} /> {profile ? "Save changes" : "Create profile"}
-              </Button>
-              {profile && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  loading={submitting}
-                  onClick={submitForReview}
-                >
-                  <Send size={16} /> Submit for review
-                </Button>
-              )}
-            </motion.div>
-          )}
-        </form>
-      </motion.div>
-    </StudentLayout>
+            </Field>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setRequestOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={submitEditRequest}
+              loading={requesting}
+              disabled={requestReason.trim().length < 10}
+            >
+              Send request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AppShell>
   );
 }

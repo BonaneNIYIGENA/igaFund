@@ -1,131 +1,74 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ShieldCheck, GraduationCap, Building2, Sparkles, CheckCircle2 } from "lucide-react";
-import { stagger, fadeUp } from "../../lib/motion";
+import { Building2, HeartHandshake, Receipt, ShieldCheck, Wallet } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
+import { RoutingRail, type RailStep } from "@/components/ui/RoutingRail";
 
-type Props = {
+const PROMISE: RailStep[] = [
+  { key: "give", label: "A donor gives", icon: HeartHandshake, state: "done" },
+  { key: "verify", label: "igaFund verifies the student", icon: ShieldCheck, state: "done" },
+  { key: "wallet", label: "A personal wallet", detail: "Never touched", icon: Wallet, state: "bypassed" },
+  { key: "school", label: "The school is paid directly", icon: Building2, state: "done" },
+  { key: "receipt", label: "Both sides keep a receipt", icon: Receipt, state: "done" },
+];
+
+/** Two-panel auth frame. */
+export function AuthLayout({
+  title,
+  description,
+  children,
+  footer,
+}: {
   title: string;
-  subtitle: string;
+  description: string;
   children: ReactNode;
-  foot?: ReactNode;
-};
-
-export function AuthLayout({ title, subtitle, children, foot }: Props) {
+  footer?: ReactNode;
+}) {
   return (
-    <div className="auth">
-      {/* Background glowing ambient light orbs */}
-      <div className="auth__orb auth__orb--1" aria-hidden />
-      <div className="auth__orb auth__orb--2" aria-hidden />
-      <div className="auth__orb auth__orb--3" aria-hidden />
+    <div className="min-h-dvh bg-canvas lg:grid lg:grid-cols-[1fr_1.1fr]">
+      <aside className="grain relative hidden flex-col justify-between bg-forest-900 p-12 text-forest-100 lg:flex">
+        <Link to="/" className="relative z-10 w-fit">
+          <Logo inverted />
+        </Link>
 
-      <div className="auth__container">
-        {/* Left hero panel (visible on desktop) */}
-        <div className="auth__hero">
-          <div className="auth__brand">
-            iga<span>Fund</span>
-          </div>
+        <div className="relative z-10">
+          <h2 className="max-w-md font-display text-4xl leading-tight tracking-tight text-white">
+            School fees that reach the school.
+          </h2>
+          <p className="mt-4 max-w-md leading-relaxed text-forest-200">
+            Every profile is verified by a person, and every contribution is paid to a registered
+            institution — never to an individual.
+          </p>
 
-          <div className="auth__hero-content">
-            <div className="auth__hero-badge">
-              <Sparkles size={14} />
-              <span>Verified Crowdfunding Platform</span>
-            </div>
-
-            <h2 className="auth__hero-title">
-              Empowering Education, <span>Direct to School.</span>
-            </h2>
-
-            <p className="auth__hero-desc">
-              igaFund connects underprivileged students across Rwanda with global donors. Every contribution is verified and transferred straight to the school.
-            </p>
-
-            {/* Feature highlights */}
-            <div className="auth__hero-features">
-              <div className="auth__feature-card">
-                <div className="auth__feature-icon">
-                  <GraduationCap size={20} />
-                </div>
-                <div>
-                  <h4>Verified Student Profiles</h4>
-                  <p>Authentic academic transcripts & guardian consent verified by admins.</p>
-                </div>
-              </div>
-
-              <div className="auth__feature-card">
-                <div className="auth__feature-icon auth__feature-icon--amber">
-                  <Building2 size={20} />
-                </div>
-                <div>
-                  <h4>Direct Institution Routing</h4>
-                  <p>100% of funded tuition goes directly to the school account, never a personal wallet.</p>
-                </div>
-              </div>
-
-              <div className="auth__feature-card">
-                <div className="auth__feature-icon auth__feature-icon--teal">
-                  <ShieldCheck size={20} />
-                </div>
-                <div>
-                  <h4>Transparent Audit Log</h4>
-                  <p>Complete traceability for students, donors, and educational institutions.</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Trust metrics */}
-            <div className="auth__hero-stats">
-              <div className="auth__hero-stat">
-                <CheckCircle2 size={16} /> <span>100% Direct Transfer</span>
-              </div>
-              <div className="auth__hero-stat">
-                <CheckCircle2 size={16} /> <span>Zero Personal Wallet Routing</span>
-              </div>
-            </div>
+          <div className="mt-10 rounded-xl border border-forest-800 bg-forest-950/40 p-6 [&_li_p]:text-forest-100">
+            <RoutingRail steps={PROMISE} />
           </div>
         </div>
 
-        {/* Right card wrap (form container) */}
-        <div className="auth__card-wrap">
-          {/* Mobile header brand */}
-          <div className="auth__mobile-brand">
-            iga<span>Fund</span>
-          </div>
+        <p className="relative z-10 text-sm text-forest-400">
+          Piloting in Rwanda · Compliant with the Data Protection and Privacy Law
+        </p>
+      </aside>
 
-          <motion.div
-            className="auth__glass"
-            initial={{ opacity: 0, y: 16, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <motion.div variants={stagger} initial="hidden" animate="show">
-              <motion.h1 variants={fadeUp}>{title}</motion.h1>
-              <motion.p className="auth__sub" variants={fadeUp}>
-                {subtitle}
-              </motion.p>
-              {children}
-              {foot && (
-                <motion.div className="auth__foot" variants={fadeUp}>
-                  {foot}
-                </motion.div>
-              )}
-            </motion.div>
-          </motion.div>
+      <div className="flex min-h-dvh flex-col px-4 py-8 sm:px-6 lg:px-0 lg:py-12">
+        <Link to="/" className="mb-10 w-fit lg:hidden">
+          <Logo />
+        </Link>
 
-          {/* Footer trust bar for mobile */}
-          <motion.div
-            className="auth__trust-bar"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            <span className="auth__trust-item">
-              <ShieldCheck size={14} /> Admin Verified
-            </span>
-            <span className="auth__trust-item">
-              <Building2 size={14} /> Direct to School
-            </span>
-          </motion.div>
-        </div>
+        <motion.main
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 28 }}
+          className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center"
+        >
+          <h1 className="font-display text-3xl tracking-tight sm:text-[2rem]">{title}</h1>
+          <p className="mt-2.5 leading-relaxed text-muted">{description}</p>
+
+          <div className="mt-8">{children}</div>
+
+          {footer && <div className="mt-8 text-[0.9375rem] text-muted">{footer}</div>}
+        </motion.main>
       </div>
     </div>
   );
