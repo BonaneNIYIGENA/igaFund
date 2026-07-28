@@ -215,7 +215,7 @@ export function StudentDashboard() {
                           Fees are paid to
                         </p>
                         <p className="mt-2 flex items-start gap-2 font-medium text-ink">
-                          <Building2 className="mt-0.5 size-[18px] shrink-0 text-forest-600" aria-hidden />
+                          <Building2 className="mt-0.5 size-[18px] shrink-0 text-accent-ink" aria-hidden />
                           {profile.institution.name}
                         </p>
                         <p className="mt-1 pl-6 text-sm text-muted">{profile.institution.location}</p>

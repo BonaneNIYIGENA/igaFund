@@ -60,7 +60,7 @@ export function LoadingScreen({ compact = false }: { compact?: boolean }) {
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
           />
           <span className="font-display text-3xl font-bold tracking-tight text-ink">
-            iga<span className="text-forest-600">Fund</span>
+            iga<span className="text-accent-ink">Fund</span>
           </span>
         </motion.div>
 

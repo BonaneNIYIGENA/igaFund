@@ -25,7 +25,7 @@ const nodeStyles: Record<RailState, string> = {
 };
 
 const labelStyles: Record<RailState, string> = {
-  done: "text-forest-800",
+  done: "text-accent-ink",
   current: "text-ink font-semibold",
   todo: "text-muted",
   blocked: "text-clay-700 font-medium",

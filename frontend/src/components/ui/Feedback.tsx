@@ -105,8 +105,8 @@ export function ErrorState({
 
 
 const alertTones = {
-  info: { wrap: "bg-info-soft border-forest-200 text-forest-800", icon: Info },
-  success: { wrap: "bg-success-soft border-forest-200 text-forest-800", icon: CheckCircle2 },
+  info: { wrap: "bg-info-soft border-forest-200 text-accent-ink", icon: Info },
+  success: { wrap: "bg-success-soft border-forest-200 text-accent-ink", icon: CheckCircle2 },
   warning: { wrap: "bg-warning-soft border-amber-300 text-amber-700", icon: TriangleAlert },
   danger: { wrap: "bg-danger-soft border-clay-200 text-clay-700", icon: AlertCircle },
 } as const;

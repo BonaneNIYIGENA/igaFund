@@ -66,13 +66,13 @@ export function Landing() {
           </Link>
 
           <nav className="ml-auto hidden items-center gap-7 md:flex" aria-label="Main">
-            <a href="#how" className="text-sm font-medium text-muted transition-colors hover:text-forest-800">
+            <a href="#how" className="text-sm font-medium text-muted transition-colors hover:text-accent-ink">
               How it works
             </a>
-            <Link to="/students" className="text-sm font-medium text-muted transition-colors hover:text-forest-800">
+            <Link to="/students" className="text-sm font-medium text-muted transition-colors hover:text-accent-ink">
               Students
             </Link>
-            <Link to="/help" className="text-sm font-medium text-muted transition-colors hover:text-forest-800">
+            <Link to="/help" className="text-sm font-medium text-muted transition-colors hover:text-accent-ink">
               Help
             </Link>
           </nav>
@@ -96,16 +96,16 @@ export function Landing() {
                   <DialogTitle>Menu</DialogTitle>
                 </DialogHeader>
                 <nav className="flex flex-col gap-1 p-4 pt-0">
-                  <a href="#how" className="rounded-sm px-3 py-3 text-[0.9375rem] hover:bg-forest-50">
+                  <a href="#how" className="rounded-sm px-3 py-3 text-[0.9375rem] hover:bg-sunk">
                     How it works
                   </a>
-                  <Link to="/students" className="rounded-sm px-3 py-3 text-[0.9375rem] hover:bg-forest-50">
+                  <Link to="/students" className="rounded-sm px-3 py-3 text-[0.9375rem] hover:bg-sunk">
                     Browse students
                   </Link>
-                  <Link to="/help" className="rounded-sm px-3 py-3 text-[0.9375rem] hover:bg-forest-50">
+                  <Link to="/help" className="rounded-sm px-3 py-3 text-[0.9375rem] hover:bg-sunk">
                     Help
                   </Link>
-                  <Link to="/login" className="rounded-sm px-3 py-3 text-[0.9375rem] hover:bg-forest-50">
+                  <Link to="/login" className="rounded-sm px-3 py-3 text-[0.9375rem] hover:bg-sunk">
                     Sign in
                   </Link>
                 </nav>
@@ -133,7 +133,7 @@ export function Landing() {
               >
                 School fees that reach
                 <br />
-                <span className="text-forest-700">the school.</span>
+                <span className="text-accent-ink">the school.</span>
               </motion.h1>
 
               <motion.p
@@ -225,7 +225,7 @@ export function Landing() {
                 <p className="mt-2 text-[0.9375rem] text-muted">
                   {totalRaised > 0 ? (
                     <>
-                      <span className="figure font-semibold text-forest-800">
+                      <span className="figure font-semibold text-accent-ink">
                         {formatCompact(totalRaised)} RWF
                       </span>{" "}
                       routed to schools so far.
@@ -317,16 +317,16 @@ export function Landing() {
             </p>
           </div>
           <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm" aria-label="Footer">
-            <Link to="/students" className="text-muted hover:text-forest-800">
+            <Link to="/students" className="text-muted hover:text-accent-ink">
               Browse students
             </Link>
-            <Link to="/register" className="text-muted hover:text-forest-800">
+            <Link to="/register" className="text-muted hover:text-accent-ink">
               Apply for funding
             </Link>
-            <Link to="/help" className="text-muted hover:text-forest-800">
+            <Link to="/help" className="text-muted hover:text-accent-ink">
               Help
             </Link>
-            <Link to="/login" className="text-muted hover:text-forest-800">
+            <Link to="/login" className="text-muted hover:text-accent-ink">
               Sign in
             </Link>
           </nav>

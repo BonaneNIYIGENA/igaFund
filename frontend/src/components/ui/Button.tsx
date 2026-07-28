@@ -12,14 +12,14 @@ const buttonVariants = cva(
         primary:
           "bg-forest-700 text-white shadow-sm hover:bg-forest-800 hover:shadow-lift",
         secondary:
-          "bg-surface text-ink border border-line hover:bg-forest-50 hover:border-forest-200",
+          "bg-surface text-ink border border-line hover:bg-sunk hover:border-forest-200",
         soft: "bg-forest-100 text-forest-800 hover:bg-forest-200",
         /** Reserved for money-moving actions — amber means funds in motion. */
         fund: "bg-amber-500 text-forest-950 shadow-sm hover:bg-amber-600 hover:text-white hover:shadow-lift",
         danger: "bg-clay-500 text-white hover:bg-clay-600",
         dangerSoft: "bg-clay-100 text-clay-700 hover:bg-clay-200",
         ghost: "text-forest-800 hover:bg-forest-100",
-        link: "text-forest-700 underline-offset-4 hover:underline p-0 h-auto",
+        link: "text-accent-ink underline-offset-4 hover:underline p-0 h-auto",
       },
       size: {
         sm: "h-9 px-3.5 text-sm rounded-xs [&_svg]:size-4",

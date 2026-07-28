@@ -53,7 +53,7 @@ export function FundingProgress({
       </div>
       {showLabels && (
         <p className="text-xs text-muted">
-          <span className="figure font-semibold text-forest-700">{percent}%</span> funded
+          <span className="figure font-semibold text-accent-ink">{percent}%</span> funded
           {complete && " — goal reached"}
         </p>
       )}

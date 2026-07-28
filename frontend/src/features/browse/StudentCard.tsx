@@ -76,7 +76,7 @@ export function StudentCard({
         <p
           className={cn(
             "mt-4 text-sm font-medium",
-            fullyFunded ? "text-forest-700" : "text-forest-700 group-hover:underline",
+            fullyFunded ? "text-accent-ink" : "text-accent-ink group-hover:underline",
           )}
         >
           {fullyFunded ? "Goal reached — see the record" : "View profile and fund"}

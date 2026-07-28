@@ -152,7 +152,7 @@ export function AdminUsers() {
                     </thead>
                     <tbody className="divide-y divide-line">
                       {users.map((u) => (
-                        <tr key={u.id} className="hover:bg-forest-50/50">
+                        <tr key={u.id} className="hover:bg-sunk">
                           <td className="py-3 pl-2">
                             <div className="font-medium text-ink">{u.full_name}</div>
                             <div className="text-xs text-muted">{u.email}</div>
@@ -190,7 +190,7 @@ export function AdminUsers() {
                             >
                               {u.is_suspended ? (
                                 <>
-                                  <UserCheck className="size-3.5 text-forest-700" aria-hidden />
+                                  <UserCheck className="size-3.5 text-accent-ink" aria-hidden />
                                   Reactivate
                                 </>
                               ) : (

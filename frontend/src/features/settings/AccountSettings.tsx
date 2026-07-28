@@ -172,7 +172,7 @@ export function AccountSettings() {
 
               <dl className="space-y-2 text-sm text-muted">
                 <div className="flex items-center gap-2">
-                  <UserRound className="size-4 shrink-0 text-forest-600" aria-hidden />
+                  <UserRound className="size-4 shrink-0 text-accent-ink" aria-hidden />
                   <span>
                     Account type: <strong className="font-medium text-ink">{ROLE_LABEL[user.role]}</strong>
                   </span>
@@ -232,7 +232,7 @@ export function AccountSettings() {
             <Separator className="my-5" />
 
             <p className="flex items-start gap-2 text-sm text-muted">
-              <ShieldCheck className="mt-0.5 size-4 shrink-0 text-forest-600" aria-hidden />
+              <ShieldCheck className="mt-0.5 size-4 shrink-0 text-accent-ink" aria-hidden />
               Every security action here is recorded in the system's permanent audit trail.
             </p>
           </CardContent>
@@ -246,7 +246,7 @@ export function AccountSettings() {
           <CardContent>
             <label className="flex cursor-pointer items-start justify-between gap-4 rounded-md border border-line bg-raised p-4">
               <span className="flex items-start gap-3">
-                <Bell className="mt-0.5 size-[18px] shrink-0 text-forest-600" aria-hidden />
+                <Bell className="mt-0.5 size-[18px] shrink-0 text-accent-ink" aria-hidden />
                 <span>
                   <span className="block font-medium text-ink">Email me about my account</span>
                   <span className="mt-0.5 block text-sm text-muted">

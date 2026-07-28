@@ -96,7 +96,7 @@ export function Register() {
       footer={
         <>
           Already have an account?{" "}
-          <Link to="/login" className="font-medium text-forest-700 underline-offset-4 hover:underline">
+          <Link to="/login" className="font-medium text-accent-ink underline-offset-4 hover:underline">
             Sign in
           </Link>
         </>
@@ -124,8 +124,8 @@ export function Register() {
                     "flex cursor-pointer flex-col items-start gap-2 rounded-md border p-4 text-left transition-[border-color,background,box-shadow] duration-200",
                     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700",
                     selected
-                      ? "border-forest-600 bg-forest-50 shadow-sm"
-                      : "border-line-strong bg-surface hover:border-forest-300 hover:bg-forest-50/60",
+                      ? "border-forest-600 bg-sunk shadow-sm"
+                      : "border-line-strong bg-surface hover:border-forest-300 hover:bg-sunk",
                   )}
                 >
                   <span

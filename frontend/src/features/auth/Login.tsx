@@ -47,7 +47,7 @@ export function Login() {
       footer={
         <>
           New to igaFund?{" "}
-          <Link to="/register" className="font-medium text-forest-700 underline-offset-4 hover:underline">
+          <Link to="/register" className="font-medium text-accent-ink underline-offset-4 hover:underline">
             Create an account
           </Link>
         </>
@@ -84,7 +84,7 @@ export function Login() {
         <div className="flex justify-end">
           <Link
             to="/forgot-password"
-            className="text-sm font-medium text-forest-700 underline-offset-4 hover:underline"
+            className="text-sm font-medium text-accent-ink underline-offset-4 hover:underline"
           >
             Forgot your password?
           </Link>

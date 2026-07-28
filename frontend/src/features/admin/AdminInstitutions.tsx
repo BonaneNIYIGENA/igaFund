@@ -190,7 +190,7 @@ export function AdminInstitutions() {
                         </div>
                       </dl>
 
-                      <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-forest-700 group-hover:underline">
+                      <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-accent-ink group-hover:underline">
                         See students and payments
                         <ArrowRight className="size-4" aria-hidden />
                       </p>

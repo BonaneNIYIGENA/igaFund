@@ -7,7 +7,7 @@ import { Input, Label } from "./Field";
 
 const BAR_COLOR_INCOMPLETE = ["bg-sage-300", "bg-clay-500", "bg-amber-500", "bg-forest-500", "bg-forest-700"];
 const BAR_COLOR_COMPLETE = "bg-forest-600";
-const TEXT_COLOR = ["text-muted", "text-clay-600", "text-amber-700", "text-forest-700", "text-forest-700"];
+const TEXT_COLOR = ["text-muted", "text-clay-600", "text-amber-700", "text-accent-ink", "text-accent-ink"];
 
 const REQUIREMENTS = [
   { key: "hasLength" as const, label: "At least 8 characters" },
@@ -104,7 +104,7 @@ export function PasswordField({
           {/* Strength label */}
           {value && (
             <p className="mt-1.5 text-sm" aria-live="polite">
-              <span className={cn("font-medium", allPassed ? "text-forest-700" : TEXT_COLOR[strength.score])}>
+              <span className={cn("font-medium", allPassed ? "text-accent-ink" : TEXT_COLOR[strength.score])}>
                 {strength.label}
               </span>
               <span className="text-muted"> — {strength.hint}</span>
@@ -117,7 +117,7 @@ export function PasswordField({
               <button
                 type="button"
                 onClick={() => setExpanded((v) => !v)}
-                className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-forest-700 hover:text-ink transition-colors"
+                className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-accent-ink hover:text-ink transition-colors"
                 aria-expanded={expanded}
               >
                 <motion.span
@@ -150,12 +150,12 @@ export function PasswordField({
                               transition={{ duration: 0.25 }}
                             >
                               {met ? (
-                                <Check className="size-4 text-forest-600" aria-hidden />
+                                <Check className="size-4 text-accent-ink" aria-hidden />
                               ) : (
                                 <X className="size-4 text-sage-400" aria-hidden />
                               )}
                             </motion.span>
-                            <span className={met ? "text-forest-700" : "text-muted"}>
+                            <span className={met ? "text-accent-ink" : "text-muted"}>
                               {req.label}
                             </span>
                           </li>
@@ -176,7 +176,7 @@ export function PasswordField({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="mt-2 flex items-center gap-1.5 text-sm font-medium text-forest-700"
+                className="mt-2 flex items-center gap-1.5 text-sm font-medium text-accent-ink"
               >
                 <Check className="size-4" aria-hidden />
                 All requirements met

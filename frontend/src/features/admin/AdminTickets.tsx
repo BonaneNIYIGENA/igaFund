@@ -81,7 +81,7 @@ export function AdminTickets() {
                         </div>
                         <p className="mt-1.5 text-sm leading-relaxed text-muted">{ticket.summary}</p>
                         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
-                          <span className="figure text-sm font-semibold text-forest-700">
+                          <span className="figure text-sm font-semibold text-accent-ink">
                             {ticket.ticket_number}
                           </span>
                           <span className="text-xs text-faint">{formatDateTime(ticket.created_at)}</span>

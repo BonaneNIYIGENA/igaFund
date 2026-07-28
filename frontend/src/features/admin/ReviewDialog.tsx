@@ -161,7 +161,7 @@ export function ReviewDialog({
 
                 <dl className="grid gap-4 rounded-md bg-sunk p-4 sm:grid-cols-2">
                   <div className="flex items-start gap-2.5">
-                    <UserRound className="mt-0.5 size-4 shrink-0 text-forest-600" aria-hidden />
+                    <UserRound className="mt-0.5 size-4 shrink-0 text-accent-ink" aria-hidden />
                     <div>
                       <dt className="text-xs font-semibold uppercase tracking-wide text-faint">
                         Date of birth
@@ -177,7 +177,7 @@ export function ReviewDialog({
                     </div>
                   </div>
                   <div className="flex items-start gap-2.5">
-                    <Phone className="mt-0.5 size-4 shrink-0 text-forest-600" aria-hidden />
+                    <Phone className="mt-0.5 size-4 shrink-0 text-accent-ink" aria-hidden />
                     <div>
                       <dt className="text-xs font-semibold uppercase tracking-wide text-faint">
                         Phone
@@ -186,7 +186,7 @@ export function ReviewDialog({
                     </div>
                   </div>
                   <div className="flex items-start gap-2.5">
-                    <GraduationCap className="mt-0.5 size-4 shrink-0 text-forest-600" aria-hidden />
+                    <GraduationCap className="mt-0.5 size-4 shrink-0 text-accent-ink" aria-hidden />
                     <div>
                       <dt className="text-xs font-semibold uppercase tracking-wide text-faint">
                         Studies
@@ -198,7 +198,7 @@ export function ReviewDialog({
                     </div>
                   </div>
                   <div className="flex items-start gap-2.5">
-                    <Building2 className="mt-0.5 size-4 shrink-0 text-forest-600" aria-hidden />
+                    <Building2 className="mt-0.5 size-4 shrink-0 text-accent-ink" aria-hidden />
                     <div>
                       <dt className="text-xs font-semibold uppercase tracking-wide text-faint">
                         Institution

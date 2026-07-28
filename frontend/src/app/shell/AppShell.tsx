@@ -71,7 +71,10 @@ export function AppShell({
                 className={cn(
                   "relative flex items-center gap-3 rounded-md px-3.5 py-2.5 text-[0.9375rem] font-medium transition-colors duration-200",
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700",
-                  active ? "text-ink" : "text-muted hover:bg-forest-50 hover:text-forest-800",
+                  // The active pill's bg-forest-100 is a fixed light tint in both
+                  // themes, so its label must be a fixed dark literal too — not
+                  // text-ink, which flips to near-white and vanishes in dark mode.
+                  active ? "text-forest-900" : "text-muted hover:bg-forest-50 hover:text-forest-800",
                 )}
               >
                 {active && (
@@ -217,13 +220,16 @@ export function AppShell({
                   end={item.to === `/${user.role}`}
                   className={cn(
                     "flex min-h-[3.75rem] flex-col items-center justify-center gap-1 px-1 py-2 text-[0.6875rem] font-medium transition-colors",
-                    active ? "text-forest-800" : "text-muted",
+                    active ? "text-accent-ink" : "text-muted",
                   )}
                 >
                   <span
                     className={cn(
                       "grid h-7 w-12 place-items-center rounded-full transition-colors duration-200",
-                      active && "bg-forest-100",
+                      // Fixed light chip in both themes, so the icon inside needs
+                      // its own fixed dark color rather than inheriting the
+                      // theme-flipping text-accent-ink from the label below.
+                      active && "bg-forest-100 text-forest-900",
                     )}
                   >
                     <item.icon className="size-[18px]" aria-hidden />

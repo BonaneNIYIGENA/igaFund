@@ -212,7 +212,7 @@ export function StudentStatus() {
                           )}
                           <p className="mt-1.5 text-xs text-faint">{formatRelative(c.created_at)}</p>
                         </div>
-                        <span className="figure shrink-0 text-sm font-semibold text-forest-800">
+                        <span className="figure shrink-0 text-sm font-semibold text-accent-ink">
                           {formatMoney(c.amount)}
                         </span>
                       </div>

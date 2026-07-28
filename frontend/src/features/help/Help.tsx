@@ -240,7 +240,7 @@ export function Help() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2.5 text-base">
-                    <guide.icon className="size-[18px] text-forest-700" aria-hidden />
+                    <guide.icon className="size-[18px] text-accent-ink" aria-hidden />
                     {guide.label}
                   </CardTitle>
                 </CardHeader>
@@ -261,7 +261,7 @@ export function Help() {
                     className="overflow-hidden rounded-md border border-line bg-surface"
                   >
                     <Accordion.Header>
-                      <Accordion.Trigger className="group flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-forest-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-forest-700">
+                      <Accordion.Trigger className="group flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-sunk focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-forest-700">
                         <span className="font-medium text-ink">{faq.q}</span>
                         <ChevronDown
                           className="size-[18px] shrink-0 text-muted transition-transform duration-200 group-data-[state=open]:rotate-180"

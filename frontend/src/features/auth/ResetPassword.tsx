@@ -63,7 +63,7 @@ export function ResetPassword() {
           Link expired?{" "}
           <Link
             to="/forgot-password"
-            className="font-medium text-forest-700 underline-offset-4 hover:underline"
+            className="font-medium text-accent-ink underline-offset-4 hover:underline"
           >
             Request a new one
           </Link>

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Menu";
 
 const TONE = {
-  success: { icon: PartyPopper, class: "bg-success-soft text-forest-700" },
+  success: { icon: PartyPopper, class: "bg-success-soft text-accent-ink" },
   warning: { icon: CircleAlert, class: "bg-warning-soft text-amber-700" },
   action: { icon: Bell, class: "bg-amber-100 text-amber-700" },
   info: { icon: Info, class: "bg-forest-100 text-forest-700" },
@@ -113,8 +113,10 @@ export function NotificationCenter() {
                       type="button"
                       onClick={() => openItem(item)}
                       className={cn(
-                        "flex w-full cursor-pointer gap-3 px-4 py-3.5 text-left transition-colors hover:bg-forest-50",
-                        !item.read && "bg-amber-50/60",
+                        "flex w-full cursor-pointer gap-3 px-4 py-3.5 text-left transition-colors hover:bg-sunk",
+                        // A solid theme-aware highlight, not a fixed light tint —
+                        // this row's text is adaptive and must stay readable on it.
+                        !item.read && "bg-highlight",
                       )}
                     >
                       <span className={cn("mt-0.5 grid size-8 shrink-0 place-items-center rounded-full", toneClass)}>

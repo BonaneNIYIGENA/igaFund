@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       <div className="grid min-h-dvh place-items-center bg-canvas" role="status" aria-label="Loading igaFund">
         <div className="flex flex-col items-center gap-4">
           <span className="size-9 animate-spin rounded-full border-[3px] border-forest-200 border-t-forest-700" />
-          <span className="font-display text-lg text-forest-800">igaFund</span>
+          <span className="font-display text-lg text-accent-ink">igaFund</span>
         </div>
       </div>
     );

@@ -128,7 +128,7 @@ export function AdminQueue() {
                           {profile.institution ? ` · ${profile.institution.name}` : ""}
                         </p>
                         <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
-                          <span className="figure font-medium text-forest-800">
+                          <span className="figure font-medium text-accent-ink">
                             {formatMoney(profile.funding_goal)}
                           </span>
                           <span>

@@ -38,7 +38,7 @@ export const DropdownMenuItem = React.forwardRef<
       "[&_svg]:size-4 [&_svg]:shrink-0",
       destructive
         ? "text-clay-600 data-[highlighted]:bg-clay-100 data-[highlighted]:text-clay-700"
-        : "text-body data-[highlighted]:bg-forest-50 data-[highlighted]:text-ink",
+        : "text-body data-[highlighted]:bg-sunk data-[highlighted]:text-ink",
       className,
     )}
     {...props}

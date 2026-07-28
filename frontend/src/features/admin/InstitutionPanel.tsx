@@ -200,7 +200,7 @@ export function InstitutionPanel({
                             />
                           </div>
                           <div className="shrink-0 text-right">
-                            <p className="figure text-lg font-semibold text-forest-800">
+                            <p className="figure text-lg font-semibold text-accent-ink">
                               {s.funding_percent}%
                             </p>
                             <p className="flex items-center gap-1 text-xs text-muted">

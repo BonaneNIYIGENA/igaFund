@@ -53,7 +53,7 @@ function ChartTooltip({
   return (
     <div className="rounded-sm border border-line bg-surface px-3 py-2 shadow-md">
       <p className="text-xs font-medium text-ink">{label}</p>
-      <p className="figure mt-0.5 text-sm font-semibold text-forest-800">
+      <p className="figure mt-0.5 text-sm font-semibold text-accent-ink">
         {formatter ? formatter(payload[0].value) : payload[0].value}
       </p>
     </div>

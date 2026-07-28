@@ -159,7 +159,7 @@ export function DonorGiving() {
                         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line pt-3.5 text-xs">
                           {c.receipt_ref && (
                             <span className="text-muted">
-                              Receipt <span className="figure text-forest-700">{c.receipt_ref}</span>
+                              Receipt <span className="figure text-accent-ink">{c.receipt_ref}</span>
                             </span>
                           )}
                           <Badge tone="forest" icon={ShieldCheck}>
@@ -170,7 +170,7 @@ export function DonorGiving() {
                               href={c.proof_image_url}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1.5 font-medium text-forest-700 underline-offset-4 hover:underline"
+                              className="inline-flex items-center gap-1.5 font-medium text-accent-ink underline-offset-4 hover:underline"
                             >
                               <ImageIcon className="size-3.5" aria-hidden />
                               View your payment slip

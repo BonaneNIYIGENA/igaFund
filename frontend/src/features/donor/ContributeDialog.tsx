@@ -160,7 +160,7 @@ export function ContributeDialog({
         {receipt ? (
           <>
             <SidePanelHeader>
-              <span className="mb-3 grid size-12 place-items-center rounded-full bg-success-soft text-forest-700">
+              <span className="mb-3 grid size-12 place-items-center rounded-full bg-success-soft text-accent-ink">
                 <CheckCircle2 className="size-6" aria-hidden />
               </span>
               <SidePanelTitle>Your contribution is routed</SidePanelTitle>
@@ -230,7 +230,7 @@ export function ContributeDialog({
                       className={`figure min-h-11 cursor-pointer rounded-sm border px-3 text-sm font-semibold transition-colors ${
                         numericAmount === preset
                           ? "border-amber-500 bg-amber-50 text-amber-700"
-                          : "border-line-strong bg-surface text-ink hover:border-forest-300 hover:bg-forest-50"
+                          : "border-line-strong bg-surface text-ink hover:border-forest-300 hover:bg-sunk"
                       }`}
                     >
                       {preset.toLocaleString("en-RW")}

@@ -52,6 +52,12 @@ export function StatTile({
   const animated = useCountUp(numeric ? value : 0, countUp && numeric && !reduce);
   const display = numeric ? animated.toLocaleString("en-RW") : value;
 
+  // "forest" and "amber" are fixed light-tint cards — their background never
+  // changes with theme, so every label inside must be a fixed dark literal
+  // too. Using the adaptive text-ink/text-muted tokens here was the bug:
+  // in dark mode they'd turn near-white and vanish against the still-light card.
+  const fixedLightCard = tone === "forest" || tone === "amber";
+
   return (
     <div
       className={cn(
@@ -67,7 +73,7 @@ export function StatTile({
         <p
           className={cn(
             "text-sm font-medium",
-            tone === "ink" ? "text-forest-200" : "text-muted",
+            tone === "ink" ? "text-forest-200" : fixedLightCard ? "text-forest-700" : "text-muted",
           )}
         >
           {label}
@@ -91,7 +97,7 @@ export function StatTile({
         <motion.span
           className={cn(
             "figure text-3xl font-semibold tracking-tight",
-            tone === "ink" ? "text-white" : "text-ink",
+            tone === "ink" ? "text-white" : fixedLightCard ? "text-forest-950" : "text-ink",
           )}
           initial={reduce ? false : { opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -103,7 +109,7 @@ export function StatTile({
           <span
             className={cn(
               "figure text-sm font-medium",
-              tone === "ink" ? "text-forest-300" : "text-muted",
+              tone === "ink" ? "text-forest-300" : fixedLightCard ? "text-forest-700" : "text-muted",
             )}
           >
             {unit}
@@ -112,7 +118,14 @@ export function StatTile({
       </p>
 
       {hint && (
-        <p className={cn("text-xs", tone === "ink" ? "text-forest-300" : "text-muted")}>{hint}</p>
+        <p
+          className={cn(
+            "text-xs",
+            tone === "ink" ? "text-forest-300" : fixedLightCard ? "text-forest-600" : "text-muted",
+          )}
+        >
+          {hint}
+        </p>
       )}
     </div>
   );

@@ -70,6 +70,17 @@
   --color-info: #1e5945;
   --color-info-soft: #eff9f4;
 
+  /* Brand-green text/icons sitting directly on an adaptive surface (not
+     inside a fixed-tint chip) — flips to a lighter green in dark mode so
+     it never goes dark-on-dark. Fixed-tint chips (Badge, StatTile amber/
+     forest cards) pair their own bg+text and must NOT use this token. */
+  --color-accent-ink: var(--color-forest-700);
+
+  /* A highlight patch (unread row, selected state) that must read on any
+     surface. Deliberately not a semantic canvas/surface token — its whole
+     job is to stand out from whichever one it sits on. */
+  --color-highlight: #fbeacd;
+
   /* ── type ─────────────────────────────────────────────── */
   --font-display: "Fraunces", ui-serif, Georgia, serif;
   --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
@@ -120,6 +131,9 @@
   --color-warning-soft: #3a2c14;
   --color-danger-soft: #3a2320;
   --color-info-soft: #16261f;
+
+  --color-accent-ink: var(--color-forest-300);
+  --color-highlight: #2e2410;
 
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);

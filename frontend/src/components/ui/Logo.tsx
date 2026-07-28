@@ -36,7 +36,7 @@ export function Logo({
         /* Fallback SVG if image fails to load */
         <svg
           viewBox="0 0 40 40"
-          className={cn(iconSizes[size], "shrink-0", inverted ? "text-forest-100" : "text-forest-700")}
+          className={cn(iconSizes[size], "shrink-0", inverted ? "text-forest-100" : "text-accent-ink")}
           aria-hidden
         >
           <text x="4" y="30" fontSize="32" fontWeight="bold" fill="currentColor">iF</text>
@@ -58,7 +58,7 @@ export function Logo({
             inverted ? "text-white" : "text-ink",
           )}
         >
-          iga<span className={inverted ? "text-forest-200" : "text-forest-600"}>Fund</span>
+          iga<span className={inverted ? "text-forest-200" : "text-accent-ink"}>Fund</span>
         </span>
       )}
     </span>

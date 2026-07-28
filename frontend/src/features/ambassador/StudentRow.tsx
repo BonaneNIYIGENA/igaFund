@@ -46,7 +46,7 @@ export function StudentRow({ student, onChange }: { student: Profile; onChange: 
             {student.institution ? ` · ${student.institution.name}` : ""}
           </p>
           <p className="mt-1 text-sm text-muted">
-            <span className="figure font-medium text-forest-800">
+            <span className="figure font-medium text-accent-ink">
               {formatMoney(student.funded_amount)}
             </span>{" "}
             of <span className="figure">{formatMoney(student.funding_goal)}</span> ·{" "}
