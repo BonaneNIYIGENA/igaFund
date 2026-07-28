@@ -167,7 +167,7 @@ export function AppShell({
           id="main"
           className="px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 lg:px-8 lg:pb-16"
         >
-          <div className="mx-auto w-full max-w-6xl">
+          <div className="mx-auto w-full max-w-360">
             <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
               <div className="min-w-0">
                 <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-[1.75rem]">

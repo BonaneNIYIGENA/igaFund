@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Search, SearchX, ShieldCheck } from "lucide-react";
 import { endpoints, type Profile } from "@/lib/api";
 import { stagger } from "@/lib/motion";
+import { PublicHeader } from "@/components/ui/PublicHeader";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { Input, NativeSelect, Label } from "@/components/ui/Field";
@@ -22,6 +23,8 @@ const LEVELS = ["all", "S4", "S5", "S6", "Year 1", "Year 2", "Year 3", "Year 4",
  * panel over this same grid, so there is no separate full-page detail view
  * to keep visually consistent with — it's this page, with the panel open.
  */
+const PAGE_SIZE = 10;
+
 export function BrowseStudents() {
   const { user } = useAuth();
   const { t } = useLocale();
@@ -32,6 +35,7 @@ export function BrowseStudents() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [level, setLevel] = useState("all");
+  const [page, setPage] = useState(1);
 
   const viewing = id ? Number(id) : null;
   function openProfile(profileId: number) {
@@ -71,31 +75,9 @@ export function BrowseStudents() {
 
   return (
     <div className="min-h-dvh bg-canvas">
-      <header className="sticky top-0 z-40 border-b border-line/70 bg-canvas/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3.5 sm:px-6">
-          <Link to="/" aria-label="igaFund home">
-            <Logo />
-          </Link>
-          <div className="ml-auto flex items-center gap-2">
-            {user ? (
-              <Button size="sm" asChild>
-                <Link to={HOME_FOR_ROLE[user.role]}>Go to dashboard</Link>
-              </Button>
-            ) : (
-              <>
-                <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-                  <Link to="/login">Sign in</Link>
-                </Button>
-                <Button size="sm" asChild>
-                  <Link to="/register">Create an account</Link>
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
-      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+      <main className="mx-auto max-w-360 px-4 py-10 sm:px-6 sm:py-14">
         <div className="max-w-2xl">
           <p className="inline-flex items-center gap-2 rounded-full border border-forest-200 bg-forest-50 px-3 py-1.5 text-sm font-medium text-forest-700">
             <ShieldCheck className="size-4" aria-hidden />
@@ -191,21 +173,31 @@ export function BrowseStudents() {
               />
             )
           ) : (
-            <motion.div
-              variants={stagger}
-              initial="hidden"
-              animate="show"
-              className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-            >
-              {visible.map((profile) => (
-                <StudentCard
-                key={profile.id}
-                profile={profile}
-                to={`/students/${profile.id}`}
-                onOpen={openProfile}
-              />
-              ))}
-            </motion.div>
+            <>
+              <motion.div
+                variants={stagger}
+                initial="hidden"
+                animate="show"
+                className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+              >
+                {visible.slice(0, page * PAGE_SIZE).map((profile) => (
+                  <StudentCard
+                  key={profile.id}
+                  profile={profile}
+                  to={`/students/${profile.id}`}
+                  onOpen={openProfile}
+                />
+                ))}
+              </motion.div>
+
+              {visible.length > page * PAGE_SIZE && (
+                <div className="mt-8 flex justify-center">
+                  <Button variant="secondary" onClick={() => setPage((p) => p + 1)}>
+                    Load more ({visible.length - page * PAGE_SIZE} remaining)
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>

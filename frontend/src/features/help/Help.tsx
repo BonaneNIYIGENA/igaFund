@@ -9,37 +9,30 @@ import {
   FileText,
   GraduationCap,
   HeartHandshake,
-  Instagram,
-  Linkedin,
   Mail,
-  MessageCircle,
-  Phone,
   Receipt,
   Send,
   ShieldCheck,
-  Twitter,
   UserPlus,
   UserRound,
   Users,
   Wallet,
 } from "lucide-react";
 import { useAuth, HOME_FOR_ROLE } from "@/features/auth/AuthContext";
+import { PublicHeader } from "@/components/ui/PublicHeader";
 import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { RoutingFlow, RoutingRail, type RailStep } from "@/components/ui/RoutingRail";
 import { UnderlineTabs } from "@/components/ui/Tabs";
 import { fadeUp, stagger } from "@/lib/motion";
-
-const CONTACT_EMAIL = "igafund@gmail.com";
-const CONTACT_PHONE_DISPLAY = "+250 788 251 302";
-const CONTACT_PHONE_INTL = "250788251302";
-
-const SOCIAL_LINKS = [
-  { label: "X", icon: Twitter },
-  { label: "LinkedIn", icon: Linkedin },
-  { label: "Instagram", icon: Instagram },
-];
+import {
+  CONTACT_EMAIL,
+  CONTACT_PHONE_DISPLAY,
+  CONTACT_WHATSAPP_URL,
+  WhatsAppIcon,
+  SOCIAL_LINKS,
+} from "@/lib/contact";
 
 const MONEY_PATH: RailStep[] = [
   { key: "donor", label: "A donor gives", icon: HeartHandshake, state: "done" },
@@ -191,29 +184,9 @@ export function Help() {
 
   return (
     <div className="min-h-dvh bg-canvas">
-      <header className="sticky top-0 z-40 border-b border-line/70 bg-canvas/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-4xl items-center gap-4 px-4 py-3.5 sm:px-6">
-          <Link to="/" aria-label="igaFund home">
-            <Logo />
-          </Link>
-          <div className="ml-auto">
-            {user ? (
-              <Button variant="secondary" size="sm" asChild>
-                <Link to={HOME_FOR_ROLE[user.role]}>
-                  <ArrowLeft aria-hidden />
-                  Back to dashboard
-                </Link>
-              </Button>
-            ) : (
-              <Button size="sm" asChild>
-                <Link to="/register">Get started</Link>
-              </Button>
-            )}
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
+      <main className="mx-auto max-w-360 px-4 py-10 sm:px-6 sm:py-14">
         <div className="max-w-2xl">
           <h1 className="font-display text-4xl tracking-tight sm:text-5xl">How igaFund works</h1>
           <p className="mt-4 text-lg leading-relaxed text-muted">
@@ -333,13 +306,13 @@ export function Help() {
               </a>
 
               <a
-                href={`https://wa.me/${CONTACT_PHONE_INTL}`}
+                href={CONTACT_WHATSAPP_URL}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-3 rounded-md border border-line bg-raised p-4 transition-colors hover:bg-sunk"
               >
                 <span className="grid size-10 shrink-0 place-items-center rounded-sm bg-forest-100 text-forest-700">
-                  <MessageCircle className="size-[18px]" aria-hidden />
+                  <WhatsAppIcon className="size-[18px]" aria-hidden />
                 </span>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wide text-faint">

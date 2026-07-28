@@ -19,6 +19,17 @@ import { Logo } from "@/components/ui/Logo";
 import { RoutingFlow, type RailStep } from "@/components/ui/RoutingRail";
 import { StudentCard } from "@/features/browse/StudentCard";
 import { SkeletonCard } from "@/components/ui/Feedback";
+import { useAuth } from "@/features/auth/AuthContext";
+import { PublicHeader } from "@/components/ui/PublicHeader";
+import { LanguageToggle } from "@/app/shell/LanguageToggle";
+import { ThemeToggle } from "@/app/shell/ThemeToggle";
+import {
+  CONTACT_EMAIL,
+  CONTACT_PHONE_DISPLAY,
+  CONTACT_WHATSAPP_URL,
+  WhatsAppIcon,
+  SOCIAL_LINKS,
+} from "@/lib/contact";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +48,7 @@ const MONEY_PATH: RailStep[] = [
 ];
 
 export function Landing() {
+  const { user } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -59,65 +71,11 @@ export function Landing() {
         Skip to main content
       </a>
 
-      <header className="sticky top-0 z-40 border-b border-line/70 bg-canvas/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3.5 sm:px-6">
-          <Link to="/" aria-label="igaFund home">
-            <Logo size="lg" />
-          </Link>
-
-          <nav className="ml-auto hidden items-center gap-7 md:flex" aria-label="Main">
-            <a href="#how" className="text-sm font-medium text-muted transition-colors hover:text-accent-ink">
-              How it works
-            </a>
-            <Link to="/students" className="text-sm font-medium text-muted transition-colors hover:text-accent-ink">
-              Students
-            </Link>
-            <Link to="/help" className="text-sm font-medium text-muted transition-colors hover:text-accent-ink">
-              Help
-            </Link>
-          </nav>
-
-          <div className="ml-auto flex items-center gap-2 md:ml-0">
-            <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-              <Link to="/login">Sign in</Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link to="/register">Get started</Link>
-            </Button>
-
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="iconSm" className="md:hidden" aria-label="Open menu">
-                  <Menu aria-hidden />
-                </Button>
-              </DialogTrigger>
-              <DialogContent size="sm">
-                <DialogHeader>
-                  <DialogTitle>Menu</DialogTitle>
-                </DialogHeader>
-                <nav className="flex flex-col gap-1 p-4 pt-0">
-                  <a href="#how" className="rounded-sm px-3 py-3 text-[0.9375rem] hover:bg-sunk">
-                    How it works
-                  </a>
-                  <Link to="/students" className="rounded-sm px-3 py-3 text-[0.9375rem] hover:bg-sunk">
-                    Browse students
-                  </Link>
-                  <Link to="/help" className="rounded-sm px-3 py-3 text-[0.9375rem] hover:bg-sunk">
-                    Help
-                  </Link>
-                  <Link to="/login" className="rounded-sm px-3 py-3 text-[0.9375rem] hover:bg-sunk">
-                    Sign in
-                  </Link>
-                </nav>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       <main id="main">
         <section className="grain relative overflow-hidden px-4 pb-16 pt-14 sm:px-6 sm:pb-20 sm:pt-20">
-          <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-360">
             <motion.div variants={staggerSlow} initial="hidden" animate="show" className="max-w-3xl">
               <motion.p
                 variants={fadeUp}
@@ -147,7 +105,7 @@ export function Landing() {
 
               <motion.div variants={fadeUp} className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" variant="fund" asChild>
-                  <Link to="/students">
+                  <Link to={user?.role === "donor" ? "/donor/browse" : "/students"}>
                     Find a student to fund
                     <ArrowRight aria-hidden />
                   </Link>
@@ -174,7 +132,7 @@ export function Landing() {
         </section>
 
         <section id="how" className="border-y border-line bg-surface px-4 py-16 sm:px-6 sm:py-20">
-          <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-360">
             <h2 className="max-w-2xl font-display text-3xl tracking-tight sm:text-4xl">
               Three things we can prove, not just promise
             </h2>
@@ -216,7 +174,7 @@ export function Landing() {
         </section>
 
         <section className="px-4 py-16 sm:px-6 sm:py-20">
-          <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-360">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <h2 className="font-display text-3xl tracking-tight sm:text-4xl">
@@ -266,17 +224,17 @@ export function Landing() {
           </div>
         </section>
 
-        <section className="px-4 pb-20 sm:px-6">
-          <div className="mx-auto max-w-6xl overflow-hidden rounded-2xl bg-forest-900 text-forest-100">
-            <div className="grain relative grid gap-10 p-8 sm:p-12 lg:grid-cols-2 lg:items-center lg:p-14">
-              <div>
+        <section className="px-4 pb-20 sm:px-6 overflow-hidden">
+          <div className="mx-auto max-w-360 overflow-hidden rounded-2xl bg-forest-900 text-forest-100">
+            <div className="grain relative grid gap-8 p-6 sm:p-10 lg:grid-cols-2 lg:items-center lg:p-14">
+              <div className="min-w-0">
                 <p className="text-sm font-medium uppercase tracking-[0.08em] text-forest-300">
                   Community ambassadors
                 </p>
-                <h2 className="mt-4 font-display text-3xl tracking-tight text-white sm:text-4xl">
+                <h2 className="mt-4 font-display text-2xl tracking-tight text-white sm:text-4xl break-words">
                   For students the internet hasn't reached yet
                 </h2>
-                <p className="mt-4 max-w-lg leading-relaxed text-forest-200">
+                <p className="mt-4 max-w-lg leading-relaxed text-forest-200 text-sm sm:text-base">
                   Ambassadors are former beneficiaries who enroll students in their own communities.
                   They capture a full profile offline, and it uploads itself the moment a signal
                   comes back — nothing is lost between the village and the server.
@@ -289,16 +247,16 @@ export function Landing() {
                 </Button>
               </div>
 
-              <dl className="grid grid-cols-2 gap-4">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                 {[
                   { value: "Offline", label: "Profiles captured without a connection" },
                   { value: "Auto-sync", label: "Queued drafts submit on reconnect" },
                   { value: "Own students", label: "Ambassadors see only who they enrolled" },
                   { value: "Full trail", label: "Every submission is ticketed" },
                 ].map((stat) => (
-                  <div key={stat.label} className="rounded-lg bg-forest-800/70 p-5">
-                    <dt className="font-display text-xl text-white">{stat.value}</dt>
-                    <dd className="mt-1.5 text-sm leading-snug text-forest-300">{stat.label}</dd>
+                  <div key={stat.label} className="rounded-lg bg-forest-800/70 p-4 sm:p-5">
+                    <dt className="font-display text-lg sm:text-xl text-white">{stat.value}</dt>
+                    <dd className="mt-1.5 text-xs sm:text-sm leading-snug text-forest-300">{stat.label}</dd>
                   </div>
                 ))}
               </dl>
@@ -308,7 +266,7 @@ export function Landing() {
       </main>
 
       <footer className="border-t border-line bg-surface px-4 py-10 sm:px-6">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-360 flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <Logo size="lg" />
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted">
@@ -316,24 +274,54 @@ export function Landing() {
               Piloting in Rwanda.
             </p>
           </div>
-          <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm" aria-label="Footer">
-            <Link to="/students" className="text-muted hover:text-accent-ink">
-              Browse students
-            </Link>
-            <Link to="/register" className="text-muted hover:text-accent-ink">
-              Apply for funding
-            </Link>
-            <Link to="/help" className="text-muted hover:text-accent-ink">
-              Help
-            </Link>
-            <Link to="/login" className="text-muted hover:text-accent-ink">
-              Sign in
-            </Link>
-          </nav>
+          <div className="flex flex-col gap-1.5 text-sm text-muted">
+            <p className="font-semibold text-ink">Contact us</p>
+            <p>
+              Email:{" "}
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-accent-ink hover:underline">
+                {CONTACT_EMAIL}
+              </a>
+            </p>
+            <p>
+              WhatsApp &amp; phone:{" "}
+              <a
+                href={CONTACT_WHATSAPP_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="text-accent-ink hover:underline"
+              >
+                {CONTACT_PHONE_DISPLAY}
+              </a>
+            </p>
+            <p>Location: Kigali, Rwanda</p>
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            <p className="text-sm font-semibold text-ink">Follow us</p>
+            <div className="flex flex-wrap gap-2.5">
+              <a
+                href={CONTACT_WHATSAPP_URL}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Chat with us on WhatsApp"
+                className="grid size-9 place-items-center rounded-full border border-line bg-raised text-muted transition-colors hover:bg-sunk hover:text-accent-ink"
+              >
+                <WhatsAppIcon className="size-4" aria-hidden />
+              </a>
+              {SOCIAL_LINKS.map((s) => (
+                <span
+                  key={s.label}
+                  title={`${s.label} — coming soon`}
+                  className="grid size-9 place-items-center rounded-full border border-line bg-raised text-faint"
+                >
+                  <s.icon className="size-4" aria-hidden />
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
-        <p className="mx-auto mt-8 max-w-6xl text-xs text-faint">
-          © {new Date().getFullYear()} igaFund. Contributions are recorded as routed to partner
-          institutions. No contribution is ever held in a personal account.
+        <p className="mx-auto mt-8 max-w-360 text-center text-xs text-faint">
+          © 2026 igaFund. Let's make an impact together.
         </p>
       </footer>
     </div>
