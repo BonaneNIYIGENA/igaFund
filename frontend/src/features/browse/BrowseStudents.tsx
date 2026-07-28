@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, SearchX, ShieldCheck } from "lucide-react";
 import { endpoints, type Profile } from "@/lib/api";
@@ -14,15 +14,30 @@ import { useAuth, HOME_FOR_ROLE } from "@/features/auth/AuthContext";
 
 const LEVELS = ["all", "S4", "S5", "S6", "Year 1", "Year 2", "Year 3", "Year 4", "TVET"];
 
-/** Public discovery. */
+/**
+ * Public discovery.
+ *
+ * Also serves /students/:id: the id in the URL opens a profile in the side
+ * panel over this same grid, so there is no separate full-page detail view
+ * to keep visually consistent with — it's this page, with the panel open.
+ */
 export function BrowseStudents() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { id } = useParams();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewing, setViewing] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [level, setLevel] = useState("all");
+
+  const viewing = id ? Number(id) : null;
+  function openProfile(profileId: number) {
+    navigate(`/students/${profileId}`);
+  }
+  function closeProfile() {
+    navigate("/students");
+  }
 
   async function load() {
     setLoading(true);
@@ -185,7 +200,7 @@ export function BrowseStudents() {
                 key={profile.id}
                 profile={profile}
                 to={`/students/${profile.id}`}
-                onOpen={setViewing}
+                onOpen={openProfile}
               />
               ))}
             </motion.div>
@@ -196,7 +211,7 @@ export function BrowseStudents() {
       <StudentPanel
         profileId={viewing}
         open={viewing !== null}
-        onOpenChange={(o) => !o && setViewing(null)}
+        onOpenChange={(o) => !o && closeProfile()}
         onFunded={load}
       />
     </div>
