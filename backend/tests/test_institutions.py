@@ -40,10 +40,36 @@ def test_list_institutions(client, app):
     client.post(
         "/api/institutions/",
         headers={"Authorization": f"Bearer {token}"},
-        json={"name": "Kigali Tech", "location": "Kigali"}
+        json={"name": "Kigali Tech", "location": "Kigali", "bank_reference": "BK-9988776655"}
     )
-    # The route /api/profiles/institutions still exists or /api/institutions/
-    # Let's test the new one
-    res = client.get("/api/institutions/")
+
+    assert client.get("/api/institutions/").status_code == 401
+
+    res = client.get("/api/institutions/", headers={"Authorization": f"Bearer {token}"})
     assert res.status_code == 200
-    assert len(res.get_json()["institutions"]) == 1
+    rows = res.get_json()["institutions"]
+    assert len(rows) == 1
+    assert rows[0]["applicants"] == 0
+    assert rows[0]["total_routed"] == 0
+
+
+def test_institution_detail_masks_bank_reference_from_non_admins(client, app):
+    """Donors see where money goes without seeing a reusable account number."""
+    admin = _admin_token(client, app)
+    created = client.post(
+        "/api/institutions/",
+        headers={"Authorization": f"Bearer {admin}"},
+        json={"name": "Kigali Tech", "location": "Kigali", "bank_reference": "BK-9988776655"}
+    ).get_json()["institution"]
+
+    as_admin = client.get(
+        f"/api/institutions/{created['id']}", headers={"Authorization": f"Bearer {admin}"}
+    ).get_json()["institution"]
+    assert as_admin["bank_reference"] == "BK-9988776655"
+
+    student = _register(client)
+    as_student = client.get(
+        f"/api/institutions/{created['id']}", headers={"Authorization": f"Bearer {student}"}
+    ).get_json()["institution"]
+    assert as_student["bank_reference"].endswith("6655")
+    assert "BK-99887" not in as_student["bank_reference"]
