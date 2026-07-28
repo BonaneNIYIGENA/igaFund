@@ -2,23 +2,68 @@
 import uuid
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
-from marshmallow import Schema, fields, validate, ValidationError
+from marshmallow import Schema, fields, validate, ValidationError, EXCLUDE, post_load
 
 from ...extensions import db
 from ...models import User, Role, StudentProfile, ProfileStatus, Contribution, Notification
 from ...common.decorators import role_required
+from ...common.validators import clean_text
+from ...common.storage import upload_photo
 
 from ..tickets.routes import create_process_ticket, generate_ticket_number
+
+PROOF_SIGNATURES = {
+    "pdf": [b"%PDF-"],
+    "png": [b"\x89PNG\r\n\x1a\n"],
+    "jpg": [b"\xff\xd8\xff"],
+    "jpeg": [b"\xff\xd8\xff"],
+}
 
 contributions_bp = Blueprint("contributions", __name__)
 
 
 class ContributeSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     profile_id = fields.Int(required=True)
     amount = fields.Float(required=True, validate=validate.Range(min=1000))
     message = fields.Str(load_default="")
     is_anonymous = fields.Bool(load_default=False)
-    proof_image_url = fields.Str(load_default="")
+    # FR4.3: evidence of the transfer is mandatory, not a nicety.
+    proof_image_url = fields.Str(required=True, validate=validate.Length(min=1))
+    proof_public_id = fields.Str(load_default="")
+
+    @post_load
+    def scrub(self, data, **kwargs):
+        data["message"] = clean_text(data.get("message", ""), 500)
+        return data
+
+
+class ProofUploadResponse(Schema):
+    url = fields.Str()
+    public_id = fields.Str()
+
+
+@contributions_bp.post("/proof")
+@role_required(Role.DONOR.value, Role.ADMIN.value)
+def upload_proof():
+    """Uploads the payment slip before the contribution itself is recorded."""
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"error": "Choose your payment slip to upload."}), 400
+
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in (file.filename or "") else ""
+    if ext not in {"pdf", "png", "jpg", "jpeg"}:
+        return jsonify({"error": "Upload a PDF, PNG or JPG of your transfer confirmation."}), 400
+
+    head = file.stream.read(8)
+    file.stream.seek(0)
+    if not any(head.startswith(sig) for sig in PROOF_SIGNATURES[ext]):
+        return jsonify({"error": "That file isn't a real PDF or image."}), 400
+
+    url = upload_photo(file, ext)
+    return jsonify({"url": url}), 201
 
 
 @contributions_bp.post("/")
@@ -52,7 +97,8 @@ def make_contribution():
         amount=data["amount"],
         message=data.get("message", ""),
         is_anonymous=data.get("is_anonymous", False),
-        proof_image_url=data.get("proof_image_url", ""),
+        proof_image_url=data["proof_image_url"],
+        proof_public_id=data.get("proof_public_id", ""),
         ticket_number=ticket_num,
         receipt_ref=receipt_ref,
         routed_to_institution=True,
@@ -108,12 +154,23 @@ def make_contribution():
     }), 201
 
 
+PUBLIC_CONTRIBUTION_FIELDS = ("id", "donor_name", "amount", "currency", "message", "created_at")
+
+
 @contributions_bp.get("/profile/<int:profile_id>")
+@jwt_required()
 def list_profile_contributions(profile_id):
-    """List public contributions and donor messages for a given profile."""
+    """Contributions and donor messages for a profile."""
     profile = db.session.get(StudentProfile, profile_id)
     if not profile:
         return jsonify({"error": "Profile not found."}), 404
+
+    uid, role = int(get_jwt_identity()), get_jwt().get("role")
+    privileged = (
+        role == Role.ADMIN.value
+        or profile.user_id == uid
+        or (profile.ambassador_id is not None and profile.ambassador_id == uid)
+    )
 
     contributions = (
         Contribution.query
@@ -122,7 +179,19 @@ def list_profile_contributions(profile_id):
         .all()
     )
 
-    return jsonify({"contributions": [c.to_dict() for c in contributions]}), 200
+    if privileged:
+        payload = [c.to_dict() for c in contributions]
+    else:
+        payload = []
+        for c in contributions:
+            full = c.to_dict()
+            row = {k: full[k] for k in PUBLIC_CONTRIBUTION_FIELDS}
+            # A donor always sees their own contribution in full detail.
+            if c.donor_id == uid:
+                row = full
+            payload.append(row)
+
+    return jsonify({"contributions": payload}), 200
 
 
 @contributions_bp.get("/my")
