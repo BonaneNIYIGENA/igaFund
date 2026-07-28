@@ -92,6 +92,20 @@ def validate_password(value):
         raise ValidationError("That password is too easy to guess. Choose something else.")
     if len(set(value)) < 4:
         raise ValidationError("That password repeats too few characters to be safe.")
+
+    # NFR1: composition rules — uppercase, lowercase, digit, special character.
+    missing = []
+    if not any(c.isupper() for c in value):
+        missing.append("an uppercase letter")
+    if not any(c.islower() for c in value):
+        missing.append("a lowercase letter")
+    if not any(c.isdigit() for c in value):
+        missing.append("a digit")
+    if not any(not c.isalnum() for c in value):
+        missing.append("a special character")
+    if missing:
+        raise ValidationError(f"Password must include {', '.join(missing)}.")
+
     return value
 
 

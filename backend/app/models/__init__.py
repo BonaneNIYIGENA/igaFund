@@ -6,6 +6,7 @@ from .contribution import Contribution
 from .notification import Notification
 from .audit_log import AuditLog
 from .ticket import Ticket
+from .watchlist import WatchedProfile
 
 __all__ = [
     "User", "Role",
@@ -16,4 +17,5 @@ __all__ = [
     "Notification",
     "AuditLog",
     "Ticket",
+    "WatchedProfile",
 ]

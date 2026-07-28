@@ -25,6 +25,12 @@ class BaseConfig:
     CLOUDINARY_API_KEY = os.environ.get("CLOUDINARY_API_KEY", "")
     CLOUDINARY_API_SECRET = os.environ.get("CLOUDINARY_API_SECRET", "")
 
+    # SMTP configuration for transactional emails (Gmail, SendGrid, etc.)
+    MAIL_SERVER = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+    MAIL_PORT = int(os.environ.get("MAIL_PORT", "587"))
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
+
 
 class DevConfig(BaseConfig):
     DEBUG = True

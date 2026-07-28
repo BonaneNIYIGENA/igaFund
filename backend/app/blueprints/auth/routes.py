@@ -4,9 +4,9 @@ from flask_jwt_extended import (
     create_access_token, create_refresh_token,
     jwt_required, get_jwt_identity, get_jwt,
 )
-from marshmallow import ValidationError
+from marshmallow import Schema, fields, EXCLUDE, ValidationError
 from ...extensions import db
-from ...models import User
+from ...models import User, AuditLog
 from ...common.mailer import send_email
 from ...common.tokens import make_reset_token, read_reset_token
 from ...common.security import rate_limit, clear_rate_limit
@@ -14,6 +14,7 @@ from .schemas import (
     RegisterSchema, LoginSchema,
     PasswordResetRequestSchema, PasswordResetConfirmSchema,
 )
+from ...common.email_templates import welcome_student, welcome_donor, password_reset as password_reset_tpl
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -39,6 +40,22 @@ def register():
     user.set_password(data["password"])
     db.session.add(user)
     db.session.commit()
+
+    db.session.add(AuditLog(
+        actor_id=user.id,
+        action="user_registered",
+        target_type="user",
+        target_id=user.id,
+        note=f"User registered with role {user.role}",
+        ip_address=request.remote_addr,
+    ))
+    db.session.commit()
+
+    # Welcome email — logged to console if SMTP is not configured.
+    tpl = welcome_student if data["role"] == "student" else welcome_donor
+    subj, body = tpl(user.full_name.split(" ")[0])
+    send_email(user.email, subj, body)
+
     return jsonify({"user": user.to_dict(), **_tokens(user)}), 201
 
 
@@ -51,9 +68,42 @@ def login():
         return jsonify({"errors": err.messages}), 400
     user = User.query.filter_by(email=data["email"]).first()
     if not user or not user.check_password(data["password"]):
+        if user:
+            db.session.add(AuditLog(
+                actor_id=user.id,
+                action="login_failed",
+                target_type="user",
+                target_id=user.id,
+                note="Invalid password attempt",
+                ip_address=request.remote_addr,
+            ))
+            db.session.commit()
         # One message for both cases so the response cannot enumerate accounts.
         return jsonify({"error": "That email and password don't match."}), 401
+
+    if user.is_suspended:
+        db.session.add(AuditLog(
+            actor_id=user.id,
+            action="login_blocked_inactive",
+            target_type="user",
+            target_id=user.id,
+            note="Inactive user attempted login",
+            ip_address=request.remote_addr,
+        ))
+        db.session.commit()
+        return jsonify({"error": "Your account has been inactive for so long. Please contact administration for reactivation."}), 403
+
     clear_rate_limit("login")
+
+    db.session.add(AuditLog(
+        actor_id=user.id,
+        action="login_success",
+        target_type="user",
+        target_id=user.id,
+        note="User logged in successfully",
+        ip_address=request.remote_addr,
+    ))
+    db.session.commit()
     return jsonify({"user": user.to_dict(), **_tokens(user)}), 200
 
 
@@ -71,6 +121,85 @@ def me():
     return jsonify({"user": user.to_dict()}), 200
 
 
+class UpdateSettingsSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+    full_name = fields.Str(load_default=None)
+    email = fields.Str(load_default=None)
+    current_password = fields.Str(load_default=None)
+    new_password = fields.Str(load_default=None)
+    notify_email = fields.Bool(load_default=None)
+
+
+@auth_bp.put("/me")
+@jwt_required()
+def update_settings():
+    """Update profile settings (full_name, email, password) with audit logging."""
+    from ...common.validators import validate_name, validate_email, validate_password
+
+    user = db.session.get(User, int(get_jwt_identity()))
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+
+    try:
+        data = UpdateSettingsSchema().load(request.get_json() or {})
+    except ValidationError as err:
+        return jsonify({"errors": err.messages}), 400
+
+    changes = []
+
+    if data.get("full_name"):
+        try:
+            new_name = validate_name(data["full_name"], "full name")
+            if new_name != user.full_name:
+                user.full_name = new_name
+                changes.append("full name")
+        except ValidationError as e:
+            return jsonify({"errors": {"full_name": e.messages}}), 400
+
+    if data.get("email"):
+        try:
+            new_email = validate_email(data["email"])
+            if new_email != user.email:
+                if User.query.filter(User.email == new_email, User.id != user.id).first():
+                    return jsonify({"errors": {"email": ["An account already uses that email."]}}), 409
+                user.email = new_email
+                changes.append("email address")
+        except ValidationError as e:
+            return jsonify({"errors": {"email": e.messages}}), 400
+
+    if data.get("new_password"):
+        current_pass = data.get("current_password") or ""
+        if not current_pass or not user.check_password(current_pass):
+            return jsonify({"errors": {"current_password": ["Current password is incorrect."]}}), 400
+        try:
+            validate_password(data["new_password"])
+            user.set_password(data["new_password"])
+            changes.append("password")
+        except ValidationError as e:
+            return jsonify({"errors": {"new_password": e.messages}}), 400
+
+    if data.get("notify_email") is not None and data["notify_email"] != user.notify_email:
+        user.notify_email = data["notify_email"]
+        changes.append("email notification preference")
+
+    if not changes:
+        return jsonify({"user": user.to_dict(), "message": "No changes made."}), 200
+
+    db.session.add(AuditLog(
+        actor_id=user.id,
+        action="user_settings_updated",
+        target_type="user",
+        target_id=user.id,
+        note=f"Updated profile settings ({', '.join(changes)})",
+        ip_address=request.remote_addr,
+    ))
+    db.session.commit()
+
+    return jsonify({"user": user.to_dict(), "message": "Settings updated successfully."}), 200
+
+
 @auth_bp.post("/password-reset/request")
 @rate_limit("reset", limit=5, window_seconds=900)
 def password_reset_request():
@@ -81,7 +210,8 @@ def password_reset_request():
     user = User.query.filter_by(email=data["email"]).first()
     if user:
         token = make_reset_token(user.id)
-        send_email(user.email, "Reset your igaFund password", f"Reset token: {token}")
+        subj, body = password_reset_tpl(user.full_name.split(" ")[0], token)
+        send_email(user.email, subj, body)
     # never reveal whether the email exists
     return jsonify({"message": "If that email exists, a reset link has been sent."}), 200
 

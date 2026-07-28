@@ -72,3 +72,27 @@ def test_password_reset_bad_token(client):
 def test_password_reset_unknown_email_still_200(client):
     res = client.post("/api/auth/password-reset/request", json={"email": "nobody@example.com"})
     assert res.status_code == 200
+
+
+def test_password_composition_rules(client):
+    # Missing uppercase
+    assert _register(client, password="passw0rd!").status_code == 400
+    # Missing digit
+    assert _register(client, password="Password!").status_code == 400
+    # Missing special character
+    assert _register(client, password="Passw0rd123").status_code == 400
+
+
+def test_suspended_user_cannot_login(client, app):
+    _register(client)
+    with app.app_context():
+        from app.extensions import db
+        from app.models import User
+        u = User.query.filter_by(email="s@example.com").first()
+        u.is_suspended = True
+        db.session.commit()
+
+    res = client.post("/api/auth/login", json={"email": "s@example.com", "password": "Passw0rd!"})
+    assert res.status_code == 403
+    assert "inactive" in res.get_json()["error"].lower()
+

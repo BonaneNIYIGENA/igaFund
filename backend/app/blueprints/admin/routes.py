@@ -12,6 +12,8 @@ from ...models import (
     AuditLog, Notification, Document, DocType,
 )
 from ...common.decorators import role_required
+from ...common.mailer import send_email
+from ...common.email_templates import profile_approved as tpl_approved, profile_rejected as tpl_rejected, ambassador_promoted as tpl_promoted
 
 from ..tickets.routes import create_process_ticket
 
@@ -106,6 +108,7 @@ def approve_profile(profile_id):
         target_type="student_profile",
         target_id=profile.id,
         note=data["note"],
+        ip_address=request.remote_addr,
     ))
     db.session.add(Notification(
         user_id=profile.user_id,
@@ -129,6 +132,10 @@ def approve_profile(profile_id):
     )
 
     db.session.commit()
+
+    if profile.user and profile.user.email and profile.user.notify_email:
+        subj, body = tpl_approved(profile.user.full_name.split(" ")[0], data["note"])
+        send_email(profile.user.email, subj, body)
 
     return jsonify({"profile": profile.to_dict()}), 200
 
@@ -159,6 +166,7 @@ def reject_profile(profile_id):
         target_type="student_profile",
         target_id=profile.id,
         note=data["note"],
+        ip_address=request.remote_addr,
     ))
     db.session.add(Notification(
         user_id=profile.user_id,
@@ -167,6 +175,10 @@ def reject_profile(profile_id):
         link="/student/profile",
     ))
     db.session.commit()
+
+    if profile.user and profile.user.email and profile.user.notify_email:
+        subj, body = tpl_rejected(profile.user.full_name.split(" ")[0], data["note"])
+        send_email(profile.user.email, subj, body)
 
     return jsonify({"profile": profile.to_dict()}), 200
 
@@ -186,6 +198,7 @@ def promote_ambassador(user_id):
         target_type="user",
         target_id=user.id,
         note=f"Promoted student {user.full_name} to Community Ambassador",
+        ip_address=request.remote_addr,
     ))
     
     ticket = create_process_ticket(
@@ -195,7 +208,18 @@ def promote_ambassador(user_id):
         summary=f"Congratulations {user.full_name}! Your student profile has been promoted to a Community Ambassador account to assist in onboarding underprivileged students in your area.",
         details={"role": "ambassador", "promoted_at": datetime.now(timezone.utc).isoformat()}
     )
+    db.session.add(Notification(
+        user_id=user.id,
+        type="success",
+        message="Congratulations! You have been promoted to Community Ambassador.",
+        link="/ambassador",
+    ))
     db.session.commit()
+
+    if user.email and user.notify_email:
+        subj, body = tpl_promoted(user.full_name.split(" ")[0])
+        send_email(user.email, subj, body)
+
     return jsonify({"user": user.to_dict(), "ticket": ticket.to_dict()}), 200
 
 
@@ -300,3 +324,109 @@ def export_pdf():
         download_name=f"igaFund_Analytics_{datetime.now().strftime('%Y%m%d')}.pdf",
         mimetype="application/pdf"
     )
+
+
+class ChangeRoleSchema(Schema):
+    role = fields.Str(required=True, validate=validate.OneOf([r.value for r in Role]))
+
+
+class SuspendUserSchema(Schema):
+    note = fields.Str(required=True, validate=validate.Length(min=5))
+
+
+@admin_bp.get("/users")
+@role_required(Role.ADMIN.value)
+def list_users():
+    """List all registered users with optional role and search filtering."""
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    role_filter = request.args.get("role")
+    search = request.args.get("search", "").strip()
+
+    q = User.query
+    if role_filter and role_filter != "all":
+        q = q.filter_by(role=role_filter)
+    if search:
+        q = q.filter(
+            (User.full_name.ilike(f"%{search}%")) | (User.email.ilike(f"%{search}%"))
+        )
+
+    pagination = q.order_by(User.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+
+    return jsonify({
+        "users": [u.to_dict() for u in pagination.items],
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "current_page": page,
+    }), 200
+
+
+@admin_bp.put("/users/<int:user_id>/role")
+@role_required(Role.ADMIN.value)
+def change_user_role(user_id):
+    """Change a user's role (BR8 enforcement)."""
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+
+    try:
+        data = ChangeRoleSchema().load(request.get_json() or {})
+    except ValidationError as err:
+        return jsonify({"errors": err.messages}), 400
+
+    old_role = user.role
+    user.role = data["role"]
+
+    db.session.add(AuditLog(
+        actor_id=int(get_jwt_identity()),
+        action="user_role_changed",
+        target_type="user",
+        target_id=user.id,
+        note=f"Changed role of {user.full_name} from {old_role} to {user.role}",
+        ip_address=request.remote_addr,
+    ))
+    db.session.commit()
+
+    return jsonify({"user": user.to_dict()}), 200
+
+
+@admin_bp.post("/users/<int:user_id>/suspend")
+@role_required(Role.ADMIN.value)
+def toggle_suspend_user(user_id):
+    """Suspend or unsuspend a user account (BR10 compliance)."""
+    admin_id = int(get_jwt_identity())
+    if admin_id == user_id:
+        return jsonify({"error": "You cannot suspend your own admin account."}), 400
+
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+
+    try:
+        data = SuspendUserSchema().load(request.get_json() or {})
+    except ValidationError as err:
+        return jsonify({"errors": err.messages}), 400
+
+    user.is_suspended = not user.is_suspended
+    action_str = "user_suspended" if user.is_suspended else "user_unsuspended"
+
+    db.session.add(AuditLog(
+        actor_id=admin_id,
+        action=action_str,
+        target_type="user",
+        target_id=user.id,
+        note=data["note"],
+        ip_address=request.remote_addr,
+    ))
+    db.session.add(Notification(
+        user_id=user.id,
+        type="warning" if user.is_suspended else "info",
+        message=f"Your account has been {'suspended' if user.is_suspended else 'reactivated'}. Reason: {data['note']}",
+        link="/help",
+    ))
+    db.session.commit()
+
+    return jsonify({"user": user.to_dict()}), 200
+

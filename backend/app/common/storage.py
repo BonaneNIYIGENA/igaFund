@@ -15,8 +15,17 @@ except ImportError:
     CLOUDINARY_AVAILABLE = False
 
 
+# Organised folder structure inside Cloudinary.
+DOC_TYPE_FOLDERS = {
+    "id_card": "igafund/documents/ids",
+    "transcript": "igafund/documents/transcripts",
+    "recommendation": "igafund/documents/recommendations",
+    "guardian_consent": "igafund/documents/guardian-consent",
+}
 DOCUMENT_FOLDER = "igafund/documents"
 PHOTO_FOLDER = "igafund/photos"
+RECEIPT_FOLDER = "igafund/receipts"
+LOGO_FOLDER = "igafund/logo"
 SIGNED_URL_TTL = 300
 
 
@@ -46,13 +55,14 @@ def _local_dir():
     return path
 
 
-def upload_document(file_storage, ext, profile_id):
-    """Stores a verification document."""
+def upload_document(file_storage, ext, profile_id, doc_type=None):
+    """Stores a verification document in an organised subfolder."""
     if is_cloud_enabled():
         _configure()
+        folder = DOC_TYPE_FOLDERS.get(doc_type, DOCUMENT_FOLDER)
         result = cloudinary.uploader.upload(
             file_storage,
-            folder=f"{DOCUMENT_FOLDER}/{profile_id}",
+            folder=f"{folder}/{profile_id}",
             resource_type="raw" if ext == "pdf" else "image",
             type="authenticated",
             public_id=uuid.uuid4().hex,
@@ -81,6 +91,25 @@ def upload_photo(file_storage, ext):
         return result["secure_url"]
 
     filename = f"photo-{uuid.uuid4().hex}.{ext}"
+    path = os.path.join(_local_dir(), filename)
+    file_storage.save(path)
+    return path
+
+
+def upload_receipt(file_storage, ext):
+    """Stores a payment proof image in the receipts folder."""
+    if is_cloud_enabled():
+        _configure()
+        result = cloudinary.uploader.upload(
+            file_storage,
+            folder=RECEIPT_FOLDER,
+            resource_type="raw" if ext == "pdf" else "image",
+            public_id=uuid.uuid4().hex,
+            overwrite=False,
+        )
+        return result["secure_url"]
+
+    filename = f"receipt-{uuid.uuid4().hex}.{ext}"
     path = os.path.join(_local_dir(), filename)
     file_storage.save(path)
     return path
