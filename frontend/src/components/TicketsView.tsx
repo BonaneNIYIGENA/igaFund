@@ -1,100 +1,111 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Ticket, CheckCircle2, Award, DollarSign, Clock, FileText } from "lucide-react";
-import { api, TicketItem } from "../lib/api";
-import { fadeUp, stagger } from "../lib/motion";
+import { Receipt, ShieldCheck, UserPlus, Building2, type LucideIcon } from "lucide-react";
+import { endpoints, type TicketItem } from "@/lib/api";
+import { formatDateTime } from "@/lib/format";
+import { Card, CardContent } from "@/components/ui/Card";
+import { EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedback";
+import { Badge } from "@/components/ui/Badge";
 
-export function TicketsView() {
+const PROCESS: Record<string, { label: string; icon: LucideIcon }> = {
+  profile_approved: { label: "Verification", icon: ShieldCheck },
+  profile_submitted: { label: "Submission", icon: Receipt },
+  ambassador_promoted: { label: "Promotion", icon: UserPlus },
+  contribution_funded: { label: "Payment sent", icon: Building2 },
+  funding_received: { label: "Funding received", icon: Receipt },
+};
+
+/** Process tickets — the official, numbered record of each completed step. */
+export function TicketsView({ emptyHint }: { emptyHint?: string }) {
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  async function load() {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await endpoints.tickets();
+      setTickets(res.tickets ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "We couldn't load your tickets.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    api("/tickets/")
-      .then((d) => setTickets(d.tickets ?? []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    load();
   }, []);
+
+  if (error) return <ErrorState description={error} onRetry={load} />;
 
   if (loading) {
     return (
-      <div className="empty-state">
-        <div className="btn__spinner" style={{ width: 24, height: 24, borderColor: "var(--primary)", borderTopColor: "transparent", margin: "0 auto" }} />
+      <div className="space-y-3">
+        {Array.from({ length: 3 }, (_, i) => (
+          <Skeleton key={i} className="h-28 w-full rounded-lg" />
+        ))}
       </div>
     );
   }
 
   if (tickets.length === 0) {
     return (
-      <div className="card" style={{ textAlign: "center", padding: "var(--space-6)" }}>
-        <Ticket size={32} style={{ color: "var(--text-subtle)", marginBottom: "var(--space-2)" }} />
-        <h3>No Process Tickets Issued Yet</h3>
-        <p style={{ color: "var(--text-subtle)" }}>
-          Official tickets are generated automatically when a profile is submitted, approved, promoted, or funded.
-        </p>
-      </div>
+      <EmptyState
+        icon={Receipt}
+        title="No tickets yet"
+        description={
+          emptyHint ??
+          "Every completed step — verification, funding, promotion — issues a numbered ticket. They'll collect here."
+        }
+      />
     );
   }
 
   return (
-    <motion.div variants={stagger} initial="hidden" animate="show" style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-      {tickets.map((t) => {
-        let Icon = Ticket;
-        let badgeColor = "var(--primary)";
-        if (t.process_type === "profile_approved") {
-          Icon = CheckCircle2;
-          badgeColor = "var(--primary)";
-        } else if (t.process_type === "ambassador_promoted") {
-          Icon = Award;
-          badgeColor = "var(--amber)";
-        } else if (t.process_type === "contribution_funded" || t.process_type === "funding_received") {
-          Icon = DollarSign;
-          badgeColor = "var(--pine)";
-        }
-
+    <ul className="space-y-3">
+      {tickets.map((ticket) => {
+        const meta = PROCESS[ticket.process_type] ?? { label: "Record", icon: Receipt };
+        const Icon = meta.icon;
         return (
-          <motion.div key={t.id} className="card" variants={fadeUp} style={{ borderLeft: `4px solid ${badgeColor}` }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "var(--space-2)", marginBottom: "var(--space-2)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--surface-sunken)", display: "flex", alignItems: "center", justifyContent: "center", color: badgeColor }}>
-                  <Icon size={18} />
-                </div>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: "var(--step-0)", fontWeight: 600 }}>{t.title}</h4>
-                  <span style={{ fontFamily: "monospace", fontSize: "0.8rem", color: "var(--text-subtle)", background: "var(--surface-sunken)", padding: "2px 6px", borderRadius: 4 }}>
-                    {t.ticket_number}
+          <li key={ticket.id}>
+            <Card>
+              <CardContent className="p-5 pt-5 sm:p-5 sm:pt-5">
+                <div className="flex gap-4">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-md bg-forest-50 text-forest-700">
+                    <Icon className="size-5" aria-hidden />
                   </span>
-                </div>
-              </div>
-              <span style={{ fontSize: "var(--step--2)", color: "var(--text-subtle)", display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                <Clock size={12} /> {t.created_at ? new Date(t.created_at).toLocaleString() : ""}
-              </span>
-            </div>
 
-            <p style={{ margin: "var(--space-2) 0", color: "var(--text-main)", fontSize: "var(--step--1)" }}>
-              {t.summary}
-            </p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <h3 className="font-semibold leading-snug text-forest-900">{ticket.title}</h3>
+                      <Badge tone="forest">{meta.label}</Badge>
+                    </div>
 
-            {t.details && Object.keys(t.details).length > 0 && (
-              <div style={{ background: "var(--surface-sunken)", padding: "var(--space-3)", borderRadius: 6, fontSize: "var(--step--1)", marginTop: "var(--space-3)" }}>
-                <div style={{ fontWeight: 600, marginBottom: "var(--space-1)", fontSize: "0.8rem", textTransform: "uppercase", color: "var(--text-subtle)" }}>
-                  Official Ticket Verification Details:
+                    <p className="mt-1.5 text-sm leading-relaxed text-muted">{ticket.summary}</p>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
+                      <span className="figure text-sm font-semibold text-forest-700">
+                        {ticket.ticket_number}
+                      </span>
+                      <span className="text-xs text-faint">
+                        {formatDateTime(ticket.created_at)}
+                      </span>
+                    </div>
+
+                    {ticket.details?.bank_reference && (
+                      <p className="mt-2 text-xs text-muted">
+                        Institution reference:{" "}
+                        <span className="figure">{ticket.details.bank_reference}</span>
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "var(--space-2)" }}>
-                  {Object.entries(t.details).map(([k, v]) => {
-                    if (!v) return null;
-                    return (
-                      <div key={k}>
-                        <span style={{ color: "var(--text-subtle)", textTransform: "capitalize" }}>{k.replace(/_/g, " ")}: </span>
-                        <strong style={{ color: "var(--text-main)" }}>{String(v)}</strong>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </motion.div>
+              </CardContent>
+            </Card>
+          </li>
         );
       })}
-    </motion.div>
+    </ul>
   );
 }
