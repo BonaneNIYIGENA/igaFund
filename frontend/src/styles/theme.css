@@ -96,6 +96,41 @@
   --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
+/*
+  Dark mode overrides the semantic tokens only — the brand ramp (forest,
+  amber, clay, sage) stays fixed so accent colors and always-dark brand
+  panels (Card tone="ink", the auth hero) look identical in both themes.
+  The toggle sets data-theme on <html>; ThemeProvider picks the initial
+  value from localStorage, falling back to the OS preference.
+*/
+:root[data-theme="dark"] {
+  --color-canvas: #0e1613;
+  --color-surface: #16211d;
+  --color-sunk: #1b2622;
+  --color-raised: #1c2925;
+
+  --color-ink: #eaf3ee;
+  --color-body: #c9d9d0;
+  --color-muted: #8fa69a;
+  --color-faint: #6c8579;
+  --color-line: #2a3833;
+  --color-line-strong: #3a4a43;
+
+  --color-success-soft: #17342a;
+  --color-warning-soft: #3a2c14;
+  --color-danger-soft: #3a2320;
+  --color-info-soft: #16261f;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px -6px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 18px 40px -12px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 32px 64px -16px rgba(0, 0, 0, 0.6), 0 8px 16px rgba(0, 0, 0, 0.35);
+  --shadow-lift: 0 12px 28px -8px rgba(0, 0, 0, 0.5);
+
+  color-scheme: dark;
+}
+
 /* ── base ───────────────────────────────────────────────── */
 
 @layer base {
