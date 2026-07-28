@@ -14,6 +14,7 @@ class RegisterSchema(Schema):
     full_name = fields.Str(required=True)
     password = fields.Str(required=True, load_only=True)
     role = fields.Str(required=True)
+    date_of_birth = fields.Date(load_default=None)
 
     @validates("email")
     def check_email(self, value, **kwargs):

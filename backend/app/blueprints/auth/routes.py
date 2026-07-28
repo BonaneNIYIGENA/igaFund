@@ -34,6 +34,14 @@ def register():
     db.session.add(user)
     db.session.commit()
 
+    # If student, create initial profile with DOB
+    if user.role == "student":
+        from ...models import StudentProfile
+        dob = data.get("date_of_birth")
+        profile = StudentProfile(user_id=user.id, date_of_birth=dob)
+        db.session.add(profile)
+        db.session.commit()
+
     db.session.add(AuditLog(
         actor_id=user.id,
         action="user_registered",
@@ -173,6 +181,11 @@ def update_settings():
         except ValidationError as e:
             return jsonify({"errors": {"email": e.messages}}), 400
 
+    if data.get("current_password") and not data.get("new_password"):
+        if not user.check_password(data["current_password"]):
+            return jsonify({"errors": {"current_password": ["Current password is incorrect."]}}), 400
+        return jsonify({"valid": True, "message": "Password verified successfully."}), 200
+
     if data.get("new_password"):
         current_pass = data.get("current_password") or ""
         if not current_pass or not user.check_password(current_pass):
@@ -204,6 +217,19 @@ def update_settings():
     return jsonify({"user": user.to_dict(), "message": "Settings updated successfully."}), 200
 
 
+@auth_bp.post("/verify-password")
+@jwt_required()
+def verify_password():
+    user = db.session.get(User, int(get_jwt_identity()))
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+    data = request.get_json() or {}
+    password = data.get("password", "")
+    if not password or not user.check_password(password):
+        return jsonify({"errors": {"current_password": ["Current password is incorrect."]}}), 400
+    return jsonify({"valid": True, "message": "Password verified successfully."}), 200
+
+
 @auth_bp.post("/password-reset/request")
 @rate_limit("reset", limit=5, window_seconds=900)
 def password_reset_request():
@@ -212,12 +238,15 @@ def password_reset_request():
     except ValidationError as err:
         return jsonify({"errors": err.messages}), 400
     user = User.query.filter_by(email=data["email"]).first()
-    if user:
-        token = make_reset_token(user.id)
-        subj, body = password_reset_tpl(user.full_name.split(" ")[0], token)
-        send_email(user.email, subj, body)
-    # never reveal whether the email exists
-    return jsonify({"message": "If that email exists, a reset link has been sent."}), 200
+    if not user:
+        return jsonify({
+            "error": "No account was found with that email.",
+            "code": "account_not_found",
+        }), 404
+    token = make_reset_token(user.id)
+    subj, body = password_reset_tpl(user.full_name.split(" ")[0], token)
+    send_email(user.email, subj, body)
+    return jsonify({"message": "A password reset link has been sent to that email."}), 200
 
 
 @auth_bp.post("/password-reset/confirm")

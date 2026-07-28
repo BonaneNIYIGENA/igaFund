@@ -69,9 +69,10 @@ def test_password_reset_bad_token(client):
     assert res.status_code == 400
 
 
-def test_password_reset_unknown_email_still_200(client):
+def test_password_reset_unknown_email_reports_not_found(client):
     res = client.post("/api/auth/password-reset/request", json={"email": "nobody@example.com"})
-    assert res.status_code == 200
+    assert res.status_code == 404
+    assert res.get_json()["code"] == "account_not_found"
 
 
 def test_password_composition_rules(client):

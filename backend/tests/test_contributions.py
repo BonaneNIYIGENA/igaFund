@@ -15,10 +15,12 @@ def _setup_approved_profile(client):
     })
     token = res.get_json()["access"]
 
-    res = client.post("/api/profiles/", json={
+    # Registration already created a draft profile; fill it in via PUT.
+    mine = client.get("/api/profiles/", headers={"Authorization": f"Bearer {token}"})
+    pid = mine.get_json()["profiles"][0]["id"]
+    client.put(f"/api/profiles/{pid}", json={
         "bio": "Studying hard", "funding_goal": 500000, "institution_id": inst.id, "academic_level": "S6"
     }, headers={"Authorization": f"Bearer {token}"})
-    pid = res.get_json()["profile"]["id"]
 
     # Admin approve profile
     admin_res = client.post("/api/auth/register", json={

@@ -25,9 +25,14 @@ def _auth(client, email="student@test.com"):
 
 
 def _create_profile(client, token, **overrides):
+    """Registration auto-creates a draft profile (with the student's DOB), so
+    completing it is a PUT against that existing row, not a POST — mirrors
+    what the frontend actually does now that `profile` is never null."""
     data = {"bio": "I love learning.", "academic_level": "S4", "funding_goal": 500000}
     data.update(overrides)
-    return client.post("/api/profiles/", json=data, headers={"Authorization": f"Bearer {token}"})
+    mine = client.get("/api/profiles/", headers={"Authorization": f"Bearer {token}"})
+    pid = mine.get_json()["profiles"][0]["id"]
+    return client.put(f"/api/profiles/{pid}", json=data, headers={"Authorization": f"Bearer {token}"})
 
 
 # ── Profile CRUD ─────────────────────────────────────────
@@ -36,15 +41,20 @@ def test_create_profile(client):
     _register_student(client)
     token = _auth(client)
     res = _create_profile(client, token)
-    assert res.status_code == 201
+    assert res.status_code == 200
     assert res.get_json()["profile"]["status"] == "draft"
 
 
 def test_duplicate_profile_rejected(client):
     _register_student(client)
     token = _auth(client)
-    _create_profile(client, token)
-    res = _create_profile(client, token)
+    # Registration already created a draft profile; a second POST must still
+    # be rejected — one profile per student is an invariant, not just a UX default.
+    res = client.post(
+        "/api/profiles/",
+        json={"bio": "I love learning.", "academic_level": "S4", "funding_goal": 500000},
+        headers={"Authorization": f"Bearer {token}"},
+    )
     assert res.status_code == 409
 
 

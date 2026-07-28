@@ -126,15 +126,17 @@ def ambassador_promoted(name):
 
 
 def password_reset(name, token):
+    import os
+    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5173").rstrip("/")
+    reset_url = f"{frontend_url}/reset-password?token={token}"
     subject = "Reset your igaFund password"
     body = (
         f"{_header()}"
         f"Hi {name},\n\n"
         "We received a request to reset your password.\n\n"
-        f"Your reset token: {token}\n\n"
-        "Copy this token into the password reset page to set a new password.\n"
-        "This token expires in 30 minutes.\n\n"
-        "If you didn't request this, you can safely ignore this email.\n"
+        "Click the link below to set your new password:\n"
+        f"{reset_url}\n\n"
+        "This link expires in 30 minutes. If you didn't request this, you can safely ignore this email.\n"
         f"{_footer()}"
     )
     return subject, body

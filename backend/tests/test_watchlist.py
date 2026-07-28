@@ -16,10 +16,11 @@ def _approved_profile(client):
     db.session.commit()
 
     token = _register(client, "student_wl@example.com", "student")
-    res = client.post("/api/profiles/", json={
+    mine = client.get("/api/profiles/", headers={"Authorization": f"Bearer {token}"})
+    pid = mine.get_json()["profiles"][0]["id"]
+    client.put(f"/api/profiles/{pid}", json={
         "bio": "Studying hard", "funding_goal": 500000, "institution_id": inst.id, "academic_level": "S6",
     }, headers={"Authorization": f"Bearer {token}"})
-    pid = res.get_json()["profile"]["id"]
 
     profile = db.session.get(StudentProfile, pid)
     profile.status = ProfileStatus.APPROVED.value
@@ -52,10 +53,11 @@ def test_cannot_follow_an_unverified_profile(client):
     inst = Institution(name="Another School", location="Kigali", type="secondary")
     db.session.add(inst)
     db.session.commit()
-    created = client.post("/api/profiles/", json={
+    mine = client.get("/api/profiles/", headers={"Authorization": f"Bearer {token}"})
+    pid = mine.get_json()["profiles"][0]["id"]
+    client.put(f"/api/profiles/{pid}", json={
         "bio": "Studying hard", "funding_goal": 400000, "institution_id": inst.id, "academic_level": "S5",
     }, headers={"Authorization": f"Bearer {token}"})
-    pid = created.get_json()["profile"]["id"]
 
     donor = _register(client, "donor_wl2@example.com", "donor")
     res = client.post(f"/api/profiles/{pid}/watch", headers={"Authorization": f"Bearer {donor}"})
