@@ -5,10 +5,12 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from marshmallow import Schema, fields, validate, ValidationError, EXCLUDE, post_load
 
 from ...extensions import db
-from ...models import User, Role, StudentProfile, ProfileStatus, Contribution, Notification
+from ...models import User, Role, StudentProfile, ProfileStatus, Contribution, Notification, AuditLog
 from ...common.decorators import role_required
 from ...common.validators import clean_text
-from ...common.storage import upload_photo
+from ...common.storage import upload_receipt
+from ...common.mailer import send_email
+from ...common.email_templates import funding_received as tpl_funding_received, contribution_confirmation as tpl_contribution_confirmation
 
 from ..tickets.routes import create_process_ticket, generate_ticket_number
 
@@ -62,7 +64,7 @@ def upload_proof():
     if not any(head.startswith(sig) for sig in PROOF_SIGNATURES[ext]):
         return jsonify({"error": "That file isn't a real PDF or image."}), 400
 
-    url = upload_photo(file, ext)
+    url = upload_receipt(file, ext)
     return jsonify({"url": url}), 201
 
 
@@ -115,7 +117,23 @@ def make_contribution():
         link="/student",
     ))
 
+    # Notify donor
+    db.session.add(Notification(
+        user_id=donor_id,
+        type="success",
+        message=f"Your contribution of {data['amount']:,.0f} RWF has been recorded!",
+        link="/donor/receipts",
+    ))
+
     db.session.add(contribution)
+    db.session.add(AuditLog(
+        actor_id=donor_id,
+        action="contribution_created",
+        target_type="contribution",
+        target_id=profile.id,
+        note=f"Contributed {data['amount']:,.0f} RWF to student profile #{profile.id}",
+        ip_address=request.remote_addr,
+    ))
     db.session.commit()
 
     # Create official process tickets for both Donor and Student
@@ -146,6 +164,29 @@ def make_contribution():
             "institution": profile.institution.name if profile.institution else None,
         }
     )
+
+    # Emails
+    inst_name = profile.institution.name if profile.institution else "your registered institution"
+    if profile.user and profile.user.email and profile.user.notify_email:
+        subj, body = tpl_funding_received(
+            profile.user.full_name.split(" ")[0],
+            data["amount"],
+            donor_display,
+            inst_name
+        )
+        send_email(profile.user.email, subj, body)
+
+    donor_user = db.session.get(User, donor_id)
+    if donor_user and donor_user.email and donor_user.notify_email:
+        student_name = profile.user.full_name if profile.user else "Student"
+        subj, body = tpl_contribution_confirmation(
+            donor_user.full_name.split(" ")[0],
+            data["amount"],
+            student_name,
+            inst_name,
+            receipt_ref
+        )
+        send_email(donor_user.email, subj, body)
 
     return jsonify({
         "contribution": contribution.to_dict(),

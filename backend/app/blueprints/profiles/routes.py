@@ -8,11 +8,13 @@ from werkzeug.utils import secure_filename
 from marshmallow import ValidationError
 
 from ...extensions import db
-from ...models import User, Role, StudentProfile, ProfileStatus, Document, DocType, Notification
+from ...models import User, Role, StudentProfile, ProfileStatus, Document, DocType, Notification, WatchedProfile
 from ...common.decorators import role_required
 from ...common.storage import (
     delete_document, is_cloud_enabled, signed_document_url, upload_document, upload_photo,
 )
+from ...common.mailer import send_email
+from ...common.email_templates import profile_submitted as tpl_profile_submitted, change_request_approved as tpl_change_request
 from .schemas import ProfileCreateSchema, ProfileUpdateSchema, EditRequestSchema
 
 profiles_bp = Blueprint("profiles", __name__)
@@ -278,6 +280,10 @@ def submit_profile(profile_id):
         ))
     db.session.commit()
 
+    if profile.user and profile.user.email:
+        subj, body = tpl_profile_submitted(profile.user.full_name.split(" ")[0])
+        send_email(profile.user.email, subj, body)
+
     return jsonify({"profile": profile.to_dict()}), 200
 
 
@@ -354,7 +360,7 @@ def upload_document(profile_id):
     if not _signature_matches(file.stream, ext):
         return jsonify({"error": "That file isn't a real PDF or image. Upload the original file."}), 400
 
-    storage_ref, public_id = upload_document(file, ext, profile.id)
+    storage_ref, public_id = upload_document(file, ext, profile.id, doc_type=doc_type)
 
     doc = Document(
         profile_id=profile.id,
@@ -495,3 +501,50 @@ def list_institutions():
     from ...models import Institution
     institutions = Institution.query.order_by(Institution.name).all()
     return jsonify({"institutions": [i.to_dict() for i in institutions]}), 200
+
+
+# ── Donor watchlist ─────────────────────────────────────────
+# A donor following a student sees their progress without having to search
+# for them again; it is a bookmark, not a financial record.
+
+@profiles_bp.post("/<int:profile_id>/watch")
+@role_required(Role.DONOR.value)
+def watch_profile(profile_id):
+    profile = db.session.get(StudentProfile, profile_id)
+    if not profile or profile.status != ProfileStatus.APPROVED.value:
+        return jsonify({"error": "Only verified profiles can be followed."}), 404
+
+    uid = int(get_jwt_identity())
+    existing = WatchedProfile.query.filter_by(donor_id=uid, profile_id=profile_id).first()
+    if existing:
+        return jsonify({"watching": True}), 200
+
+    db.session.add(WatchedProfile(donor_id=uid, profile_id=profile_id))
+    db.session.commit()
+    return jsonify({"watching": True}), 201
+
+
+@profiles_bp.delete("/<int:profile_id>/watch")
+@role_required(Role.DONOR.value)
+def unwatch_profile(profile_id):
+    uid = int(get_jwt_identity())
+    existing = WatchedProfile.query.filter_by(donor_id=uid, profile_id=profile_id).first()
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+    return jsonify({"watching": False}), 200
+
+
+@profiles_bp.get("/watching")
+@role_required(Role.DONOR.value)
+def list_watched_profiles():
+    uid = int(get_jwt_identity())
+    rows = (
+        WatchedProfile.query
+        .filter_by(donor_id=uid)
+        .order_by(WatchedProfile.created_at.desc())
+        .all()
+    )
+    watched_ids = {r.profile_id for r in rows}
+    profiles = [r.profile.to_dict(public=True) for r in rows if r.profile]
+    return jsonify({"profiles": profiles, "watched_ids": list(watched_ids)}), 200

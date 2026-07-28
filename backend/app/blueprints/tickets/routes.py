@@ -3,10 +3,10 @@ import json
 import uuid
 from datetime import datetime, timezone
 from flask import Blueprint, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 
 from ...extensions import db
-from ...models import Ticket, User, Role
+from ...models import Ticket, Role
+from ...common.decorators import role_required
 
 tickets_bp = Blueprint("tickets", __name__)
 
@@ -34,15 +34,9 @@ def create_process_ticket(user_id, process_type, title, summary, details=None):
 
 
 @tickets_bp.get("/")
-@jwt_required()
+@role_required(Role.ADMIN.value)
 def list_tickets():
-    """Fetch tickets for the logged in user or all for admin."""
-    uid = int(get_jwt_identity())
-    role = get_jwt().get("role")
-
-    if role == Role.ADMIN.value:
-        tickets = Ticket.query.order_by(Ticket.created_at.desc()).all()
-    else:
-        tickets = Ticket.query.filter_by(user_id=uid).order_by(Ticket.created_at.desc()).all()
-
+    """The official process record. Admin-only — students and donors get
+    their own progress and receipt views instead, built from live data."""
+    tickets = Ticket.query.order_by(Ticket.created_at.desc()).all()
     return jsonify({"tickets": [t.to_dict() for t in tickets]}), 200
