@@ -66,5 +66,6 @@ Recorded honestly rather than claimed as covered.
 | **NFR4** audit completeness | Complete | `ip_address` column tracked for authentication events (login, register), administrative decisions (approve, reject, suspend, promote), and financial transactions (contributions). |
 | **FR4.3** receipt upload | Complete | Dedicated `POST /contributions/proof` file upload endpoint supporting PDF, PNG, JPG with signature verification, stored in `igafund/receipts/`. |
 | **FR7.1** funding over time | Partial | Charts use profile creation dates. Month-by-month *funding* totals need a reporting endpoint exposing per-contribution timestamps. |
-| **§5.4** session security | Partial | Rate limiting implemented. No 24-hour inactivity timeout or token revocation blacklist on sign-out yet. |
-| **FR6.2** local encrypted storage | Partial | The IndexedDB queue is not encrypted at rest; it stores drafts in plain form with a client id for replay safety. |
+| **§5.4** session security | Complete | Server-side `UserSession` table (`models/user_session.py`) backs a JWT blocklist loader: 24h idle timeout, immediate revocation on `POST /auth/logout`, and a single concurrent session enforced for admin accounts on login (`common/sessions.py`). |
+| **FR6.2** local encrypted storage | Complete | The IndexedDB draft queue is encrypted at rest with a non-extractable AES-GCM key generated via Web Crypto and stored only inside IndexedDB (`lib/offline.ts`); plaintext drafts never touch disk. |
+| **NFR4** audit trail export | Complete | `GET /audit/export-pdf` (admin-only) renders the full append-only audit trail as a paginated, branded PDF (`blueprints/audit/routes.py`), exposed via the Export PDF button on the Audit trail page. |

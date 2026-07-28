@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Lock, ScrollText, SearchX } from "lucide-react";
-import { endpoints, type AuditLogItem } from "@/lib/api";
+import { FileDown, Lock, ScrollText, SearchX } from "lucide-react";
+import { toast } from "sonner";
+import { endpoints, getToken, type AuditLogItem } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import { AppShell } from "@/app/shell/AppShell";
 import { Button } from "@/components/ui/Button";
@@ -21,6 +22,7 @@ export function AdminAudit() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [action, setAction] = useState("all");
+  const [exporting, setExporting] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -38,6 +40,27 @@ export function AdminAudit() {
   useEffect(() => {
     load();
   }, []);
+
+  async function exportPdf() {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/audit/export-pdf", {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `igaFund-audit-trail-${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Couldn't export the audit trail. Try again.");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   const actions = useMemo(
     () => ["all", ...Array.from(new Set(logs.map((l) => l.action)))],
@@ -57,6 +80,12 @@ export function AdminAudit() {
     <AppShell
       title="Audit trail"
       description="Every administrative decision, permanently recorded."
+      actions={
+        <Button variant="secondary" onClick={exportPdf} loading={exporting}>
+          <FileDown aria-hidden />
+          Export PDF
+        </Button>
+      }
     >
       <div className="space-y-5">
         <Alert tone="info" title="This record is append-only">
