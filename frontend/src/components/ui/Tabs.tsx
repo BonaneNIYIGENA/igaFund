@@ -30,7 +30,7 @@ export const TabsTrigger = React.forwardRef<
     className={cn(
       "relative inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-sm px-3.5 py-2 text-sm font-medium text-muted transition-colors duration-200",
       "hover:text-forest-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700",
-      "data-[state=active]:text-forest-900",
+      "data-[state=active]:text-ink",
       "[&_svg]:size-4 [&_svg]:shrink-0",
       className,
     )}
@@ -94,7 +94,7 @@ export function UnderlineTabs({
             className={cn(
               "relative shrink-0 cursor-pointer px-4 py-3 text-sm font-medium transition-colors duration-200",
               "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700",
-              active ? "text-forest-900" : "text-muted hover:text-forest-700",
+              active ? "text-ink" : "text-muted hover:text-forest-700",
             )}
           >
             <span className="inline-flex items-center gap-2">

@@ -163,7 +163,7 @@ export function AmbassadorDocuments({
             )}
 
             <div>
-              <p className="text-sm font-medium text-forest-900">
+              <p className="text-sm font-medium text-ink">
                 On file{docs.length > 0 && ` (${docs.length})`}
               </p>
               {loading ? (
@@ -185,7 +185,7 @@ export function AmbassadorDocuments({
                           <Icon className="size-4" aria-hidden />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-forest-900">
+                          <p className="truncate text-sm font-medium text-ink">
                             {DOC_LABEL[doc.doc_type] ?? doc.doc_type}
                           </p>
                           <p className="truncate text-xs text-muted">

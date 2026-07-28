@@ -25,7 +25,7 @@ export function FundingProgress({
     <div className={cn("flex flex-col gap-2", className)}>
       {showLabels && (
         <div className="flex items-baseline justify-between gap-3">
-          <span className="figure text-[0.9375rem] font-semibold text-forest-900">
+          <span className="figure text-[0.9375rem] font-semibold text-ink">
             {formatMoney(funded)}
           </span>
           <span className="text-sm text-muted">
@@ -76,7 +76,7 @@ export function StepProgress({
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-forest-900">
+        <p className="text-sm font-medium text-ink">
           {labels?.[current - 1] ?? `Step ${current}`}
         </p>
         <p className="figure text-xs text-muted">

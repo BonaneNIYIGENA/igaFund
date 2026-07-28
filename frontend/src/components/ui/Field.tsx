@@ -12,7 +12,7 @@ export const Label = React.forwardRef<
     ref={ref}
     // The asterisk is drawn, not written, so it stays out of the accessible name.
     className={cn(
-      "text-sm font-medium leading-none text-forest-900",
+      "text-sm font-medium leading-none text-ink",
       required && "after:ml-0.5 after:text-clay-500 after:content-['*']",
       className,
     )}
@@ -25,7 +25,7 @@ Label.displayName = "Label";
 
 
 const inputBase =
-  "w-full bg-white border rounded-sm px-3.5 text-[0.9375rem] text-body placeholder:text-faint transition-[border-color,box-shadow] duration-200 focus:outline-none focus:border-forest-600 focus:ring-4 focus:ring-forest-100 disabled:bg-sunk disabled:text-muted disabled:cursor-not-allowed";
+  "w-full bg-surface border rounded-sm px-3.5 text-[0.9375rem] text-body placeholder:text-faint transition-[border-color,box-shadow] duration-200 focus:outline-none focus:border-forest-600 focus:ring-4 focus:ring-forest-100 disabled:bg-sunk disabled:text-muted disabled:cursor-not-allowed";
 
 export const Input = React.forwardRef<
   HTMLInputElement,

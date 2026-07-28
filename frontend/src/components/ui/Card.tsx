@@ -9,7 +9,7 @@ export const Card = React.forwardRef<
     ref={ref}
     className={cn(
       "rounded-lg border transition-shadow duration-200",
-      tone === "plain" && "bg-white border-line shadow-sm",
+      tone === "plain" && "bg-surface border-line shadow-sm",
       tone === "sunk" && "bg-sunk border-transparent",
       tone === "ink" && "bg-forest-900 border-forest-800 text-forest-50",
       tone === "amber" && "bg-amber-50 border-amber-100",

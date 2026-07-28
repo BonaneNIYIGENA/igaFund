@@ -213,7 +213,7 @@ export function StudentDocuments() {
                   <span className="mx-auto grid size-12 place-items-center rounded-full bg-forest-100 text-forest-700">
                     <UploadCloud className="size-6" aria-hidden />
                   </span>
-                  <p className="mt-4 font-medium text-forest-900">
+                  <p className="mt-4 font-medium text-ink">
                     Drag a file here, or choose one
                   </p>
                   <p className="mt-1 text-sm text-muted">{DOC_LABEL[docType]}</p>
@@ -273,7 +273,7 @@ export function StudentDocuments() {
                         </span>
 
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[0.9375rem] font-medium text-forest-900">
+                          <p className="truncate text-[0.9375rem] font-medium text-ink">
                             {DOC_LABEL[doc.doc_type] ?? doc.doc_type}
                           </p>
                           <p className="truncate text-sm text-muted">

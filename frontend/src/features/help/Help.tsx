@@ -258,11 +258,11 @@ export function Help() {
                   <Accordion.Item
                     key={faq.q}
                     value={`item-${i}`}
-                    className="overflow-hidden rounded-md border border-line bg-white"
+                    className="overflow-hidden rounded-md border border-line bg-surface"
                   >
                     <Accordion.Header>
                       <Accordion.Trigger className="group flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-forest-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-forest-700">
-                        <span className="font-medium text-forest-900">{faq.q}</span>
+                        <span className="font-medium text-ink">{faq.q}</span>
                         <ChevronDown
                           className="size-[18px] shrink-0 text-muted transition-transform duration-200 group-data-[state=open]:rotate-180"
                           aria-hidden

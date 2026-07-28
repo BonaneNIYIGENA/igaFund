@@ -62,7 +62,7 @@ export function Landing() {
       <header className="sticky top-0 z-40 border-b border-line/70 bg-canvas/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3.5 sm:px-6">
           <Link to="/" aria-label="igaFund home">
-            <Logo />
+            <Logo size="lg" />
           </Link>
 
           <nav className="ml-auto hidden items-center gap-7 md:flex" aria-label="Main">
@@ -163,7 +163,7 @@ export function Landing() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35, type: "spring", stiffness: 200, damping: 26 }}
-              className="mt-14 rounded-2xl border border-line bg-white p-6 shadow-lg sm:p-9"
+              className="mt-14 rounded-2xl border border-line bg-surface p-6 shadow-lg sm:p-9"
             >
               <p className="text-sm font-medium uppercase tracking-[0.08em] text-faint">
                 Where a contribution actually goes
@@ -173,7 +173,7 @@ export function Landing() {
           </div>
         </section>
 
-        <section id="how" className="border-y border-line bg-white px-4 py-16 sm:px-6 sm:py-20">
+        <section id="how" className="border-y border-line bg-surface px-4 py-16 sm:px-6 sm:py-20">
           <div className="mx-auto max-w-6xl">
             <h2 className="max-w-2xl font-display text-3xl tracking-tight sm:text-4xl">
               Three things we can prove, not just promise
@@ -251,8 +251,8 @@ export function Landing() {
                   <StudentCard key={profile.id} profile={profile} to={`/students/${profile.id}`} />
                 ))
               ) : (
-                <div className="col-span-full rounded-lg border border-dashed border-line-strong bg-white px-6 py-14 text-center">
-                  <p className="font-medium text-forest-900">No verified profiles yet</p>
+                <div className="col-span-full rounded-lg border border-dashed border-line-strong bg-surface px-6 py-14 text-center">
+                  <p className="font-medium text-ink">No verified profiles yet</p>
                   <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted">
                     Profiles appear here the moment an administrator approves them. If you are a
                     student, you can start your application now.
@@ -307,10 +307,10 @@ export function Landing() {
         </section>
       </main>
 
-      <footer className="border-t border-line bg-white px-4 py-10 sm:px-6">
+      <footer className="border-t border-line bg-surface px-4 py-10 sm:px-6">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <Logo />
+            <Logo size="lg" />
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted">
               Verified educational funding for underprivileged youth in Sub-Saharan Africa.
               Piloting in Rwanda.

@@ -18,7 +18,7 @@ export const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "anim-popover z-50 min-w-52 overflow-hidden rounded-md border border-line bg-white p-1.5 shadow-lg",
+        "anim-popover z-50 min-w-52 overflow-hidden rounded-md border border-line bg-surface p-1.5 shadow-lg",
         className,
       )}
       {...props}
@@ -38,7 +38,7 @@ export const DropdownMenuItem = React.forwardRef<
       "[&_svg]:size-4 [&_svg]:shrink-0",
       destructive
         ? "text-clay-600 data-[highlighted]:bg-clay-100 data-[highlighted]:text-clay-700"
-        : "text-body data-[highlighted]:bg-forest-50 data-[highlighted]:text-forest-900",
+        : "text-body data-[highlighted]:bg-forest-50 data-[highlighted]:text-ink",
       className,
     )}
     {...props}
@@ -86,7 +86,7 @@ export const PopoverContent = React.forwardRef<
       sideOffset={sideOffset}
       collisionPadding={12}
       className={cn(
-        "anim-popover z-50 rounded-lg border border-line bg-white shadow-lg outline-none",
+        "anim-popover z-50 rounded-lg border border-line bg-surface shadow-lg outline-none",
         className,
       )}
       {...props}

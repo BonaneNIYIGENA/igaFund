@@ -41,12 +41,12 @@ type RankedProfile = Profile & { funding_percent: number; fully_funded: boolean 
 
 function Stat({ label, value, icon: Icon }: { label: string; value: string | number; icon: typeof Users }) {
   return (
-    <div className="rounded-md border border-line bg-white p-4">
+    <div className="rounded-md border border-line bg-surface p-4">
       <div className="flex items-center gap-2 text-muted">
         <Icon className="size-4 shrink-0" aria-hidden />
         <span className="text-xs font-medium">{label}</span>
       </div>
-      <p className="figure mt-1.5 text-xl font-semibold text-forest-900">{value}</p>
+      <p className="figure mt-1.5 text-xl font-semibold text-ink">{value}</p>
     </div>
   );
 }
@@ -117,7 +117,7 @@ export function InstitutionPanel({
                 <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
                   Routed to this institution
                 </p>
-                <p className="figure mt-1 text-3xl font-semibold text-forest-900">
+                <p className="figure mt-1 text-3xl font-semibold text-ink">
                   {formatMoney(detail.total_routed)}
                 </p>
                 <p className="mt-1 text-sm text-muted">
@@ -134,8 +134,8 @@ export function InstitutionPanel({
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-forest-900">Where donors pay</h3>
-                <div className="mt-2.5 flex items-start gap-3 rounded-md border border-line bg-white p-4">
+                <h3 className="text-sm font-semibold text-ink">Where donors pay</h3>
+                <div className="mt-2.5 flex items-start gap-3 rounded-md border border-line bg-surface p-4">
                   <span className="grid size-10 shrink-0 place-items-center rounded-sm bg-forest-50 text-forest-700">
                     <CreditCard className="size-[18px]" aria-hidden />
                   </span>
@@ -143,7 +143,7 @@ export function InstitutionPanel({
                     <p className="text-xs font-semibold uppercase tracking-wide text-faint">
                       Account reference
                     </p>
-                    <p className="figure mt-0.5 text-base font-semibold text-forest-900">
+                    <p className="figure mt-0.5 text-base font-semibold text-ink">
                       {detail.bank_reference ?? "Not set"}
                     </p>
                     <p className="mt-1 text-sm text-muted">
@@ -155,7 +155,7 @@ export function InstitutionPanel({
 
               <div>
                 <div className="flex items-baseline justify-between gap-3">
-                  <h3 className="text-sm font-semibold text-forest-900">
+                  <h3 className="text-sm font-semibold text-ink">
                     Students funded here
                   </h3>
                   <span className="text-xs text-muted">Closest to their goal first</span>
@@ -173,13 +173,13 @@ export function InstitutionPanel({
                     {students.map((s) => (
                       <li
                         key={s.id}
-                        className="rounded-md border border-line bg-white p-4"
+                        className="rounded-md border border-line bg-surface p-4"
                       >
                         <div className="flex items-start gap-3">
                           <Avatar name={s.full_name ?? "?"} src={s.photo_url} size="md" />
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <p className="truncate font-medium text-forest-900">
+                              <p className="truncate font-medium text-ink">
                                 {s.full_name ?? "Verified Student"}
                               </p>
                               {s.fully_funded && (

@@ -43,7 +43,7 @@ export function ForgotPassword() {
           <span className="grid size-11 place-items-center rounded-full bg-forest-100 text-forest-700">
             <MailCheck className="size-5" aria-hidden />
           </span>
-          <p className="mt-4 font-medium text-forest-900">Sent to {email}</p>
+          <p className="mt-4 font-medium text-ink">Sent to {email}</p>
           <p className="mt-1.5 text-sm leading-relaxed text-muted">
             The link expires in 30 minutes. If nothing arrives, check your spam folder or try a
             different address.

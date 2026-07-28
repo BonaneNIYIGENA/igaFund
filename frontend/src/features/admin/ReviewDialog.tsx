@@ -145,7 +145,7 @@ export function ReviewDialog({
               <>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h3 className="font-display text-xl text-forest-900">
+                    <h3 className="font-display text-xl text-ink">
                       {profile.full_name ?? "Student"}
                     </h3>
                     <p className="text-sm text-muted">{profile.email}</p>
@@ -212,7 +212,7 @@ export function ReviewDialog({
                     <dt className="text-xs font-semibold uppercase tracking-wide text-faint">
                       Funding goal
                     </dt>
-                    <dd className="figure mt-0.5 text-lg font-semibold text-forest-900">
+                    <dd className="figure mt-0.5 text-lg font-semibold text-ink">
                       {formatMoney(profile.funding_goal)}
                     </dd>
                   </div>
@@ -220,7 +220,7 @@ export function ReviewDialog({
 
                 {profile.is_minor && (
                   <div className="rounded-md border border-amber-300 bg-amber-50 p-4">
-                    <p className="flex items-center gap-2 font-medium text-forest-900">
+                    <p className="flex items-center gap-2 font-medium text-ink">
                       <ShieldAlert className="size-[18px] text-amber-700" aria-hidden />
                       Guardian consent required
                     </p>
@@ -253,14 +253,14 @@ export function ReviewDialog({
                 )}
 
                 <div>
-                  <h4 className="text-sm font-semibold text-forest-900">Their story</h4>
+                  <h4 className="text-sm font-semibold text-ink">Their story</h4>
                   <p className="mt-2 whitespace-pre-line rounded-md bg-raised p-4 text-sm leading-relaxed text-body">
                     {profile.bio || "No story provided."}
                   </p>
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-semibold text-forest-900">
+                  <h4 className="text-sm font-semibold text-ink">
                     Documents ({docs.length})
                   </h4>
                   {docs.length === 0 ? (
@@ -277,7 +277,7 @@ export function ReviewDialog({
                               <Icon className="size-4" aria-hidden />
                             </span>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-forest-900">
+                              <p className="truncate text-sm font-medium text-ink">
                                 {DOC_LABEL[doc.doc_type] ?? doc.doc_type}
                               </p>
                               <p className="truncate text-xs text-muted">

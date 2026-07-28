@@ -32,7 +32,7 @@ export const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "anim-sheet fixed z-50 flex flex-col bg-white shadow-xl",
+        "anim-sheet fixed z-50 flex flex-col bg-surface shadow-xl",
         // Mobile: a sheet rising from the bottom, dismissible and thumb-reachable.
         "inset-x-0 bottom-0 max-h-[92dvh] rounded-t-xl",
         // Desktop: a centred dialog.

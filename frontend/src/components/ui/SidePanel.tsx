@@ -26,7 +26,7 @@ export const SidePanelContent = React.forwardRef<
     >
       {children}
       <DialogPrimitive.Close
-        className="absolute right-4 top-4 z-10 grid size-10 place-items-center rounded-full bg-white/80 text-muted shadow-sm backdrop-blur transition-colors hover:bg-forest-100 hover:text-forest-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700"
+        className="absolute right-4 top-4 z-10 grid size-10 place-items-center rounded-full bg-surface/80 text-muted shadow-sm backdrop-blur transition-colors hover:bg-forest-100 hover:text-forest-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700"
         aria-label="Close panel"
       >
         <X className="size-[18px]" aria-hidden />
@@ -40,7 +40,7 @@ export function SidePanelHeader({ className, ...props }: React.HTMLAttributes<HT
   return (
     <div
       className={cn(
-        "shrink-0 border-b border-line bg-white px-6 py-5 pr-16 sm:px-8",
+        "shrink-0 border-b border-line bg-surface px-6 py-5 pr-16 sm:px-8",
         className,
       )}
       {...props}
@@ -56,7 +56,7 @@ export function SidePanelFooter({ className, ...props }: React.HTMLAttributes<HT
   return (
     <div
       className={cn(
-        "shrink-0 border-t border-line bg-white px-6 py-4 sm:px-8",
+        "shrink-0 border-t border-line bg-surface px-6 py-4 sm:px-8",
         "flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end",
         "pb-[max(1rem,env(safe-area-inset-bottom))]",
         className,

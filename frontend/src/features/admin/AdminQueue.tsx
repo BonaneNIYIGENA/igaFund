@@ -111,7 +111,7 @@ export function AdminQueue() {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="truncate font-semibold text-forest-900">
+                          <p className="truncate font-semibold text-ink">
                             {profile.full_name ?? "Student"}
                           </p>
                           {profile.is_minor && (

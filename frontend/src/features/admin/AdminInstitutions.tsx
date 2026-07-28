@@ -152,7 +152,7 @@ export function AdminInstitutions() {
                           <Building2 className="size-[18px]" aria-hidden />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold leading-snug text-forest-900">{inst.name}</h3>
+                          <h3 className="font-semibold leading-snug text-ink">{inst.name}</h3>
                           <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
                             <MapPin className="size-4 shrink-0" aria-hidden />
                             {inst.location}
@@ -169,13 +169,13 @@ export function AdminInstitutions() {
                             <Users className="size-3" aria-hidden />
                             Applied
                           </dt>
-                          <dd className="figure mt-0.5 font-semibold text-forest-900">
+                          <dd className="figure mt-0.5 font-semibold text-ink">
                             {inst.applicants}
                           </dd>
                         </div>
                         <div>
                           <dt className="text-xs text-muted">Verified</dt>
-                          <dd className="figure mt-0.5 font-semibold text-forest-900">
+                          <dd className="figure mt-0.5 font-semibold text-ink">
                             {inst.approved}
                           </dd>
                         </div>

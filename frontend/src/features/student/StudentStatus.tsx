@@ -4,13 +4,13 @@ import { toast } from "sonner";
 import {
   FileText,
   HeartHandshake,
-  Receipt,
+  MessageSquareQuote,
   Send,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { ApiError, endpoints, type TicketItem } from "@/lib/api";
-import { formatDateTime } from "@/lib/format";
+import { ApiError, endpoints, type ContributionItem } from "@/lib/api";
+import { formatDateTime, formatMoney, formatRelative } from "@/lib/format";
 import { AppShell } from "@/app/shell/AppShell";
 import { useMyProfile, journeyFor } from "./useMyProfile";
 import { Button } from "@/components/ui/Button";
@@ -21,14 +21,15 @@ import { Alert, EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedbac
 
 export function StudentStatus() {
   const { profile, loading, error, reload } = useMyProfile();
-  const [tickets, setTickets] = useState<TicketItem[]>([]);
+  const [funding, setFunding] = useState<ContributionItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!profile) return;
     endpoints
-      .tickets()
-      .then((res) => setTickets(res.tickets ?? []))
-      .catch(() => setTickets([]));
+      .profileContributions(profile.id)
+      .then((res) => setFunding(res.contributions ?? []))
+      .catch(() => setFunding([]));
   }, [profile]);
 
   async function submitForReview() {
@@ -41,7 +42,6 @@ export function StudentStatus() {
       });
       await reload();
     } catch (err) {
-      // The API tells us precisely what is missing — pass that straight through.
       toast.error("Not ready yet", {
         description: err instanceof ApiError ? err.message : "Try again in a moment.",
       });
@@ -98,7 +98,7 @@ export function StudentStatus() {
   return (
     <AppShell
       title="Progress"
-      description="Every step of your application, and the official record behind it."
+      description="Every step of your application, and who has funded you so far."
       actions={profile ? <StatusBadge status={profile.status} size="md" /> : undefined}
     >
       {error ? (
@@ -151,7 +151,7 @@ export function StudentStatus() {
 
                 {readyToSubmit && (
                   <div className="mt-6 rounded-md border border-amber-300 bg-amber-50 p-5">
-                    <p className="font-medium text-forest-900">Ready to send for review?</p>
+                    <p className="font-medium text-ink">Ready to send for review?</p>
                     <p className="mt-1 text-sm leading-relaxed text-muted">
                       Check your profile and documents once more. While it's under review you won't
                       be able to change them.
@@ -170,7 +170,7 @@ export function StudentStatus() {
 
                 {profile.status === "draft" && profile.document_count === 0 && (
                   <div className="mt-6 rounded-md bg-sunk p-5">
-                    <p className="font-medium text-forest-900">Upload your documents first</p>
+                    <p className="font-medium text-ink">Upload your documents first</p>
                     <p className="mt-1 text-sm text-muted">
                       A reviewer needs your transcript and ID before they can verify you.
                     </p>
@@ -185,33 +185,36 @@ export function StudentStatus() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Official record</CardTitle>
+              <CardTitle className="text-base">Your supporters</CardTitle>
               <CardDescription>
-                Every completed step issues a numbered, timestamped ticket.
+                Every contribution routed to {profile.institution?.name ?? "your school"} on your behalf.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {tickets.length === 0 ? (
+              {funding.length === 0 ? (
                 <p className="py-6 text-center text-sm text-muted">
-                  Tickets appear here as milestones complete.
+                  {profile.status === "approved"
+                    ? "No contributions yet. They'll appear here as donors give."
+                    : "Once you're verified, donors can fund you and their gifts will show here."}
                 </p>
               ) : (
                 <ul className="space-y-3">
-                  {tickets.slice(0, 6).map((ticket) => (
-                    <li key={ticket.id} className="rounded-md border border-line bg-raised p-4">
-                      <div className="flex items-start gap-2.5">
-                        <Receipt className="mt-0.5 size-4 shrink-0 text-forest-600" aria-hidden />
+                  {funding.slice(0, 6).map((c) => (
+                    <li key={c.id} className="rounded-md border border-line bg-raised p-4">
+                      <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-sm font-medium leading-snug text-forest-900">
-                            {ticket.title}
-                          </p>
-                          <p className="figure mt-1 text-xs text-forest-700">
-                            {ticket.ticket_number}
-                          </p>
-                          <p className="mt-1 text-xs text-faint">
-                            {formatDateTime(ticket.created_at)}
-                          </p>
+                          <p className="text-sm font-medium text-ink">{c.donor_name}</p>
+                          {c.message && (
+                            <p className="mt-1 flex items-start gap-1.5 text-sm leading-snug text-body">
+                              <MessageSquareQuote className="mt-0.5 size-3.5 shrink-0 text-forest-500" aria-hidden />
+                              {c.message}
+                            </p>
+                          )}
+                          <p className="mt-1.5 text-xs text-faint">{formatRelative(c.created_at)}</p>
                         </div>
+                        <span className="figure shrink-0 text-sm font-semibold text-forest-800">
+                          {formatMoney(c.amount)}
+                        </span>
                       </div>
                     </li>
                   ))}

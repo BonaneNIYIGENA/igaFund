@@ -174,11 +174,11 @@ export function ContributeDialog({
               <RoutingRail steps={receiptRail} />
 
               {receipt.ticket_number && (
-                <div className="mt-6 rounded-md border border-line bg-white p-5">
+                <div className="mt-6 rounded-md border border-line bg-surface p-5">
                   <p className="text-xs font-semibold uppercase tracking-wide text-faint">
                     Transaction ticket
                   </p>
-                  <p className="figure mt-1 text-lg font-semibold text-forest-900">
+                  <p className="figure mt-1 text-lg font-semibold text-ink">
                     {receipt.ticket_number}
                   </p>
                   <p className="mt-1 text-sm text-muted">
@@ -216,7 +216,7 @@ export function ContributeDialog({
               )}
 
               <div>
-                <p className="text-sm font-medium text-forest-900">Choose an amount</p>
+                <p className="text-sm font-medium text-ink">Choose an amount</p>
                 <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {PRESETS.map((preset) => (
                     <button
@@ -230,7 +230,7 @@ export function ContributeDialog({
                       className={`figure min-h-11 cursor-pointer rounded-sm border px-3 text-sm font-semibold transition-colors ${
                         numericAmount === preset
                           ? "border-amber-500 bg-amber-50 text-amber-700"
-                          : "border-line-strong bg-white text-forest-900 hover:border-forest-300 hover:bg-forest-50"
+                          : "border-line-strong bg-surface text-ink hover:border-forest-300 hover:bg-forest-50"
                       }`}
                     >
                       {preset.toLocaleString("en-RW")}
@@ -265,7 +265,7 @@ export function ContributeDialog({
 
               {/* Proof of payment is required — the record is the whole promise. */}
               <div>
-                <p className="text-sm font-medium text-forest-900">
+                <p className="text-sm font-medium text-ink">
                   Payment slip <span className="text-clay-500">*</span>
                 </p>
                 <p className="mt-1 text-sm text-muted">
@@ -278,7 +278,7 @@ export function ContributeDialog({
                       <CheckCircle2 className="size-[18px]" aria-hidden />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-forest-900">{proofName}</p>
+                      <p className="truncate text-sm font-medium text-ink">{proofName}</p>
                       <p className="text-xs text-muted">Attached</p>
                     </div>
                     <Button
@@ -348,7 +348,7 @@ export function ContributeDialog({
                 )}
               </Field>
 
-              <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-white p-4">
+              <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-surface p-4">
                 <input
                   type="checkbox"
                   checked={anonymous}
@@ -356,7 +356,7 @@ export function ContributeDialog({
                   className="mt-0.5 size-[18px] shrink-0 cursor-pointer accent-[var(--color-forest-700)]"
                 />
                 <span className="text-sm">
-                  <span className="font-medium text-forest-900">Give anonymously</span>
+                  <span className="font-medium text-ink">Give anonymously</span>
                   <span className="mt-0.5 block text-muted">
                     Your name is hidden from the student and the public page. It stays on the
                     receipt and in the audit trail.

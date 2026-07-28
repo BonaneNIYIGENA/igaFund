@@ -18,15 +18,15 @@ export interface RailStep {
 const nodeStyles: Record<RailState, string> = {
   done: "bg-forest-700 text-white border-forest-700",
   current: "bg-amber-500 text-forest-950 border-amber-500 shadow-[0_0_0_6px_var(--color-amber-100)]",
-  todo: "bg-white text-sage-500 border-line-strong",
+  todo: "bg-surface text-sage-500 border-line-strong",
   blocked: "bg-clay-500 text-white border-clay-500",
   /** The node money deliberately never passes through. */
-  bypassed: "bg-white text-clay-500 border-clay-200 border-dashed",
+  bypassed: "bg-surface text-clay-500 border-clay-200 border-dashed",
 };
 
 const labelStyles: Record<RailState, string> = {
   done: "text-forest-800",
-  current: "text-forest-900 font-semibold",
+  current: "text-ink font-semibold",
   todo: "text-muted",
   blocked: "text-clay-700 font-medium",
   bypassed: "text-clay-600 line-through decoration-clay-500/60",

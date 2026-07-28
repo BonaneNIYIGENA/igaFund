@@ -38,7 +38,7 @@ export function StudentRow({ student, onChange }: { student: Profile; onChange: 
         <Avatar name={student.full_name ?? "?"} size="md" />
 
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium text-forest-900">
+          <p className="truncate font-medium text-ink">
             {student.full_name ?? "Student"}
           </p>
           <p className="truncate text-sm text-muted">

@@ -12,7 +12,7 @@ const buttonVariants = cva(
         primary:
           "bg-forest-700 text-white shadow-sm hover:bg-forest-800 hover:shadow-lift",
         secondary:
-          "bg-white text-forest-900 border border-line hover:bg-forest-50 hover:border-forest-200",
+          "bg-surface text-ink border border-line hover:bg-forest-50 hover:border-forest-200",
         soft: "bg-forest-100 text-forest-800 hover:bg-forest-200",
         /** Reserved for money-moving actions — amber means funds in motion. */
         fund: "bg-amber-500 text-forest-950 shadow-sm hover:bg-amber-600 hover:text-white hover:shadow-lift",

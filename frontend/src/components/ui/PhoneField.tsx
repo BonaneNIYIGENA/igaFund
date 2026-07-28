@@ -38,7 +38,7 @@ export function PhoneField({
 
       <div
         className={cn(
-          "flex overflow-hidden rounded-sm border bg-white transition-[border-color,box-shadow] duration-200",
+          "flex overflow-hidden rounded-sm border bg-surface transition-[border-color,box-shadow] duration-200",
           "focus-within:border-forest-600 focus-within:ring-4 focus-within:ring-forest-100",
           error ? "border-clay-500 focus-within:ring-clay-100" : "border-line-strong",
         )}
@@ -50,7 +50,7 @@ export function PhoneField({
             if (next) onCountryChange(next);
           }}
           aria-label="Country code"
-          className="h-11 shrink-0 cursor-pointer border-r border-line bg-sunk pl-3 pr-2 text-sm font-medium text-forest-900 focus:outline-none"
+          className="h-11 shrink-0 cursor-pointer border-r border-line bg-sunk pl-3 pr-2 text-sm font-medium text-ink focus:outline-none"
         >
           {COUNTRIES.map((c) => (
             <option key={c.code} value={c.code}>

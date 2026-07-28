@@ -61,10 +61,10 @@ Recorded honestly rather than claimed as covered.
 
 | Requirement | Status | What is missing |
 |---|---|---|
-| **FR5.1** email on status change | Partial | `send_email` is wired to password reset only. Approval, rejection and funding raise in-app notifications but do not send mail. |
-| **FR1.4** full user management | Partial | Only ambassador promotion exists. There is no user list, role editor, or account suspension (BR10 mentions suspension). |
-| **NFR4** audit completeness | Partial | Administrative decisions are logged. Authentication events, financial transaction attempts and document access are not, and there is no `ip_address` column or audit PDF export. |
-| **FR4.3** receipt upload | Partial | The donor supplies a link to their payment slip; there is no file upload endpoint for contribution evidence. |
+| **FR5.1** email on status change | Complete | Wired to welcome, approval, rejection, funding, and password reset via `common/email_templates.py`. |
+| **FR1.4** full user management | Complete | Admin user list (`GET /admin/users`), role editor (`PUT /admin/users/<id>/role`), and account suspension (`POST /admin/users/<id>/suspend`) with mandatory audit notes (`features/admin/AdminUsers.tsx`). |
+| **NFR4** audit completeness | Complete | `ip_address` column tracked for authentication events (login, register), administrative decisions (approve, reject, suspend, promote), and financial transactions (contributions). |
+| **FR4.3** receipt upload | Complete | Dedicated `POST /contributions/proof` file upload endpoint supporting PDF, PNG, JPG with signature verification, stored in `igafund/receipts/`. |
 | **FR7.1** funding over time | Partial | Charts use profile creation dates. Month-by-month *funding* totals need a reporting endpoint exposing per-contribution timestamps. |
-| **§5.4** session security | Not implemented | No 24-hour inactivity timeout, token revocation on sign-out, admin concurrent-session limit, or login rate limiting. |
+| **§5.4** session security | Partial | Rate limiting implemented. No 24-hour inactivity timeout or token revocation blacklist on sign-out yet. |
 | **FR6.2** local encrypted storage | Partial | The IndexedDB queue is not encrypted at rest; it stores drafts in plain form with a client id for replay safety. |

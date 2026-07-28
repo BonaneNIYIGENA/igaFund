@@ -56,7 +56,7 @@ export function StatTile({
     <div
       className={cn(
         "flex flex-col gap-3 rounded-lg border p-5",
-        tone === "plain" && "border-line bg-white",
+        tone === "plain" && "border-line bg-surface",
         tone === "forest" && "border-forest-200 bg-forest-50",
         tone === "amber" && "border-amber-100 bg-amber-50",
         tone === "ink" && "border-forest-800 bg-forest-900 text-forest-100",
@@ -91,7 +91,7 @@ export function StatTile({
         <motion.span
           className={cn(
             "figure text-3xl font-semibold tracking-tight",
-            tone === "ink" ? "text-white" : "text-forest-900",
+            tone === "ink" ? "text-white" : "text-ink",
           )}
           initial={reduce ? false : { opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}

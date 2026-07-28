@@ -51,8 +51,8 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-sm border border-line bg-white px-3 py-2 shadow-md">
-      <p className="text-xs font-medium text-forest-900">{label}</p>
+    <div className="rounded-sm border border-line bg-surface px-3 py-2 shadow-md">
+      <p className="text-xs font-medium text-ink">{label}</p>
       <p className="figure mt-0.5 text-sm font-semibold text-forest-800">
         {formatter ? formatter(payload[0].value) : payload[0].value}
       </p>
@@ -250,10 +250,10 @@ export function AdminAnalytics() {
                     <caption className="sr-only-focusable">Profiles by review state</caption>
                     <thead>
                       <tr className="border-b border-line text-left">
-                        <th scope="col" className="pb-2 font-semibold text-forest-900">
+                        <th scope="col" className="pb-2 font-semibold text-ink">
                           State
                         </th>
-                        <th scope="col" className="pb-2 text-right font-semibold text-forest-900">
+                        <th scope="col" className="pb-2 text-right font-semibold text-ink">
                           Profiles
                         </th>
                       </tr>
@@ -269,7 +269,7 @@ export function AdminAnalytics() {
                                 {meta.label}
                               </span>
                             </th>
-                            <td className="figure py-2.5 text-right font-semibold text-forest-900">
+                            <td className="figure py-2.5 text-right font-semibold text-ink">
                               {row?.value ?? 0}
                             </td>
                           </tr>

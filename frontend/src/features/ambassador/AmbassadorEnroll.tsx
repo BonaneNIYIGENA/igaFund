@@ -396,7 +396,7 @@ export function AmbassadorEnroll() {
                   </Field>
                 </div>
 
-                <label className="flex cursor-pointer items-start gap-3 rounded-md border border-amber-300 bg-white p-4">
+                <label className="flex cursor-pointer items-start gap-3 rounded-md border border-amber-300 bg-surface p-4">
                   <input
                     type="checkbox"
                     checked={form.guardian_consent}
@@ -405,7 +405,7 @@ export function AmbassadorEnroll() {
                     className="mt-0.5 size-[18px] shrink-0 cursor-pointer accent-[var(--color-forest-700)]"
                   />
                   <span className="text-sm">
-                    <span className="font-medium text-forest-900">
+                    <span className="font-medium text-ink">
                       The guardian has agreed to this profile being published.
                     </span>
                     <span className="mt-0.5 block text-muted">

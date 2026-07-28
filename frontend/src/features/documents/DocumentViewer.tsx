@@ -83,7 +83,7 @@ export function DocumentViewer({
               <iframe
                 src={url}
                 title={doc?.original_filename ?? "Document"}
-                className="h-[60vh] w-full rounded-md border border-line bg-white"
+                className="h-[60vh] w-full rounded-md border border-line bg-surface"
               />
             ) : (
               <img

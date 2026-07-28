@@ -18,7 +18,7 @@ export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivEl
 /** Card-shaped placeholder so async content reserves its space (no layout shift). */
 export function SkeletonCard({ className }: { className?: string }) {
   return (
-    <div className={cn("rounded-lg border border-line bg-white p-5", className)}>
+    <div className={cn("rounded-lg border border-line bg-surface p-5", className)}>
       <div className="flex items-center gap-3">
         <Skeleton className="size-12 rounded-full" />
         <div className="flex-1 space-y-2">

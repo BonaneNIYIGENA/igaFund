@@ -8,6 +8,7 @@ import {
   validateEmail,
   validateName,
   validatePassword,
+  passwordChecklist,
 } from "@/lib/validation";
 import { useAuth, HOME_FOR_ROLE } from "./AuthContext";
 import { AuthLayout } from "./AuthLayout";
@@ -42,10 +43,12 @@ export function Register() {
   const [loading, setLoading] = useState(false);
 
   function validate() {
+    const checks = passwordChecklist(password);
+    const allComposition = checks.hasLength && checks.hasLower && checks.hasUpper && checks.hasDigit && checks.hasSymbol;
     const next = {
       fullName: validateName(fullName, "full name"),
       email: validateEmail(email),
-      password: validatePassword(password),
+      password: allComposition ? "" : "Complete all password requirements above.",
     };
     const cleaned = Object.fromEntries(Object.entries(next).filter(([, v]) => v));
     setErrors(cleaned);
@@ -107,7 +110,7 @@ export function Register() {
         )}
 
         <fieldset>
-          <legend className="text-sm font-medium text-forest-900">I am…</legend>
+          <legend className="text-sm font-medium text-ink">I am…</legend>
           <div className="mt-2.5 grid gap-2.5 sm:grid-cols-2">
             {SIGNUP_ROLES.map((option) => {
               const selected = role === option.value;
@@ -122,7 +125,7 @@ export function Register() {
                     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700",
                     selected
                       ? "border-forest-600 bg-forest-50 shadow-sm"
-                      : "border-line-strong bg-white hover:border-forest-300 hover:bg-forest-50/60",
+                      : "border-line-strong bg-surface hover:border-forest-300 hover:bg-forest-50/60",
                   )}
                 >
                   <span
@@ -133,7 +136,7 @@ export function Register() {
                   >
                     <option.icon className="size-[18px]" aria-hidden />
                   </span>
-                  <span className="font-medium text-forest-900">{option.label}</span>
+                  <span className="font-medium text-ink">{option.label}</span>
                   <span className="text-sm leading-snug text-muted">{option.blurb}</span>
                 </button>
               );
@@ -180,7 +183,7 @@ export function Register() {
             setPassword(v);
             setErrors((s) => ({ ...s, password: undefined }));
           }}
-          error={errors.password}
+          error={errors.password?.startsWith("Complete") ? undefined : errors.password}
         />
 
         <Button type="submit" size="lg" block loading={loading}>

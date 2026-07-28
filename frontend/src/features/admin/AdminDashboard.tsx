@@ -147,7 +147,7 @@ export function AdminDashboard() {
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm text-body">
-                            <span className="font-medium text-forest-900">
+                            <span className="font-medium text-ink">
                               {log.action.replace(/_/g, " ")}
                             </span>{" "}
                             on {log.target_type.replace(/_/g, " ")} #{log.target_id}
