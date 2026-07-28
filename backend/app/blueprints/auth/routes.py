@@ -1,7 +1,7 @@
 """Auth endpoints: register, login, refresh, me."""
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import (
-    create_access_token, create_refresh_token,
+    create_access_token,
     jwt_required, get_jwt_identity, get_jwt,
 )
 from marshmallow import Schema, fields, EXCLUDE, ValidationError
@@ -10,6 +10,7 @@ from ...models import User, AuditLog
 from ...common.mailer import send_email
 from ...common.tokens import make_reset_token, read_reset_token
 from ...common.security import rate_limit, clear_rate_limit
+from ...common.sessions import issue_session, touch_session, revoke_session
 from .schemas import (
     RegisterSchema, LoginSchema,
     PasswordResetRequestSchema, PasswordResetConfirmSchema,
@@ -17,14 +18,6 @@ from .schemas import (
 from ...common.email_templates import welcome_student, welcome_donor, password_reset as password_reset_tpl
 
 auth_bp = Blueprint("auth", __name__)
-
-
-def _tokens(user):
-    claims = {"role": user.role}
-    return {
-        "access": create_access_token(identity=str(user.id), additional_claims=claims),
-        "refresh": create_refresh_token(identity=str(user.id), additional_claims=claims),
-    }
 
 
 @auth_bp.post("/register")
@@ -56,7 +49,7 @@ def register():
     subj, body = tpl(user.full_name.split(" ")[0])
     send_email(user.email, subj, body)
 
-    return jsonify({"user": user.to_dict(), **_tokens(user)}), 201
+    return jsonify({"user": user.to_dict(), **issue_session(user)}), 201
 
 
 @auth_bp.post("/login")
@@ -104,14 +97,25 @@ def login():
         ip_address=request.remote_addr,
     ))
     db.session.commit()
-    return jsonify({"user": user.to_dict(), **_tokens(user)}), 200
+    return jsonify({"user": user.to_dict(), **issue_session(user)}), 200
 
 
 @auth_bp.post("/refresh")
 @jwt_required(refresh=True)
 def refresh():
-    claims = {"role": get_jwt().get("role")}
-    return jsonify({"access": create_access_token(identity=get_jwt_identity(), additional_claims=claims)}), 200
+    claims = get_jwt()
+    sid = claims.get("sid")
+    touch_session(sid)
+    access_claims = {"role": claims.get("role"), "sid": sid}
+    return jsonify({"access": create_access_token(identity=get_jwt_identity(), additional_claims=access_claims)}), 200
+
+
+@auth_bp.post("/logout")
+@jwt_required()
+def logout():
+    sid = get_jwt().get("sid")
+    revoke_session(sid)
+    return jsonify({"message": "Signed out."}), 200
 
 
 @auth_bp.get("/me")

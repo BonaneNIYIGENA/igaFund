@@ -31,6 +31,7 @@ export function getToken() {
 function clearSession() {
   localStorage.removeItem("access");
   localStorage.removeItem("refresh");
+  window.dispatchEvent(new CustomEvent("iga:session-expired"));
 }
 
 async function refreshAccessToken(): Promise<boolean> {

@@ -6,15 +6,15 @@ def _register(client, email="s@example.com", role="student"):
     return res.get_json()["access"] if res.status_code == 201 else None
 
 def _admin_token(client, app):
-    with app.app_context():
+    with app.test_request_context():
         from app.models import User
         from app.extensions import db
         user = User(email="admin@example.com", full_name="Admin", role="admin")
         user.set_password("Passw0rd!")
         db.session.add(user)
         db.session.commit()
-        from flask_jwt_extended import create_access_token
-        return create_access_token(identity=str(user.id), additional_claims={"role": user.role})
+        from app.common.sessions import issue_session
+        return issue_session(user)["access"]
 
 def test_create_institution_as_admin(client, app):
     token = _admin_token(client, app)

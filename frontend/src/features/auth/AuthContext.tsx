@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import { api, type Role, type User } from "@/lib/api";
 
 type RegisterPayload = { email: string; full_name: string; password: string; role: Role };
@@ -52,6 +53,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // The API client fires this when a revoked/idle-timed-out session is
+  // detected server-side, so the UI drops out of the authenticated state
+  // even though nothing here made the request that discovered it.
+  useEffect(() => {
+    function onSessionExpired() {
+      setUser((prev) => {
+        if (prev) toast.error("Your session has ended. Sign in again to continue.");
+        return null;
+      });
+    }
+    window.addEventListener("iga:session-expired", onSessionExpired);
+    return () => window.removeEventListener("iga:session-expired", onSessionExpired);
+  }, []);
+
   function persist(data: { access: string; refresh: string; user: User }) {
     localStorage.setItem("access", data.access);
     localStorage.setItem("refresh", data.refresh);
@@ -80,6 +95,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function logout() {
+    // Best-effort: revoke the session server-side so the token can't be replayed.
+    // Local sign-out proceeds regardless of whether this call succeeds.
+    api("/auth/logout", { method: "POST" }).catch(() => {});
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
     setUser(null);

@@ -6,7 +6,7 @@ def _register(client, email="s@example.com", role="student"):
     return res.get_json()["access"] if res.status_code == 201 else None
 
 def _admin_token(client, app):
-    with app.app_context():
+    with app.test_request_context():
         from app.models import User
         from app.extensions import db
         user = User.query.filter_by(role="admin").first()
@@ -15,8 +15,8 @@ def _admin_token(client, app):
             user.set_password("Passw0rd!")
             db.session.add(user)
             db.session.commit()
-        from flask_jwt_extended import create_access_token
-        return create_access_token(identity=str(user.id), additional_claims={"role": user.role})
+        from app.common.sessions import issue_session
+        return issue_session(user)["access"]
 
 def test_list_audit_logs_as_admin(client, app):
     token = _admin_token(client, app)
@@ -27,4 +27,18 @@ def test_list_audit_logs_as_admin(client, app):
 def test_list_audit_logs_as_student_forbidden(client):
     token = _register(client)
     res = client.get("/api/audit/", headers={"Authorization": f"Bearer {token}"})
+    assert res.status_code == 403
+
+
+def test_export_audit_pdf_as_admin(client, app):
+    token = _admin_token(client, app)
+    res = client.get("/api/audit/export-pdf", headers={"Authorization": f"Bearer {token}"})
+    assert res.status_code == 200
+    assert res.mimetype == "application/pdf"
+    assert res.data.startswith(b"%PDF")
+
+
+def test_export_audit_pdf_as_student_forbidden(client):
+    token = _register(client)
+    res = client.get("/api/audit/export-pdf", headers={"Authorization": f"Bearer {token}"})
     assert res.status_code == 403

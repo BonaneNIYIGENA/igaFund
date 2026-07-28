@@ -7,6 +7,7 @@ from .notification import Notification
 from .audit_log import AuditLog
 from .ticket import Ticket
 from .watchlist import WatchedProfile
+from .user_session import UserSession
 
 __all__ = [
     "User", "Role",
@@ -18,4 +19,5 @@ __all__ = [
     "AuditLog",
     "Ticket",
     "WatchedProfile",
+    "UserSession",
 ]

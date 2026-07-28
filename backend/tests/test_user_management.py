@@ -2,15 +2,15 @@
 
 
 def _admin_token(client, app):
-    with app.app_context():
+    with app.test_request_context():
         from app.extensions import db
         from app.models import User, Role
-        from flask_jwt_extended import create_access_token
+        from app.common.sessions import issue_session
         admin = User(email="admin_user@example.com", full_name="Admin User", role=Role.ADMIN.value)
         admin.set_password("AdminPass123!")
         db.session.add(admin)
         db.session.commit()
-        token = create_access_token(identity=str(admin.id), additional_claims={"role": Role.ADMIN.value})
+        token = issue_session(admin)["access"]
         return token, admin.id
 
 

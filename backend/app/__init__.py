@@ -14,6 +14,23 @@ def create_app(config_name=None):
     migrate.init_app(app, db)
     jwt.init_app(app)
     bcrypt.init_app(app)
+
+    from .common.sessions import is_session_blocked
+
+    @jwt.token_in_blocklist_loader
+    def _check_session(jwt_header, jwt_payload):
+        # Every access and refresh token carries the sid of the session that
+        # issued it; a revoked or 24h-idle session blocks both immediately.
+        return is_session_blocked(jwt_payload.get("sid"))
+
+    @jwt.revoked_token_loader
+    def _revoked_token_response(jwt_header, jwt_payload):
+        from flask import jsonify
+        return jsonify({
+            "error": "Your session has ended. Sign in again to continue.",
+            "code": "session_expired",
+        }), 401
+
     cors.init_app(
         app,
         resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},
