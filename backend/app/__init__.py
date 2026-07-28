@@ -14,7 +14,16 @@ def create_app(config_name=None):
     migrate.init_app(app, db)
     jwt.init_app(app)
     bcrypt.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
+    cors.init_app(
+        app,
+        resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},
+        supports_credentials=False,
+        allow_headers=["Content-Type", "Authorization"],
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    )
+
+    from .common.security import register_security
+    register_security(app)
 
     from .blueprints.auth.routes import auth_bp
     app.register_blueprint(auth_bp, url_prefix="/api/auth")

@@ -9,6 +9,7 @@ from ...extensions import db
 from ...models import User
 from ...common.mailer import send_email
 from ...common.tokens import make_reset_token, read_reset_token
+from ...common.security import rate_limit, clear_rate_limit
 from .schemas import (
     RegisterSchema, LoginSchema,
     PasswordResetRequestSchema, PasswordResetConfirmSchema,
@@ -26,6 +27,7 @@ def _tokens(user):
 
 
 @auth_bp.post("/register")
+@rate_limit("register", limit=5, window_seconds=900)
 def register():
     try:
         data = RegisterSchema().load(request.get_json() or {})
@@ -41,6 +43,7 @@ def register():
 
 
 @auth_bp.post("/login")
+@rate_limit("login", limit=8, window_seconds=300)
 def login():
     try:
         data = LoginSchema().load(request.get_json() or {})
@@ -48,7 +51,9 @@ def login():
         return jsonify({"errors": err.messages}), 400
     user = User.query.filter_by(email=data["email"]).first()
     if not user or not user.check_password(data["password"]):
-        return jsonify({"error": "Invalid credentials."}), 401
+        # One message for both cases so the response cannot enumerate accounts.
+        return jsonify({"error": "That email and password don't match."}), 401
+    clear_rate_limit("login")
     return jsonify({"user": user.to_dict(), **_tokens(user)}), 200
 
 
@@ -67,6 +72,7 @@ def me():
 
 
 @auth_bp.post("/password-reset/request")
+@rate_limit("reset", limit=5, window_seconds=900)
 def password_reset_request():
     try:
         data = PasswordResetRequestSchema().load(request.get_json() or {})
