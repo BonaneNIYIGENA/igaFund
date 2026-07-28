@@ -10,6 +10,8 @@ type AuthValue = {
   register: (payload: RegisterPayload) => Promise<User>;
   requestReset: (email: string) => Promise<void>;
   confirmReset: (token: string, password: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
+  updateUser: (user: User) => void;
   logout: () => void;
 };
 
@@ -27,16 +29,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // restore session from a stored token on first load
+  async function refreshUser() {
+    if (localStorage.getItem("access")) {
+      try {
+        const d = await api("/auth/me");
+        setUser(d.user);
+      } catch {
+        localStorage.removeItem("access");
+        localStorage.removeItem("refresh");
+        setUser(null);
+      }
+    }
+  }
+
+  // restore session from a stored token on first load — the no-token branch
+  // resolves synchronously so an anonymous visit never shows a loading frame.
   useEffect(() => {
     if (localStorage.getItem("access")) {
-      api("/auth/me")
-        .then((d) => setUser(d.user))
-        .catch(() => {
-          localStorage.removeItem("access");
-          localStorage.removeItem("refresh");
-        })
-        .finally(() => setLoading(false));
+      refreshUser().finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
@@ -47,6 +57,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("refresh", data.refresh);
     setUser(data.user);
     return data.user;
+  }
+
+  function updateUser(updatedUser: User) {
+    setUser(updatedUser);
   }
 
   async function login(email: string, password: string) {
@@ -83,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, requestReset, confirmReset, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, requestReset, confirmReset, refreshUser, updateUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,39 +1,51 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 
-/** The wordmark. */
+/** The igaFund brand logo – graduation-cap mark + optional wordmark. */
 export function Logo({
   compact = false,
   inverted = false,
+  size = "md",
   className,
 }: {
   compact?: boolean;
   inverted?: boolean;
+  size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
 
+  // Larger icon sizes so the mark is actually visible
+  const iconSizes: Record<string, string> = {
+    sm: "size-8",
+    md: "size-11",
+    lg: "size-14",
+    xl: "size-20",
+  };
+
+  const textSizes: Record<string, string> = {
+    sm: "text-lg",
+    md: "text-xl",
+    lg: "text-2xl",
+    xl: "text-3xl",
+  };
+
   return (
-    <span className={cn("inline-flex items-center gap-2.5", className)}>
+    <span className={cn("inline-flex items-center gap-2 select-none", className)}>
       {imageFailed ? (
+        /* Fallback SVG if image fails to load */
         <svg
-          viewBox="0 0 28 28"
-          className={cn("size-7 shrink-0", inverted ? "text-forest-100" : "text-forest-700")}
+          viewBox="0 0 40 40"
+          className={cn(iconSizes[size], "shrink-0", inverted ? "text-forest-100" : "text-forest-700")}
           aria-hidden
         >
-          <circle cx="4" cy="14" r="3" fill="none" stroke="currentColor" strokeWidth="2" />
-          <path d="M7 14h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <circle cx="16" cy="14" r="4.5" fill="var(--color-amber-500)" />
-          <path d="M20.5 14h3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <path d="M24 10.5v7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+          <text x="4" y="30" fontSize="32" fontWeight="bold" fill="currentColor">iF</text>
         </svg>
       ) : (
         <img
           src="/logo.png"
-          alt=""
-          width={28}
-          height={28}
-          className="size-7 shrink-0 rounded-[6px] object-contain"
+          alt="igaFund logo"
+          className={cn(iconSizes[size], "shrink-0 object-contain rounded-xl bg-white shadow-sm")}
           onError={() => setImageFailed(true)}
         />
       )}
@@ -41,11 +53,12 @@ export function Logo({
       {!compact && (
         <span
           className={cn(
-            "font-display text-[1.35rem] font-semibold tracking-tight",
-            inverted ? "text-white" : "text-forest-900",
+            "font-display font-bold tracking-tight leading-none",
+            textSizes[size],
+            inverted ? "text-white" : "text-ink",
           )}
         >
-          iga<span className="text-forest-600">Fund</span>
+          iga<span className={inverted ? "text-forest-200" : "text-forest-600"}>Fund</span>
         </span>
       )}
     </span>

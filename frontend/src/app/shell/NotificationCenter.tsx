@@ -83,7 +83,7 @@ export function NotificationCenter() {
 
       <PopoverContent className="w-[min(24rem,calc(100vw-1.5rem))] overflow-hidden p-0">
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
-          <h2 className="text-sm font-semibold text-forest-900">Notifications</h2>
+          <h2 className="text-sm font-semibold text-ink">Notifications</h2>
           {unread > 0 && (
             <Button variant="link" size="sm" onClick={markAll} className="text-sm">
               <CheckCheck aria-hidden />
@@ -98,7 +98,7 @@ export function NotificationCenter() {
               <span className="mx-auto grid size-11 place-items-center rounded-full bg-forest-50 text-forest-600">
                 <Bell className="size-5" aria-hidden />
               </span>
-              <p className="mt-3 text-sm font-medium text-forest-900">You're all caught up</p>
+              <p className="mt-3 text-sm font-medium text-ink">You're all caught up</p>
               <p className="mt-1 text-sm text-muted">
                 Updates about your profile and funding will appear here.
               </p>

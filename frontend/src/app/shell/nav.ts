@@ -15,45 +15,57 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { Role } from "@/lib/api";
+import type { TranslationKey } from "@/lib/i18n/dictionaries";
 
 export type NavItem = {
   to: string;
-  label: string;
+  labelKey: TranslationKey;
   icon: LucideIcon;
   /** Shown in the mobile bar. Max 5 per role, so only the essentials. */
   primary?: boolean;
 };
 
-/** One navigation map for the whole product. */
+/** One navigation map for the whole product. Settings sits last for every role. */
 export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   student: [
-    { to: "/student", label: "Overview", icon: LayoutDashboard, primary: true },
-    { to: "/student/profile", label: "My profile", icon: UserRound, primary: true },
-    { to: "/student/documents", label: "Documents", icon: FileText, primary: true },
-    { to: "/student/status", label: "Progress", icon: Route, primary: true },
-    { to: "/student/settings", label: "Settings", icon: Settings },
+    { to: "/student", labelKey: "nav.overview", icon: LayoutDashboard, primary: true },
+    { to: "/student/profile", labelKey: "nav.myProfile", icon: UserRound, primary: true },
+    { to: "/student/documents", labelKey: "nav.documents", icon: FileText, primary: true },
+    { to: "/student/status", labelKey: "nav.progress", icon: Route, primary: true },
+    { to: "/student/settings", labelKey: "nav.settings", icon: Settings },
   ],
   ambassador: [
-    { to: "/ambassador", label: "Overview", icon: LayoutDashboard, primary: true },
-    { to: "/ambassador/students", label: "My students", icon: Users, primary: true },
-    { to: "/ambassador/enroll", label: "Enroll", icon: UserRound, primary: true },
-    { to: "/ambassador/tickets", label: "Tickets", icon: Receipt, primary: true },
+    { to: "/ambassador", labelKey: "nav.overview", icon: LayoutDashboard, primary: true },
+    { to: "/ambassador/students", labelKey: "nav.myStudents", icon: Users, primary: true },
+    { to: "/ambassador/enroll", labelKey: "nav.enroll", icon: UserRound, primary: true },
+    { to: "/ambassador/settings", labelKey: "nav.settings", icon: Settings, primary: true },
   ],
   donor: [
-    { to: "/donor", label: "Overview", icon: LayoutDashboard, primary: true },
-    { to: "/donor/browse", label: "Find students", icon: Search, primary: true },
-    { to: "/donor/giving", label: "My giving", icon: HeartHandshake, primary: true },
-    { to: "/donor/receipts", label: "Receipts", icon: Receipt, primary: true },
+    { to: "/donor", labelKey: "nav.overview", icon: LayoutDashboard, primary: true },
+    { to: "/donor/browse", labelKey: "nav.findStudents", icon: Search, primary: true },
+    { to: "/donor/giving", labelKey: "nav.myGiving", icon: HeartHandshake, primary: true },
+    { to: "/donor/settings", labelKey: "nav.settings", icon: Settings, primary: true },
   ],
   admin: [
-    { to: "/admin", label: "Overview", icon: LayoutDashboard, primary: true },
-    { to: "/admin/queue", label: "Review queue", icon: ShieldCheck, primary: true },
-    { to: "/admin/analytics", label: "Analytics", icon: BarChart3, primary: true },
-    { to: "/admin/institutions", label: "Institutions", icon: Building2, primary: true },
-    { to: "/admin/audit", label: "Audit trail", icon: ScrollText },
+    { to: "/admin", labelKey: "nav.overview", icon: LayoutDashboard, primary: true },
+    { to: "/admin/queue", labelKey: "nav.reviewQueue", icon: ShieldCheck, primary: true },
+    { to: "/admin/users", labelKey: "nav.userAccounts", icon: Users, primary: true },
+    { to: "/admin/analytics", labelKey: "nav.analytics", icon: BarChart3 },
+    { to: "/admin/institutions", labelKey: "nav.institutions", icon: Building2 },
+    { to: "/admin/tickets", labelKey: "nav.tickets", icon: Receipt },
+    { to: "/admin/audit", labelKey: "nav.auditTrail", icon: ScrollText },
+    { to: "/admin/settings", labelKey: "nav.settings", icon: Settings },
   ],
 };
 
+export const ROLE_LABEL_KEY: Record<Role, TranslationKey> = {
+  student: "role.student",
+  ambassador: "role.ambassador",
+  donor: "role.donor",
+  admin: "role.admin",
+};
+
+/** English fallback for non-translated call sites (e.g. plain-text toasts). */
 export const ROLE_LABEL: Record<Role, string> = {
   student: "Student",
   ambassador: "Community ambassador",

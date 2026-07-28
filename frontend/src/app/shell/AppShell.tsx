@@ -3,8 +3,12 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CircleHelp, LogOut, UserRound } from "lucide-react";
 import { useAuth } from "@/features/auth/AuthContext";
-import { NAV_BY_ROLE, ROLE_LABEL } from "./nav";
+import { useLocale } from "@/lib/i18n";
+import { NAV_BY_ROLE, ROLE_LABEL_KEY } from "./nav";
 import { NotificationCenter } from "./NotificationCenter";
+import { ThemeToggle } from "./ThemeToggle";
+import { LanguageToggle } from "./LanguageToggle";
+import { ConnectionIndicator } from "./ConnectionIndicator";
 import { Logo } from "@/components/ui/Logo";
 import { cn } from "@/lib/cn";
 import { pageTransition } from "@/lib/motion";
@@ -32,6 +36,7 @@ export function AppShell({
 }) {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const { t } = useLocale();
   if (!user) return null;
 
   const items = NAV_BY_ROLE[user.role];
@@ -43,13 +48,13 @@ export function AppShell({
         href="#main"
         className="sr-only-focusable absolute left-4 top-4 z-[100] rounded-sm bg-forest-900 px-4 py-2 text-sm font-medium text-white"
       >
-        Skip to main content
+        {t("header.skipToContent")}
       </a>
 
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-line bg-white lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-line bg-surface lg:flex">
         <div className="px-6 py-6">
           <Link to="/" className="inline-flex rounded-xs focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-forest-700">
-            <Logo />
+            <Logo size="lg" />
           </Link>
         </div>
 
@@ -66,7 +71,7 @@ export function AppShell({
                 className={cn(
                   "relative flex items-center gap-3 rounded-md px-3.5 py-2.5 text-[0.9375rem] font-medium transition-colors duration-200",
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700",
-                  active ? "text-forest-900" : "text-muted hover:bg-forest-50 hover:text-forest-800",
+                  active ? "text-ink" : "text-muted hover:bg-forest-50 hover:text-forest-800",
                 )}
               >
                 {active && (
@@ -77,7 +82,7 @@ export function AppShell({
                   />
                 )}
                 <item.icon className="relative z-10 size-[18px] shrink-0" aria-hidden />
-                <span className="relative z-10">{item.label}</span>
+                <span className="relative z-10">{t(item.labelKey)}</span>
               </NavLink>
             );
           })}
@@ -90,19 +95,28 @@ export function AppShell({
             className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-md border-2 border-clay-500 bg-clay-100 px-3.5 py-3 text-[0.9375rem] font-bold text-clay-700 transition-colors duration-200 hover:bg-clay-500 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay-500"
           >
             <LogOut className="size-[18px] shrink-0" aria-hidden />
-            Sign out
+            {t("header.signOut")}
           </button>
         </div>
       </aside>
 
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 border-b border-line bg-canvas/85 backdrop-blur-md">
-          <div className="flex items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 px-4 py-3 sm:gap-3 sm:px-6 lg:px-8">
             <Link to="/" className="lg:hidden" aria-label="igaFund home">
-              <Logo compact />
+              <Logo compact size="md" />
             </Link>
 
-            <div className="ml-auto flex items-center gap-1">
+            <div className="hidden items-center gap-2 lg:flex">
+              <ConnectionIndicator />
+            </div>
+
+            <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+              <div className="hidden items-center gap-1.5 sm:flex">
+                <LanguageToggle />
+                <ThemeToggle />
+              </div>
+
               <NotificationCenter />
 
               <DropdownMenu>
@@ -110,39 +124,45 @@ export function AppShell({
                   <button
                     type="button"
                     className="flex cursor-pointer items-center gap-2.5 rounded-full py-1 pl-1 pr-2.5 transition-colors hover:bg-forest-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700"
-                    aria-label="Account menu"
+                    aria-label={t("header.accountMenu")}
                   >
                     <Avatar name={user.full_name} size="sm" />
-                    <span className="hidden text-sm font-medium text-forest-900 sm:block">
+                    <span className="hidden text-sm font-medium text-ink sm:block">
                       {user.full_name.split(" ")[0]}
                     </span>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{ROLE_LABEL[user.role]}</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t(ROLE_LABEL_KEY[user.role])}</DropdownMenuLabel>
                   <div className="px-3 pb-2">
-                    <p className="truncate text-sm font-medium text-forest-900">{user.full_name}</p>
+                    <p className="truncate text-sm font-medium text-ink">{user.full_name}</p>
                     <p className="truncate text-xs text-muted">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
-                  {user.role === "student" && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/student/settings">
-                        <UserRound aria-hidden />
-                        Account settings
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
+
+                  {/* Theme + language repeated here so they're reachable on narrow screens too. */}
+                  <div className="flex items-center justify-between gap-2 px-3 py-2 sm:hidden">
+                    <LanguageToggle />
+                    <ThemeToggle />
+                  </div>
+                  <DropdownMenuSeparator className="sm:hidden" />
+
+                  <DropdownMenuItem asChild>
+                    <Link to={`/${user.role}/settings`}>
+                      <UserRound aria-hidden />
+                      {t("header.accountSettings")}
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/help">
                       <CircleHelp aria-hidden />
-                      Help centre
+                      {t("header.helpCentre")}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem destructive onSelect={logout}>
                     <LogOut aria-hidden />
-                    Sign out
+                    {t("header.signOut")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -152,7 +172,6 @@ export function AppShell({
 
         <main
           id="main"
-          // Bottom padding clears the mobile nav bar and the gesture area.
           className="px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 lg:px-8 lg:pb-16"
         >
           <div className="mx-auto w-full max-w-6xl">
@@ -183,7 +202,7 @@ export function AppShell({
       </div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 backdrop-blur-md lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur-md lg:hidden"
         aria-label="Main"
       >
         <ul className="flex pb-[env(safe-area-inset-bottom)]">
@@ -197,7 +216,6 @@ export function AppShell({
                   to={item.to}
                   end={item.to === `/${user.role}`}
                   className={cn(
-                    // 44px+ touch target with room for the label.
                     "flex min-h-[3.75rem] flex-col items-center justify-center gap-1 px-1 py-2 text-[0.6875rem] font-medium transition-colors",
                     active ? "text-forest-800" : "text-muted",
                   )}
@@ -210,7 +228,7 @@ export function AppShell({
                   >
                     <item.icon className="size-[18px]" aria-hidden />
                   </span>
-                  <span className="max-w-full truncate">{item.label}</span>
+                  <span className="max-w-full truncate">{t(item.labelKey)}</span>
                 </NavLink>
               </li>
             );
