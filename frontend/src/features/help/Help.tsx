@@ -9,9 +9,15 @@ import {
   FileText,
   GraduationCap,
   HeartHandshake,
+  Instagram,
+  Linkedin,
+  Mail,
+  MessageCircle,
+  Phone,
   Receipt,
   Send,
   ShieldCheck,
+  Twitter,
   UserPlus,
   UserRound,
   Users,
@@ -24,6 +30,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { RoutingFlow, RoutingRail, type RailStep } from "@/components/ui/RoutingRail";
 import { UnderlineTabs } from "@/components/ui/Tabs";
 import { fadeUp, stagger } from "@/lib/motion";
+
+const CONTACT_EMAIL = "igafund@gmail.com";
+const CONTACT_PHONE_DISPLAY = "+250 788 251 302";
+const CONTACT_PHONE_INTL = "250788251302";
+
+const SOCIAL_LINKS = [
+  { label: "X", icon: Twitter },
+  { label: "LinkedIn", icon: Linkedin },
+  { label: "Instagram", icon: Instagram },
+];
 
 const MONEY_PATH: RailStep[] = [
   { key: "donor", label: "A donor gives", icon: HeartHandshake, state: "done" },
@@ -294,6 +310,61 @@ export function Help() {
                 {user ? "Back to my dashboard" : "Create an account"}
               </Link>
             </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle className="text-base">Contact us</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <a
+                href={`mailto:${CONTACT_EMAIL}`}
+                className="flex items-center gap-3 rounded-md border border-line bg-raised p-4 transition-colors hover:bg-sunk"
+              >
+                <span className="grid size-10 shrink-0 place-items-center rounded-sm bg-forest-100 text-forest-700">
+                  <Mail className="size-[18px]" aria-hidden />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-faint">Email</p>
+                  <p className="truncate font-medium text-ink">{CONTACT_EMAIL}</p>
+                </div>
+              </a>
+
+              <a
+                href={`https://wa.me/${CONTACT_PHONE_INTL}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 rounded-md border border-line bg-raised p-4 transition-colors hover:bg-sunk"
+              >
+                <span className="grid size-10 shrink-0 place-items-center rounded-sm bg-forest-100 text-forest-700">
+                  <MessageCircle className="size-[18px]" aria-hidden />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-faint">
+                    WhatsApp &amp; phone
+                  </p>
+                  <p className="truncate font-medium text-ink">{CONTACT_PHONE_DISPLAY}</p>
+                </div>
+              </a>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-faint">Follow us</p>
+              <div className="mt-2.5 flex flex-wrap gap-2.5">
+                {SOCIAL_LINKS.map((s) => (
+                  <span
+                    key={s.label}
+                    className="inline-flex items-center gap-2 rounded-full border border-line bg-raised px-3.5 py-2 text-sm text-muted"
+                  >
+                    <s.icon className="size-4" aria-hidden />
+                    {s.label}
+                    <span className="text-xs text-faint">· Coming soon</span>
+                  </span>
+                ))}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </main>
