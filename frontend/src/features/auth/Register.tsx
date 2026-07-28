@@ -10,6 +10,7 @@ import {
   validatePassword,
   passwordChecklist,
 } from "@/lib/validation";
+import { useLocale } from "@/lib/i18n";
 import { useAuth, HOME_FOR_ROLE } from "./AuthContext";
 import { AuthLayout } from "./AuthLayout";
 import { Button } from "@/components/ui/Button";
@@ -30,6 +31,7 @@ const SIGNUP_ROLES: {
 
 export function Register() {
   const { register } = useAuth();
+  const { t } = useLocale();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from;
@@ -91,8 +93,8 @@ export function Register() {
 
   return (
     <AuthLayout
-      title="Create your account"
-      description="It takes about a minute. You can finish your profile afterwards."
+      title={t("page.register.title")}
+      description={t("page.register.description")}
       footer={
         <>
           Already have an account?{" "}

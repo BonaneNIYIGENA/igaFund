@@ -10,6 +10,7 @@ type InstitutionRow = Institution & {
   total_routed: number;
 };
 import { AppShell } from "@/app/shell/AppShell";
+import { useLocale } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -40,6 +41,7 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 export function AdminInstitutions() {
+  const { t } = useLocale();
   const [institutions, setInstitutions] = useState<InstitutionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -106,8 +108,8 @@ export function AdminInstitutions() {
 
   return (
     <AppShell
-      title="Institutions"
-      description="The registered schools that can receive donor funds. Nothing routes anywhere else."
+      title={t("page.adminInstitutions.title")}
+      description={t("page.adminInstitutions.description")}
       actions={
         <Button onClick={() => setOpen(true)}>
           <Plus aria-hidden />

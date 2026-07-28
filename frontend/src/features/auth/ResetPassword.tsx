@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "./AuthContext";
+import { useLocale } from "@/lib/i18n";
 import { validatePassword } from "@/lib/validation";
 import { AuthLayout } from "./AuthLayout";
 import { Button } from "@/components/ui/Button";
@@ -11,6 +12,7 @@ import { Alert } from "@/components/ui/Feedback";
 
 export function ResetPassword() {
   const { confirmReset } = useAuth();
+  const { t } = useLocale();
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
@@ -56,8 +58,8 @@ export function ResetPassword() {
 
   return (
     <AuthLayout
-      title="Set a new password"
-      description="Choose something you haven't used on igaFund before."
+      title={t("page.resetPassword.title")}
+      description={t("page.resetPassword.description")}
       footer={
         <>
           Link expired?{" "}

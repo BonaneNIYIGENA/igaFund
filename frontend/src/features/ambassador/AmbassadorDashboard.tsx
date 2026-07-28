@@ -4,6 +4,7 @@ import { ArrowRight, CheckCircle2, Clock, HeartHandshake, UserPlus, Users } from
 import { formatMoney } from "@/lib/format";
 import { fadeUp, stagger } from "@/lib/motion";
 import { AppShell } from "@/app/shell/AppShell";
+import { useLocale } from "@/lib/i18n";
 import { useAuth } from "@/features/auth/AuthContext";
 import { useEnrollees } from "./useEnrollees";
 import { StudentRow } from "./StudentRow";
@@ -14,6 +15,7 @@ import { Alert, EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedbac
 
 export function AmbassadorDashboard() {
   const { user } = useAuth();
+  const { t } = useLocale();
   const { students, loading, error, reload, counts } = useEnrollees();
   const firstName = user?.full_name.split(" ")[0] ?? "there";
 
@@ -23,8 +25,8 @@ export function AmbassadorDashboard() {
 
   return (
     <AppShell
-      title={`Hello, ${firstName}`}
-      description="The students you've enrolled, and what each of them needs next."
+      title={t("dash.hello", { name: firstName })}
+      description={t("dash.ambassador.description")}
       actions={
         <Button asChild>
           <Link to="/ambassador/enroll">
@@ -96,8 +98,8 @@ export function AmbassadorDashboard() {
                 {students.length === 0 ? (
                   <EmptyState
                     icon={UserPlus}
-                    title="No students yet"
-                    description="Enroll a student from your community. You can capture everything offline and it will upload itself when you're back on a signal."
+                    title={t("page.ambassadorDashboard.empty.title")}
+                    description={t("page.ambassadorDashboard.empty.description")}
                     action={
                       <Button asChild>
                         <Link to="/ambassador/enroll">Enroll your first student</Link>

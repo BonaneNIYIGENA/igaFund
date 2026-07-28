@@ -13,6 +13,7 @@ import {
 import { ApiError, endpoints, type Doc, type DocType } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { AppShell } from "@/app/shell/AppShell";
+import { useLocale } from "@/lib/i18n";
 import { useMyProfile, editability } from "./useMyProfile";
 import { DOC_LABEL, DocumentViewer, docIcon } from "@/features/documents/DocumentViewer";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +32,7 @@ const REQUIRED_TYPES: { type: DocType; why: string }[] = [
 ];
 
 export function StudentDocuments() {
+  const { t } = useLocale();
   const { profile, loading: profileLoading, error: profileError, reload } = useMyProfile();
   const { canEdit } = editability(profile);
 
@@ -118,11 +120,11 @@ export function StudentDocuments() {
 
   if (!profileLoading && !profile) {
     return (
-      <AppShell title="Documents" description="Upload the papers that prove your story.">
+      <AppShell title={t("page.studentDocuments.title")} description={t("page.studentDocuments.noProfileDescription")}>
         <EmptyState
           icon={UserRound}
-          title="Create your profile first"
-          description="Documents attach to your funding profile, so that needs to exist before you can upload anything."
+          title={t("page.studentDocuments.emptyNoProfile.title")}
+          description={t("page.studentDocuments.emptyNoProfile.description")}
           action={
             <Button asChild>
               <Link to="/student/profile">Create my profile</Link>
@@ -135,8 +137,8 @@ export function StudentDocuments() {
 
   return (
     <AppShell
-      title="Documents"
-      description="Reviewers read these to verify you. Only igaFund staff can open them — donors never see them."
+      title={t("page.studentDocuments.title")}
+      description={t("page.studentDocuments.description")}
     >
       {profileError ? (
         <ErrorState description={profileError} onRetry={reload} />

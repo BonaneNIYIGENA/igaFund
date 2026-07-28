@@ -25,6 +25,7 @@ import {
 import { getToken, endpoints, type AdminStats, type Profile } from "@/lib/api";
 import { formatCompact, formatMoney } from "@/lib/format";
 import { AppShell } from "@/app/shell/AppShell";
+import { useLocale } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { StatTile } from "@/components/ui/Stat";
@@ -61,6 +62,7 @@ function ChartTooltip({
 }
 
 export function AdminAnalytics() {
+  const { t } = useLocale();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -161,8 +163,8 @@ export function AdminAnalytics() {
 
   return (
     <AppShell
-      title="Analytics"
-      description="Verification throughput and where funds have been routed."
+      title={t("page.adminAnalytics.title")}
+      description={t("page.adminAnalytics.description")}
       actions={
         <Button variant="secondary" onClick={exportReport}>
           <FileDown aria-hidden />

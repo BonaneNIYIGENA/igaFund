@@ -12,6 +12,7 @@ import {
 import { endpoints, type ContributionItem, type Profile } from "@/lib/api";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { AppShell } from "@/app/shell/AppShell";
+import { useLocale } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -24,6 +25,7 @@ import { useWatchlist } from "./WatchlistContext";
 
 /** My giving: every contribution with its receipt, and the students being followed — one page. */
 export function DonorGiving() {
+  const { t } = useLocale();
   const [tab, setTab] = useState<"contributions" | "following">("contributions");
   const [given, setGiven] = useState<ContributionItem[]>([]);
   const [following, setFollowing] = useState<Profile[]>([]);
@@ -71,8 +73,8 @@ export function DonorGiving() {
 
   return (
     <AppShell
-      title="My giving"
-      description="Every contribution you've made, and the students you keep an eye on."
+      title={t("page.donorGiving.title")}
+      description={t("page.donorGiving.description")}
       actions={
         <Button variant="fund" asChild>
           <Link to="/donor/browse">

@@ -22,7 +22,6 @@ import { ResetPassword } from "@/features/auth/ResetPassword";
 import { StudentDashboard } from "@/features/student/StudentDashboard";
 import { StudentProfile } from "@/features/student/StudentProfile";
 import { StudentDocuments } from "@/features/student/StudentDocuments";
-import { StudentStatus } from "@/features/student/StudentStatus";
 
 import { AmbassadorDashboard } from "@/features/ambassador/AmbassadorDashboard";
 import { AmbassadorStudents } from "@/features/ambassador/AmbassadorStudents";
@@ -124,7 +123,8 @@ export function App() {
                   <Route path="/student" element={<Protected roles={["student"]}><StudentDashboard /></Protected>} />
                   <Route path="/student/profile" element={<Protected roles={["student"]}><StudentProfile /></Protected>} />
                   <Route path="/student/documents" element={<Protected roles={["student"]}><StudentDocuments /></Protected>} />
-                  <Route path="/student/status" element={<Protected roles={["student"]}><StudentStatus /></Protected>} />
+                  {/* Progress is now a tab on the profile page, not its own route. */}
+                  <Route path="/student/status" element={<Navigate to="/student/profile?tab=progress" replace />} />
                   <Route path="/student/settings" element={<Protected roles={["student"]}><AccountSettings /></Protected>} />
 
                   {/* Ambassador */}

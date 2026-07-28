@@ -3,6 +3,7 @@ import { Receipt, ShieldCheck, UserPlus, Building2, type LucideIcon } from "luci
 import { endpoints, type TicketItem } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import { AppShell } from "@/app/shell/AppShell";
+import { useLocale } from "@/lib/i18n";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedback";
 import { Badge } from "@/components/ui/Badge";
@@ -21,6 +22,7 @@ const PROCESS: Record<string, { label: string; icon: LucideIcon }> = {
  * progress and receipt views built from live data instead.
  */
 export function AdminTickets() {
+  const { t } = useLocale();
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -44,8 +46,8 @@ export function AdminTickets() {
 
   return (
     <AppShell
-      title="Tickets"
-      description="A numbered, timestamped record of every completed milestone platform-wide."
+      title={t("page.adminTickets.title")}
+      description={t("page.adminTickets.description")}
     >
       {error ? (
         <ErrorState description={error} onRetry={load} />

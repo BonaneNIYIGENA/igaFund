@@ -13,6 +13,7 @@ import { endpoints, type ContributionItem, type Profile } from "@/lib/api";
 import { formatMoney, formatRelative } from "@/lib/format";
 import { fadeUp, stagger } from "@/lib/motion";
 import { AppShell } from "@/app/shell/AppShell";
+import { useLocale } from "@/lib/i18n";
 import { useAuth } from "@/features/auth/AuthContext";
 import { StudentCard } from "@/features/browse/StudentCard";
 import { Button } from "@/components/ui/Button";
@@ -22,6 +23,7 @@ import { EmptyState, SkeletonCard, Skeleton } from "@/components/ui/Feedback";
 
 export function DonorDashboard() {
   const { user } = useAuth();
+  const { t } = useLocale();
   const [given, setGiven] = useState<ContributionItem[]>([]);
   const [suggested, setSuggested] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,8 +58,8 @@ export function DonorDashboard() {
 
   return (
     <AppShell
-      title={`Hello, ${firstName}`}
-      description="Your giving, and students who still need help."
+      title={t("dash.hello", { name: firstName })}
+      description={t("dash.donor.description")}
       actions={
         <Button variant="fund" asChild>
           <Link to="/donor/browse">
@@ -103,8 +105,8 @@ export function DonorDashboard() {
                 ) : suggested.length === 0 ? (
                   <EmptyState
                     icon={Sparkles}
-                    title="Every verified student is fully funded"
-                    description="There's nobody waiting right now. Check back soon — new profiles are verified regularly."
+                    title={t("page.donorDashboard.empty.title")}
+                    description={t("page.donorDashboard.empty.description")}
                   />
                 ) : (
                   <motion.div

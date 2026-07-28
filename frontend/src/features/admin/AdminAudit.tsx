@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FileDown, Lock, ScrollText, SearchX } from "lucide-react";
 import { toast } from "sonner";
 import { endpoints, getToken, type AuditLogItem } from "@/lib/api";
+import { useLocale } from "@/lib/i18n";
 import { formatDateTime } from "@/lib/format";
 import { AppShell } from "@/app/shell/AppShell";
 import { Button } from "@/components/ui/Button";
@@ -17,6 +18,7 @@ const ACTION_TONE: Record<string, "success" | "danger" | "forest"> = {
 };
 
 export function AdminAudit() {
+  const { t } = useLocale();
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -78,8 +80,8 @@ export function AdminAudit() {
 
   return (
     <AppShell
-      title="Audit trail"
-      description="Every administrative decision, permanently recorded."
+      title={t("page.adminAudit.title")}
+      description={t("page.adminAudit.description")}
       actions={
         <Button variant="secondary" onClick={exportPdf} loading={exporting}>
           <FileDown aria-hidden />

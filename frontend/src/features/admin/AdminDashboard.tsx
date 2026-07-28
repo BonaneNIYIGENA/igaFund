@@ -15,6 +15,7 @@ import { getToken, endpoints, type AdminStats, type AuditLogItem } from "@/lib/a
 import { formatRelative } from "@/lib/format";
 import { fadeUp, stagger } from "@/lib/motion";
 import { AppShell } from "@/app/shell/AppShell";
+import { useLocale } from "@/lib/i18n";
 import { useAuth } from "@/features/auth/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -23,6 +24,7 @@ import { Alert, Skeleton } from "@/components/ui/Feedback";
 
 export function AdminDashboard() {
   const { user } = useAuth();
+  const { t } = useLocale();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,8 +59,8 @@ export function AdminDashboard() {
 
   return (
     <AppShell
-      title={`Hello, ${firstName}`}
-      description="Platform health and anything waiting on you."
+      title={t("dash.hello", { name: firstName })}
+      description={t("dash.admin.description")}
       actions={
         <>
           <Button variant="secondary" onClick={exportReport}>

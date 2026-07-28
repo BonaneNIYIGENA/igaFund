@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   UserRound,
   FileText,
-  Route,
   Settings,
   Users,
   ShieldCheck,
@@ -31,8 +30,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { to: "/student", labelKey: "nav.overview", icon: LayoutDashboard, primary: true },
     { to: "/student/profile", labelKey: "nav.myProfile", icon: UserRound, primary: true },
     { to: "/student/documents", labelKey: "nav.documents", icon: FileText, primary: true },
-    { to: "/student/status", labelKey: "nav.progress", icon: Route, primary: true },
-    { to: "/student/settings", labelKey: "nav.settings", icon: Settings },
+    { to: "/student/settings", labelKey: "nav.settings", icon: Settings, primary: true },
   ],
   ambassador: [
     { to: "/ambassador", labelKey: "nav.overview", icon: LayoutDashboard, primary: true },
@@ -54,7 +52,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { to: "/admin/institutions", labelKey: "nav.institutions", icon: Building2 },
     { to: "/admin/tickets", labelKey: "nav.tickets", icon: Receipt },
     { to: "/admin/audit", labelKey: "nav.auditTrail", icon: ScrollText },
-    { to: "/admin/settings", labelKey: "nav.settings", icon: Settings },
+    { to: "/admin/settings", labelKey: "nav.settings", icon: Settings, primary: true },
   ],
 };
 

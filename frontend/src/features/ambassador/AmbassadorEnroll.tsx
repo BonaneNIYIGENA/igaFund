@@ -5,6 +5,7 @@ import { CloudOff, Info, UserPlus, Wifi } from "lucide-react";
 import { ApiError, endpoints, type Institution } from "@/lib/api";
 import { saveDraftOffline } from "@/lib/offline";
 import { AppShell } from "@/app/shell/AppShell";
+import { useLocale } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Field, Input, NativeSelect, Textarea } from "@/components/ui/Field";
@@ -59,6 +60,7 @@ const STEPS = ["Who they are", "Their studies", "Guardian consent"];
 /** Ambassador-assisted enrolment. */
 export function AmbassadorEnroll() {
   const navigate = useNavigate();
+  const { t } = useLocale();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<Form>(EMPTY);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
@@ -183,8 +185,8 @@ export function AmbassadorEnroll() {
 
   return (
     <AppShell
-      title="Enroll a student"
-      description="Capture their details here. You can do this without a connection."
+      title={t("page.ambassadorEnroll.title")}
+      description={t("page.ambassadorEnroll.description")}
     >
       <div className="max-w-2xl space-y-5">
         {!online && (
@@ -365,15 +367,18 @@ export function AmbassadorEnroll() {
           )}
 
           {step === 3 && isMinor && (
+            // Fixed amber-50 card — text stays on fixed literals throughout,
+            // including nested field labels, since text-ink/text-muted flip
+            // light in dark mode and vanish against this pale, unmoving bg.
             <Card className="border-amber-300 bg-amber-50">
               <CardHeader>
-                <CardTitle className="text-base">Guardian consent</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-base text-forest-950">Guardian consent</CardTitle>
+                <CardDescription className="text-forest-700">
                   This student is {age}. A guardian must consent in writing before their profile can
                   be published, and their name stays hidden from donors.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-5">
+              <CardContent className="space-y-5 [&_label]:text-forest-950">
                 <div className="grid gap-5 sm:grid-cols-2">
                   <Field label="Guardian's full name" required error={errors.guardian_name}>
                     {(props) => (

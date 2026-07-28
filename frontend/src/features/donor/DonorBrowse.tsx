@@ -4,6 +4,7 @@ import { SearchX, ShieldCheck } from "lucide-react";
 import { endpoints, type Profile } from "@/lib/api";
 import { stagger } from "@/lib/motion";
 import { AppShell } from "@/app/shell/AppShell";
+import { useLocale } from "@/lib/i18n";
 import { StudentCard } from "@/features/browse/StudentCard";
 import { StudentPanel } from "@/features/browse/StudentPanel";
 import { Button } from "@/components/ui/Button";
@@ -18,6 +19,7 @@ const SORTS = [
 ] as const;
 
 export function DonorBrowse() {
+  const { t } = useLocale();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewing, setViewing] = useState<number | null>(null);
@@ -65,8 +67,8 @@ export function DonorBrowse() {
 
   return (
     <AppShell
-      title="Find a student"
-      description="Every profile here has been verified by an igaFund administrator."
+      title={t("page.donorBrowse.title")}
+      description={t("page.donorBrowse.description")}
     >
       <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">

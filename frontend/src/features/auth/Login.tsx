@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ApiError } from "@/lib/api";
 import { stripEmailInput } from "@/lib/validation";
+import { useLocale } from "@/lib/i18n";
 import { useAuth, HOME_FOR_ROLE } from "./AuthContext";
 import { AuthLayout } from "./AuthLayout";
 import { Button } from "@/components/ui/Button";
@@ -11,6 +12,7 @@ import { Alert } from "@/components/ui/Feedback";
 
 export function Login() {
   const { login } = useAuth();
+  const { t } = useLocale();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from;
@@ -42,8 +44,8 @@ export function Login() {
 
   return (
     <AuthLayout
-      title="Welcome back"
-      description="Sign in to pick up where you left off."
+      title={t("page.login.title")}
+      description={t("page.login.description")}
       footer={
         <>
           New to igaFund?{" "}

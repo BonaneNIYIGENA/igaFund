@@ -5,6 +5,7 @@ import { endpoints, type Profile } from "@/lib/api";
 import { formatMoney, formatRelative } from "@/lib/format";
 import { stagger, fadeUp } from "@/lib/motion";
 import { AppShell } from "@/app/shell/AppShell";
+import { useLocale } from "@/lib/i18n";
 import { ReviewDialog } from "./ReviewDialog";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -21,6 +22,7 @@ const TABS = [
 ];
 
 export function AdminQueue() {
+  const { t } = useLocale();
   const [tab, setTab] = useState("pending");
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
@@ -57,8 +59,8 @@ export function AdminQueue() {
 
   return (
     <AppShell
-      title="Review queue"
-      description="Nothing becomes public until someone here approves it."
+      title={t("page.adminQueue.title")}
+      description={t("page.adminQueue.description")}
     >
       <div className="space-y-5">
         <UnderlineTabs

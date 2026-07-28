@@ -17,6 +17,7 @@ import { endpoints, type ContributionItem } from "@/lib/api";
 import { formatMoney, formatRelative } from "@/lib/format";
 import { fadeUp, stagger } from "@/lib/motion";
 import { AppShell } from "@/app/shell/AppShell";
+import { useLocale } from "@/lib/i18n";
 import { useAuth } from "@/features/auth/AuthContext";
 import { useMyProfile, journeyFor } from "./useMyProfile";
 import { Button } from "@/components/ui/Button";
@@ -29,6 +30,7 @@ import { Alert, EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedbac
 
 export function StudentDashboard() {
   const { user } = useAuth();
+  const { t } = useLocale();
   const { profile, loading, error, reload } = useMyProfile();
   const [supporters, setSupporters] = useState<ContributionItem[]>([]);
 
@@ -70,48 +72,48 @@ export function StudentDashboard() {
   function nextStep() {
     if (!profile) {
       return {
-        title: "Start your funding profile",
-        body: "Tell donors who you are, what you're studying and how much you need. You can save and come back to it.",
+        title: t("dash.student.step.noProfile.title"),
+        body: t("dash.student.step.noProfile.body"),
         cta: { to: "/student/profile", label: "Create my profile" },
         tone: "warning" as const,
       };
     }
     if (profile.status === "rejected") {
       return {
-        title: "A reviewer asked for changes",
-        body: profile.review_note ?? "Update your profile and send it back for review.",
+        title: t("dash.student.step.rejected.title"),
+        body: profile.review_note ?? t("dash.student.step.rejected.bodyFallback"),
         cta: { to: "/student/profile", label: "Make the changes" },
         tone: "danger" as const,
       };
     }
     if (profile.document_count === 0) {
       return {
-        title: "Upload your documents",
-        body: "A reviewer needs your transcript and ID before they can verify you. Photos from your phone are fine.",
+        title: t("dash.student.step.uploadDocs.title"),
+        body: t("dash.student.step.uploadDocs.body"),
         cta: { to: "/student/documents", label: "Upload documents" },
         tone: "warning" as const,
       };
     }
     if (profile.status === "draft") {
       return {
-        title: "Send your profile for review",
-        body: "Everything looks ready. A reviewer usually responds within a few days.",
-        cta: { to: "/student/status", label: "Review and submit" },
+        title: t("dash.student.step.sendReview.title"),
+        body: t("dash.student.step.sendReview.body"),
+        cta: { to: "/student/profile?tab=progress", label: "Review and submit" },
         tone: "warning" as const,
       };
     }
     if (profile.status === "pending") {
       return {
-        title: "Your profile is with a reviewer",
-        body: "Nothing to do right now — we'll notify you the moment there's a decision.",
-        cta: { to: "/student/status", label: "See progress" },
+        title: t("dash.student.step.pending.title"),
+        body: t("dash.student.step.pending.body"),
+        cta: { to: "/student/profile?tab=progress", label: "See progress" },
         tone: "info" as const,
       };
     }
     return {
-      title: "You're live in the donor pool",
-      body: "Donors can find and fund you. Share your profile link to reach more of them.",
-      cta: { to: "/student/status", label: "See your progress" },
+      title: t("dash.student.step.live.title"),
+      body: t("dash.student.step.live.body"),
+      cta: { to: "/student/profile?tab=progress", label: "See your progress" },
       tone: "success" as const,
     };
   }
@@ -120,8 +122,8 @@ export function StudentDashboard() {
 
   return (
     <AppShell
-      title={`Hello, ${firstName}`}
-      description="Here's where your funding stands today."
+      title={t("dash.hello", { name: firstName })}
+      description={t("dash.student.description")}
       actions={
         profile?.status === "approved" ? (
           <Button variant="secondary" asChild>
@@ -270,8 +272,8 @@ export function StudentDashboard() {
             <motion.div variants={fadeUp}>
               <EmptyState
                 icon={UserRound}
-                title="No profile yet"
-                description="Your funding profile is what donors read. Create it once, and a reviewer will verify it before it goes live."
+                title={t("dash.student.empty.title")}
+                description={t("dash.student.empty.description")}
                 action={
                   <Button asChild>
                     <Link to="/student/profile">Create my profile</Link>

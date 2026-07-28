@@ -6,6 +6,7 @@ import { MemoryRouter } from "react-router-dom";
 import { Login } from "./Login";
 import { Register } from "./Register";
 import { AuthProvider } from "./AuthContext";
+import { LocaleProvider } from "@/lib/i18n";
 
 const okTokens = { access: "a", refresh: "r", user: { id: 1, email: "s@example.com", role: "student", full_name: "Sam" } };
 
@@ -19,9 +20,11 @@ vi.mock("../../lib/api", () => ({
 
 function renderWith(ui: ReactNode) {
   return render(
-    <MemoryRouter>
-      <AuthProvider>{ui}</AuthProvider>
-    </MemoryRouter>,
+    <LocaleProvider>
+      <MemoryRouter>
+        <AuthProvider>{ui}</AuthProvider>
+      </MemoryRouter>
+    </LocaleProvider>,
   );
 }
 

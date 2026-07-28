@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { SearchX, UserPlus, Users } from "lucide-react";
 import { AppShell } from "@/app/shell/AppShell";
+import { useLocale } from "@/lib/i18n";
 import { useEnrollees } from "./useEnrollees";
 import { StudentRow } from "./StudentRow";
 import { Button } from "@/components/ui/Button";
@@ -11,6 +12,7 @@ import { UnderlineTabs } from "@/components/ui/Tabs";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedback";
 
 export function AmbassadorStudents() {
+  const { t } = useLocale();
   const { students, loading, error, reload, counts } = useEnrollees();
   const [tab, setTab] = useState("all");
   const [search, setSearch] = useState("");
@@ -30,8 +32,8 @@ export function AmbassadorStudents() {
 
   return (
     <AppShell
-      title="My students"
-      description="Everyone you've enrolled. You can only see and manage your own students."
+      title={t("page.ambassadorStudents.title")}
+      description={t("page.ambassadorStudents.description")}
       actions={
         <Button asChild>
           <Link to="/ambassador/enroll">
@@ -48,8 +50,8 @@ export function AmbassadorStudents() {
       ) : students.length === 0 ? (
         <EmptyState
           icon={Users}
-          title="You haven't enrolled anyone yet"
-          description="Find a student in your community who needs help with school fees. You can capture their details even without a connection."
+          title={t("page.ambassadorStudents.empty.title")}
+          description={t("page.ambassadorStudents.empty.description")}
           action={
             <Button asChild>
               <Link to="/ambassador/enroll">Enroll your first student</Link>

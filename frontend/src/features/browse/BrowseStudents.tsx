@@ -11,6 +11,7 @@ import { EmptyState, ErrorState, SkeletonCard } from "@/components/ui/Feedback";
 import { StudentCard } from "./StudentCard";
 import { StudentPanel } from "./StudentPanel";
 import { useAuth, HOME_FOR_ROLE } from "@/features/auth/AuthContext";
+import { useLocale } from "@/lib/i18n";
 
 const LEVELS = ["all", "S4", "S5", "S6", "Year 1", "Year 2", "Year 3", "Year 4", "TVET"];
 
@@ -23,6 +24,7 @@ const LEVELS = ["all", "S4", "S5", "S6", "Year 1", "Year 2", "Year 3", "Year 4",
  */
 export function BrowseStudents() {
   const { user } = useAuth();
+  const { t } = useLocale();
   const navigate = useNavigate();
   const { id } = useParams();
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -162,8 +164,8 @@ export function BrowseStudents() {
             profiles.length === 0 ? (
               <EmptyState
                 icon={ShieldCheck}
-                title="No verified students yet"
-                description="Profiles appear the moment an administrator approves them. Check back shortly, or start an application of your own."
+                title={t("page.browseStudents.empty.title")}
+                description={t("page.browseStudents.empty.description")}
                 action={
                   <Button asChild>
                     <Link to="/register">Apply for funding</Link>
@@ -173,8 +175,8 @@ export function BrowseStudents() {
             ) : (
               <EmptyState
                 icon={SearchX}
-                title="Nothing matches that search"
-                description="Try a different name, school or level — or clear the filters to see everyone."
+                title={t("page.browseStudents.emptyFiltered.title")}
+                description={t("page.browseStudents.emptyFiltered.description")}
                 action={
                   <Button
                     variant="secondary"
