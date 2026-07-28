@@ -79,19 +79,12 @@ export function ResetPassword() {
           </Alert>
         )}
 
-        {!params.get("token") && (
-          <Field label="Reset token" hint="Paste the token from your reset email.">
-            {(props) => (
-              <Input
-                {...props}
-                required
-                value={token}
-                onChange={(e) => setToken(e.target.value.trim())}
-                className="figure"
-              />
-            )}
-          </Field>
-        )}
+        {!token ? (
+          <Alert tone="danger" title="Invalid reset link">
+            This password reset link is missing a valid token. Please check the link in your email or{" "}
+            <Link to="/forgot-password" className="underline font-medium">request a new link</Link>.
+          </Alert>
+        ) : null}
 
         <PasswordField
           label="New password"

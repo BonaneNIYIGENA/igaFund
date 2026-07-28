@@ -21,12 +21,15 @@ const ROLES: { value: string; label: string }[] = [
   { value: "admin", label: "Admins" },
 ];
 
+const PAGE_SIZE = 10;
+
 export function AdminUsers() {
   const { t } = useLocale();
   const [users, setUsers] = useState<User[]>([]);
   const [roleFilter, setRoleFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
   // Suspend modal state
   const [suspendTarget, setSuspendTarget] = useState<User | null>(null);
@@ -153,7 +156,7 @@ export function AdminUsers() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-line">
-                      {users.map((u) => (
+                      {users.slice(0, page * PAGE_SIZE).map((u) => (
                         <tr key={u.id} className="hover:bg-sunk">
                           <td className="py-3 pl-2">
                             <div className="font-medium text-ink">{u.full_name}</div>
@@ -207,6 +210,14 @@ export function AdminUsers() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+              {/* Load more */}
+              {users.length > page * PAGE_SIZE && (
+                <div className="flex justify-center pt-4">
+                  <Button variant="secondary" size="sm" onClick={() => setPage((p) => p + 1)}>
+                    Load more ({users.length - page * PAGE_SIZE} remaining)
+                  </Button>
                 </div>
               )}
             </CardContent>

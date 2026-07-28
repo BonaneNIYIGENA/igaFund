@@ -40,6 +40,8 @@ const TYPE_LABEL: Record<string, string> = {
   tvet: "TVET",
 };
 
+const PAGE_SIZE = 10;
+
 export function AdminInstitutions() {
   const { t } = useLocale();
   const [institutions, setInstitutions] = useState<InstitutionRow[]>([]);
@@ -47,6 +49,7 @@ export function AdminInstitutions() {
   const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
   const [viewing, setViewing] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
 
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
@@ -106,6 +109,19 @@ export function AdminInstitutions() {
     }
   }
 
+  // Derived stats
+  const totalCount = institutions.length;
+  const secondaryCount = institutions.filter((i) => i.type === "secondary").length;
+  const tvetCount = institutions.filter((i) => i.type === "tvet").length;
+  const universityCount = institutions.filter((i) => i.type === "university").length;
+  const topInstitution = institutions.reduce(
+    (best, i) => (i.applicants > (best?.applicants ?? -1) ? i : best),
+    null as InstitutionRow | null,
+  );
+
+  const visibleInstitutions = institutions.slice(0, page * PAGE_SIZE);
+  const hasMore = visibleInstitutions.length < institutions.length;
+
   return (
     <AppShell
       title={t("page.adminInstitutions.title")}
@@ -123,6 +139,35 @@ export function AdminInstitutions() {
           chosen one cannot receive funds at all.
         </Alert>
 
+        {/* Stats cards — shown whenever data is loaded */}
+        {!loading && !error && institutions.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {[
+              { label: "Total registered", value: totalCount, icon: Building2 },
+              { label: "Secondary schools", value: secondaryCount, icon: Building2 },
+              { label: "TVET / vocational", value: tvetCount, icon: Building2 },
+              { label: "Universities", value: universityCount, icon: Building2 },
+              {
+                label: "Most applications",
+                value: topInstitution ? topInstitution.applicants : 0,
+                sub: topInstitution?.name,
+                icon: Users,
+              },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-lg border border-line bg-surface p-4"
+              >
+                <p className="text-xs text-muted">{stat.label}</p>
+                <p className="mt-1 text-2xl font-bold text-ink figure">{stat.value}</p>
+                {stat.sub && (
+                  <p className="mt-0.5 truncate text-xs text-muted">{stat.sub}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {error ? (
           <ErrorState description={error} onRetry={load} />
         ) : loading ? (
@@ -139,8 +184,9 @@ export function AdminInstitutions() {
             action={<Button onClick={() => setOpen(true)}>Add the first institution</Button>}
           />
         ) : (
+          <>
           <ul className="grid gap-4 sm:grid-cols-2">
-            {institutions.map((inst) => (
+            {visibleInstitutions.map((inst) => (
               <li key={inst.id}>
                 <Card className="h-full transition-shadow hover:shadow-md">
                   <CardContent className="p-5 pt-5 sm:p-5 sm:pt-5">
@@ -202,6 +248,14 @@ export function AdminInstitutions() {
               </li>
             ))}
           </ul>
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button variant="secondary" onClick={() => setPage((p) => p + 1)}>
+                Load more ({institutions.length - visibleInstitutions.length} remaining)
+              </Button>
+            </div>
+          )}
+          </>
         )}
       </div>
 

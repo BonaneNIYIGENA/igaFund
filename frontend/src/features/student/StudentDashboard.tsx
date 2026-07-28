@@ -86,6 +86,14 @@ export function StudentDashboard() {
         tone: "danger" as const,
       };
     }
+    if (profile.is_minor && !profile.has_guardian_consent_document) {
+      return {
+        title: "Guardian Consent PDF Required (Rwandan Law)",
+        body: "Because you are under 18 years old, Rwandan law requires an official Guardian Consent PDF signed by your parent/guardian and stamped by local officials (Umurenge / Akagari) before your application can be verified.",
+        cta: { to: "/student/documents", label: "Upload Guardian Consent" },
+        tone: "warning" as const,
+      };
+    }
     if (profile.document_count === 0) {
       return {
         title: t("dash.student.step.uploadDocs.title"),
@@ -127,8 +135,8 @@ export function StudentDashboard() {
       actions={
         profile?.status === "approved" ? (
           <Button variant="secondary" asChild>
-            <Link to={`/students/${profile.id}`}>
-              View my public profile
+            <Link to="/student/profile">
+              View my profile
               <ArrowRight aria-hidden />
             </Link>
           </Button>

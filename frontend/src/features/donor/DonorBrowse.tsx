@@ -18,6 +18,8 @@ const SORTS = [
   { value: "closest", label: "Closest to goal" },
 ] as const;
 
+const PAGE_SIZE = 10;
+
 export function DonorBrowse() {
   const { t } = useLocale();
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -27,6 +29,7 @@ export function DonorBrowse() {
   const [search, setSearch] = useState("");
   const [level, setLevel] = useState("all");
   const [sort, setSort] = useState<(typeof SORTS)[number]["value"]>("need");
+  const [page, setPage] = useState(1);
 
   async function load() {
     setLoading(true);
@@ -153,16 +156,26 @@ export function DonorBrowse() {
             />
           )
         ) : (
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            animate="show"
-            className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            {visible.map((p) => (
-              <StudentCard key={p.id} profile={p} to={`/students/${p.id}`} onOpen={setViewing} />
-            ))}
-          </motion.div>
+          <>
+            <motion.div
+              variants={stagger}
+              initial="hidden"
+              animate="show"
+              className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+            >
+              {visible.slice(0, page * PAGE_SIZE).map((p) => (
+                <StudentCard key={p.id} profile={p} to={`/students/${p.id}`} onOpen={setViewing} />
+              ))}
+            </motion.div>
+
+            {visible.length > page * PAGE_SIZE && (
+              <div className="mt-8 flex justify-center">
+                <Button variant="secondary" onClick={() => setPage((p) => p + 1)}>
+                  Load more ({visible.length - page * PAGE_SIZE} remaining)
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

@@ -71,7 +71,7 @@ export function Login() {
               required
               value={email}
               onChange={(e) => setEmail(stripEmailInput(e.target.value))}
-              placeholder="you@example.com"
+              placeholder="e.g. donor@igafund.local or your email"
             />
           )}
         </Field>
@@ -80,6 +80,7 @@ export function Login() {
           value={password}
           onChange={setPassword}
           autoComplete="current-password"
+          placeholder="Enter your password"
           showMeter={false}
         />
 

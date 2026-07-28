@@ -7,6 +7,7 @@ import { Login } from "./Login";
 import { Register } from "./Register";
 import { AuthProvider } from "./AuthContext";
 import { LocaleProvider } from "@/lib/i18n";
+import { ThemeProvider } from "@/lib/theme";
 
 const okTokens = { access: "a", refresh: "r", user: { id: 1, email: "s@example.com", role: "student", full_name: "Sam" } };
 
@@ -20,11 +21,13 @@ vi.mock("../../lib/api", () => ({
 
 function renderWith(ui: ReactNode) {
   return render(
-    <LocaleProvider>
-      <MemoryRouter>
-        <AuthProvider>{ui}</AuthProvider>
-      </MemoryRouter>
-    </LocaleProvider>,
+    <ThemeProvider>
+      <LocaleProvider>
+        <MemoryRouter>
+          <AuthProvider>{ui}</AuthProvider>
+        </MemoryRouter>
+      </LocaleProvider>
+    </ThemeProvider>,
   );
 }
 
@@ -63,7 +66,8 @@ describe("Register", () => {
     await userEvent.type(screen.getByLabelText(/full name/i), "Dana Donor");
     await userEvent.type(screen.getByLabelText(/email/i), "d@example.com");
     await userEvent.type(screen.getByLabelText(/^password$/i), "Passw0rd!");
-    await userEvent.click(screen.getByRole("button", { name: /create account/i }));
+    await userEvent.type(screen.getByLabelText(/confirm password/i), "Passw0rd!");
+    await userEvent.click(screen.getByRole("button", { name: /create donor account/i }));
     expect(localStorage.getItem("access")).toBe("a");
   });
 });

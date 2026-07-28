@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { MailCheck } from "lucide-react";
+import { MailCheck, UserX } from "lucide-react";
+import { ApiError } from "@/lib/api";
 import { useLocale } from "@/lib/i18n";
 import { useAuth } from "./AuthContext";
 import { AuthLayout } from "./AuthLayout";
@@ -13,6 +14,7 @@ export function ForgotPassword() {
   const { t } = useLocale();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -20,11 +22,16 @@ export function ForgotPassword() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setNotFound(false);
     try {
       await requestReset(email);
       setSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "We couldn't send the reset link.");
+      if (err instanceof ApiError && err.code === "account_not_found") {
+        setNotFound(true);
+      } else {
+        setError(err instanceof Error ? err.message : "We couldn't send the reset link.");
+      }
     } finally {
       setLoading(false);
     }
@@ -75,6 +82,19 @@ export function ForgotPassword() {
     >
       <form onSubmit={submit} className="space-y-5" noValidate>
         {error && <Alert tone="danger">{error}</Alert>}
+
+        {notFound && (
+          <Alert tone="warning" title="No account found">
+            <p>There's no igaFund account registered with that email.</p>
+            <Link
+              to="/register"
+              className="mt-2.5 inline-flex items-center gap-1.5 font-medium text-accent-ink underline-offset-4 hover:underline"
+            >
+              <UserX className="size-4" aria-hidden />
+              Create an account instead
+            </Link>
+          </Alert>
+        )}
 
         <Field label="Email">
           {(props) => (

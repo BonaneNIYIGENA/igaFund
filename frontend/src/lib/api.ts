@@ -269,6 +269,8 @@ export const endpoints = {
   profileContributions: (profileId: number) => api(`/contributions/profile/${profileId}`),
 
   me: () => api("/auth/me"),
+  verifyPassword: (password: string) =>
+    api("/auth/me", { method: "PUT", body: JSON.stringify({ current_password: password }) }),
   updateSettings: (payload: {
     full_name?: string;
     email?: string;

@@ -21,6 +21,8 @@ const TABS = [
   { value: "draft", label: "Drafts" },
 ];
 
+const PAGE_SIZE = 10;
+
 export function AdminQueue() {
   const { t } = useLocale();
   const [tab, setTab] = useState("pending");
@@ -29,6 +31,7 @@ export function AdminQueue() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reviewing, setReviewing] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -44,9 +47,9 @@ export function AdminQueue() {
     }
   }, [tab]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
+  // Reset page on tab change
+  useEffect(() => { setPage(1); }, [tab]);
 
   // Keep the pending badge honest even while another tab is open.
   useEffect(() => {
@@ -98,71 +101,80 @@ export function AdminQueue() {
             }
           />
         ) : (
-          <motion.ul
-            variants={stagger}
-            initial="hidden"
-            animate="show"
-            className="space-y-3"
-          >
-            {profiles.map((profile) => (
-              <motion.li key={profile.id} variants={fadeUp}>
-                <Card>
-                  <CardContent className="p-4 pt-4 sm:p-5 sm:pt-5">
-                    <div className="flex flex-wrap items-center gap-4">
-                      <Avatar name={profile.full_name ?? "?"} size="md" />
+          <>
+            <motion.ul
+              variants={stagger}
+              initial="hidden"
+              animate="show"
+              className="space-y-3"
+            >
+              {profiles.slice(0, page * PAGE_SIZE).map((profile) => (
+                <motion.li key={profile.id} variants={fadeUp}>
+                  <Card>
+                    <CardContent className="p-4 pt-4 sm:p-5 sm:pt-5">
+                      <div className="flex flex-wrap items-center gap-4">
+                        <Avatar name={profile.full_name ?? "?"} size="md" />
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="truncate font-semibold text-ink">
-                            {profile.full_name ?? "Student"}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="truncate font-semibold text-ink">
+                              {profile.full_name ?? "Student"}
+                            </p>
+                            {profile.is_minor && (
+                              <Badge tone="warning" icon={ShieldAlert}>
+                                Minor
+                              </Badge>
+                            )}
+                            {profile.edit_request_reason && (
+                              <Badge tone="amber">Change request</Badge>
+                            )}
+                          </div>
+                          <p className="truncate text-sm text-muted">
+                            {profile.academic_level ?? "—"}
+                            {profile.institution ? ` · ${profile.institution.name}` : ""}
                           </p>
-                          {profile.is_minor && (
-                            <Badge tone="warning" icon={ShieldAlert}>
-                              Minor
-                            </Badge>
-                          )}
-                          {profile.edit_request_reason && (
-                            <Badge tone="amber">Change request</Badge>
-                          )}
-                        </div>
-                        <p className="truncate text-sm text-muted">
-                          {profile.academic_level ?? "—"}
-                          {profile.institution ? ` · ${profile.institution.name}` : ""}
-                        </p>
-                        <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
-                          <span className="figure font-medium text-accent-ink">
-                            {formatMoney(profile.funding_goal)}
-                          </span>
-                          <span>
-                            {profile.document_count}{" "}
-                            {profile.document_count === 1 ? "document" : "documents"}
-                          </span>
-                          {profile.submitted_at && (
-                            <span className="inline-flex items-center gap-1.5">
-                              <Clock className="size-3.5" aria-hidden />
-                              {formatRelative(profile.submitted_at)}
+                          <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
+                            <span className="figure font-medium text-accent-ink">
+                              {formatMoney(profile.funding_goal)}
                             </span>
-                          )}
-                        </p>
+                            <span>
+                              {profile.document_count}{" "}
+                              {profile.document_count === 1 ? "document" : "documents"}
+                            </span>
+                            {profile.submitted_at && (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Clock className="size-3.5" aria-hidden />
+                                {formatRelative(profile.submitted_at)}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+
+                        <StatusBadge status={profile.status} />
+
+                        <Button
+                          variant={profile.status === "pending" ? "primary" : "secondary"}
+                          size="sm"
+                          onClick={() => setReviewing(profile.id)}
+                          className="w-full sm:w-auto"
+                        >
+                          <ShieldCheck aria-hidden />
+                          {profile.status === "pending" ? "Review" : "Open"}
+                        </Button>
                       </div>
-
-                      <StatusBadge status={profile.status} />
-
-                      <Button
-                        variant={profile.status === "pending" ? "primary" : "secondary"}
-                        size="sm"
-                        onClick={() => setReviewing(profile.id)}
-                        className="w-full sm:w-auto"
-                      >
-                        <ShieldCheck aria-hidden />
-                        {profile.status === "pending" ? "Review" : "Open"}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.li>
-            ))}
-          </motion.ul>
+                    </CardContent>
+                  </Card>
+                </motion.li>
+              ))}
+            </motion.ul>
+            {profiles.length > page * PAGE_SIZE && (
+              <div className="flex justify-center pt-2">
+                <Button variant="secondary" onClick={() => setPage((p) => p + 1)}>
+                  Load more ({profiles.length - page * PAGE_SIZE} remaining)
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

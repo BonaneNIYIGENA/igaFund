@@ -5,6 +5,9 @@ import { Building2, HeartHandshake, Receipt, ShieldCheck, Wallet } from "lucide-
 import { Logo } from "@/components/ui/Logo";
 import { RoutingRail, type RailStep } from "@/components/ui/RoutingRail";
 
+import { LanguageToggle } from "@/app/shell/LanguageToggle";
+import { ThemeToggle } from "@/app/shell/ThemeToggle";
+
 const PROMISE: RailStep[] = [
   { key: "give", label: "A donor gives", icon: HeartHandshake, state: "done" },
   { key: "verify", label: "igaFund verifies the student", icon: ShieldCheck, state: "done" },
@@ -51,10 +54,16 @@ export function AuthLayout({
         </p>
       </aside>
 
-      <div className="flex min-h-dvh flex-col px-4 py-8 sm:px-6 lg:px-0 lg:py-12">
-        <Link to="/" className="mb-10 w-fit lg:hidden">
-          <Logo />
-        </Link>
+      <div className="flex min-h-dvh flex-col px-4 py-6 sm:px-6 lg:px-12 lg:py-8">
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <Link to="/" className="w-fit lg:hidden">
+            <Logo />
+          </Link>
+          <div className="flex items-center gap-2.5 ml-auto">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
+        </div>
 
         <motion.main
           initial={{ opacity: 0, y: 12 }}

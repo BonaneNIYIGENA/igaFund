@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { FileDown, Lock, ScrollText, SearchX } from "lucide-react";
+import { FileDown, SearchX, ScrollText } from "lucide-react";
 import { toast } from "sonner";
 import { endpoints, getToken, type AuditLogItem } from "@/lib/api";
 import { useLocale } from "@/lib/i18n";
 import { formatDateTime } from "@/lib/format";
 import { AppShell } from "@/app/shell/AppShell";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Input, NativeSelect, Label } from "@/components/ui/Field";
 import { Alert, EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedback";
+
+const PAGE_SIZE = 10;
 
 const ACTION_TONE: Record<string, "success" | "danger" | "forest"> = {
   profile_approved: "success",
@@ -25,6 +26,7 @@ export function AdminAudit() {
   const [search, setSearch] = useState("");
   const [action, setAction] = useState("all");
   const [exporting, setExporting] = useState(false);
+  const [page, setPage] = useState(1);
 
   async function load() {
     setLoading(true);
@@ -39,9 +41,7 @@ export function AdminAudit() {
     }
   }
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   async function exportPdf() {
     setExporting(true);
@@ -69,14 +69,21 @@ export function AdminAudit() {
     [logs],
   );
 
-  const visible = useMemo(() => {
+  const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return logs
       .filter((l) => (action === "all" ? true : l.action === action))
       .filter((l) =>
-        !q ? true : [l.note, l.action, l.target_type].some((f) => f.toLowerCase().includes(q)),
+        !q ? true : [l.note, l.action, l.target_type].some((f) => f?.toLowerCase().includes(q)),
       );
   }, [logs, search, action]);
+
+  const visible = filtered.slice(0, page * PAGE_SIZE);
+  const hasMore = visible.length < filtered.length;
+
+  // Reset page when filters change
+  function handleSearch(v: string) { setSearch(v); setPage(1); }
+  function handleAction(v: string) { setAction(v); setPage(1); }
 
   return (
     <AppShell
@@ -99,8 +106,8 @@ export function AdminAudit() {
           <ErrorState description={error} onRetry={load} />
         ) : loading ? (
           <div className="space-y-3">
-            {Array.from({ length: 4 }, (_, i) => (
-              <Skeleton key={i} className="h-24 w-full rounded-lg" />
+            {Array.from({ length: 5 }, (_, i) => (
+              <Skeleton key={i} className="h-10 w-full rounded" />
             ))}
           </div>
         ) : logs.length === 0 ? (
@@ -111,6 +118,7 @@ export function AdminAudit() {
           />
         ) : (
           <>
+            {/* Filters */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
               <div className="flex-1">
                 <Label htmlFor="audit-search">Search</Label>
@@ -118,9 +126,9 @@ export function AdminAudit() {
                   id="audit-search"
                   type="search"
                   className="mt-1.5"
-                  placeholder="Search notes and actions"
+                  placeholder="Search notes and actions…"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => handleSearch(e.target.value)}
                 />
               </div>
               <div className="sm:w-56">
@@ -129,7 +137,7 @@ export function AdminAudit() {
                   id="audit-action"
                   className="mt-1.5"
                   value={action}
-                  onChange={(e) => setAction(e.target.value)}
+                  onChange={(e) => handleAction(e.target.value)}
                 >
                   {actions.map((a) => (
                     <option key={a} value={a}>
@@ -141,58 +149,72 @@ export function AdminAudit() {
             </div>
 
             <p className="text-sm text-muted" aria-live="polite">
-              {visible.length} {visible.length === 1 ? "entry" : "entries"}
+              Showing {visible.length} of {filtered.length} {filtered.length === 1 ? "entry" : "entries"}
             </p>
 
-            {visible.length === 0 ? (
+            {filtered.length === 0 ? (
               <EmptyState
                 icon={SearchX}
                 title="No entries match"
                 description="Try a different search term or action filter."
                 action={
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setSearch("");
-                      setAction("all");
-                    }}
-                  >
+                  <Button variant="secondary" onClick={() => { handleSearch(""); handleAction("all"); }}>
                     Clear filters
                   </Button>
                 }
               />
             ) : (
-              <ul className="space-y-3">
-                {visible.map((log) => (
-                  <li key={log.id}>
-                    <Card>
-                      <CardContent className="p-4 pt-4 sm:p-5 sm:pt-5">
-                        <div className="flex gap-3.5">
-                          <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-sm bg-forest-50 text-forest-700">
-                            <Lock className="size-4" aria-hidden />
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Badge tone={ACTION_TONE[log.action] ?? "neutral"}>
-                                {log.action.replace(/_/g, " ")}
-                              </Badge>
-                              <span className="text-sm text-muted">
-                                {log.target_type.replace(/_/g, " ")} #{log.target_id}
-                              </span>
-                            </div>
-                            <p className="mt-2 text-[0.9375rem] leading-relaxed text-body">
-                              {log.note}
-                            </p>
-                            <p className="mt-2 text-xs text-faint">
-                              Administrator #{log.actor_id} · {formatDateTime(log.created_at)}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </li>
-                ))}
-              </ul>
+              <>
+                {/* Table */}
+                <div className="overflow-x-auto rounded-lg border border-line">
+                  <table className="w-full min-w-[700px] text-sm">
+                    <thead>
+                      <tr className="border-b border-line bg-surface text-left">
+                        <th className="px-4 py-3 font-semibold text-ink">Action</th>
+                        <th className="px-4 py-3 font-semibold text-ink">Target</th>
+                        <th className="px-4 py-3 font-semibold text-ink">Actor</th>
+                        <th className="px-4 py-3 font-semibold text-ink">Note</th>
+                        <th className="px-4 py-3 font-semibold text-ink whitespace-nowrap">Date & Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visible.map((log, idx) => (
+                        <tr
+                          key={log.id}
+                          className={idx % 2 === 0 ? "bg-canvas" : "bg-surface"}
+                        >
+                          <td className="px-4 py-3">
+                            <Badge tone={ACTION_TONE[log.action] ?? "neutral"}>
+                              {log.action.replace(/_/g, " ")}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">
+                            {log.target_type.replace(/_/g, " ")} #{log.target_id}
+                          </td>
+                          <td className="px-4 py-3 text-muted whitespace-nowrap">
+                            Admin #{log.actor_id}
+                          </td>
+                          <td className="px-4 py-3 text-body max-w-xs">
+                            <span className="line-clamp-2">{log.note || "—"}</span>
+                          </td>
+                          <td className="px-4 py-3 text-faint whitespace-nowrap">
+                            {formatDateTime(log.created_at)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Load more */}
+                {hasMore && (
+                  <div className="flex justify-center pt-2">
+                    <Button variant="secondary" onClick={() => setPage((p) => p + 1)}>
+                      Load more ({filtered.length - visible.length} remaining)
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}

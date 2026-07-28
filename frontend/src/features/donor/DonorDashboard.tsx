@@ -116,7 +116,7 @@ export function DonorDashboard() {
                     className="grid gap-4 sm:grid-cols-2"
                   >
                     {suggested.map((p) => (
-                      <StudentCard key={p.id} profile={p} to={`/students/${p.id}`} />
+                      <StudentCard key={p.id} profile={p} to="/donor/browse" />
                     ))}
                   </motion.div>
                 )}

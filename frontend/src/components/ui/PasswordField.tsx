@@ -26,6 +26,7 @@ export function PasswordField({
   autoComplete = "new-password",
   showMeter = true,
   required = true,
+  placeholder = "••••••••",
   id: idProp,
 }: {
   label?: string;
@@ -36,6 +37,7 @@ export function PasswordField({
   autoComplete?: string;
   showMeter?: boolean;
   required?: boolean;
+  placeholder?: string;
   id?: string;
 }) {
   const generatedId = useId();
@@ -64,6 +66,7 @@ export function PasswordField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           invalid={Boolean(error)}
+          placeholder={placeholder}
           aria-describedby={error ? errorId : showMeter ? meterId : undefined}
           className="pr-12"
         />

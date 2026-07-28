@@ -26,7 +26,7 @@ import { cn } from "@/lib/cn";
 const MAX_MB = 10;
 const ACCEPTED = ".pdf,.png,.jpg,.jpeg";
 
-const REQUIRED_TYPES: { type: DocType; why: string }[] = [
+const BASE_REQUIRED_TYPES: { type: DocType; why: string }[] = [
   { type: "transcript", why: "Proves your results and current level" },
   { type: "id_card", why: "Confirms you are who you say you are" },
 ];
@@ -35,6 +35,18 @@ export function StudentDocuments() {
   const { t } = useLocale();
   const { profile, loading: profileLoading, error: profileError, reload } = useMyProfile();
   const { canEdit } = editability(profile);
+
+  const requiredTypes = [
+    ...BASE_REQUIRED_TYPES,
+    ...(profile?.is_minor
+      ? [
+          {
+            type: "guardian_consent" as const,
+            why: "Mandatory for minors under 18 under Rwandan law (must be signed by parent/guardian and stamped by local officials)",
+          },
+        ]
+      : []),
+  ];
 
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,13 +122,7 @@ export function StudentDocuments() {
     }
   }
 
-  const needsConsent = profile?.is_minor;
-  const missing = [
-    ...REQUIRED_TYPES.filter((r) => !docs.some((d) => d.doc_type === r.type)),
-    ...(needsConsent && !docs.some((d) => d.doc_type === "guardian_consent")
-      ? [{ type: "guardian_consent" as DocType, why: "Required by law for students under 18" }]
-      : []),
-  ];
+  const missing = requiredTypes.filter((r) => !docs.some((d) => d.doc_type === r.type));
 
   if (!profileLoading && !profile) {
     return (
