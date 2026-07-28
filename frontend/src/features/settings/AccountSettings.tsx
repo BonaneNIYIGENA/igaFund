@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Bell, KeyRound, LogOut, Save, ShieldCheck, UserRound } from "lucide-react";
 import { AppShell } from "@/app/shell/AppShell";
+import { useLocale } from "@/lib/i18n";
 import { useAuth } from "@/features/auth/AuthContext";
 import { endpoints, ApiError } from "@/lib/api";
 import { stripEmailInput, stripNameInput, validateEmail, validateName, passwordChecklist } from "@/lib/validation";
@@ -29,6 +30,7 @@ import {
  */
 export function AccountSettings() {
   const { user, updateUser, logout } = useAuth();
+  const { t } = useLocale();
 
   const [fullName, setFullName] = useState(user?.full_name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
@@ -120,9 +122,9 @@ export function AccountSettings() {
   }
 
   return (
-    <AppShell title="Settings" description="Your account details, security, and notification preferences.">
-      <div className="max-w-2xl space-y-6">
-        <Card>
+    <AppShell title={t("page.settings.title")} description={t("page.settings.description")}>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-base">Account information</CardTitle>
             <CardDescription>
@@ -189,7 +191,7 @@ export function AccountSettings() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="lg:row-span-2">
           <CardHeader>
             <CardTitle className="text-base">Password &amp; security</CardTitle>
             <CardDescription>Update your account password. Changes take effect immediately.</CardDescription>

@@ -6,6 +6,7 @@ import { endpoints, type Role, type User } from "@/lib/api";
 import { formatRelative } from "@/lib/format";
 import { fadeUp, stagger } from "@/lib/motion";
 import { AppShell } from "@/app/shell/AppShell";
+import { useLocale } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Field";
@@ -21,6 +22,7 @@ const ROLES: { value: string; label: string }[] = [
 ];
 
 export function AdminUsers() {
+  const { t } = useLocale();
   const [users, setUsers] = useState<User[]>([]);
   const [roleFilter, setRoleFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -86,8 +88,8 @@ export function AdminUsers() {
 
   return (
     <AppShell
-      title="User Management"
-      description="View, manage roles, and enforce account suspensions (BR10 compliance)."
+      title={t("page.adminUsers.title")}
+      description={t("page.adminUsers.description")}
     >
       <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
         {/* Search & Filter Bar */}
@@ -101,7 +103,7 @@ export function AdminUsers() {
                 className={`cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
                   roleFilter === r.value
                     ? "bg-forest-800 text-white"
-                    : "bg-raised text-muted hover:bg-forest-100 hover:text-ink"
+                    : "bg-raised text-muted hover:bg-forest-100 hover:text-forest-900"
                 }`}
               >
                 {r.label}
@@ -181,7 +183,7 @@ export function AdminUsers() {
                           </td>
                           <td className="py-3 pr-2 text-right">
                             <Button
-                              variant={u.is_suspended ? "secondary" : "ghost"}
+                              variant={u.is_suspended ? "secondary" : "dangerSoft"}
                               size="sm"
                               onClick={() => {
                                 setSuspendTarget(u);
@@ -195,7 +197,7 @@ export function AdminUsers() {
                                 </>
                               ) : (
                                 <>
-                                  <UserX className="size-3.5 text-clay-600" aria-hidden />
+                                  <UserX className="size-3.5" aria-hidden />
                                   Deactivate
                                 </>
                               )}

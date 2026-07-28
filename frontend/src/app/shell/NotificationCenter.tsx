@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Menu";
 
 const TONE = {
   success: { icon: PartyPopper, class: "bg-success-soft text-accent-ink" },
-  warning: { icon: CircleAlert, class: "bg-warning-soft text-amber-700" },
+  warning: { icon: CircleAlert, class: "bg-warning-soft text-warning-ink" },
   action: { icon: Bell, class: "bg-amber-100 text-amber-700" },
   info: { icon: Info, class: "bg-forest-100 text-forest-700" },
 } as const;

@@ -113,14 +113,17 @@ export function InstitutionPanel({
             </div>
           ) : (
             <>
+              {/* Fixed amber-50/100 card — every text inside must be a fixed
+                  literal too, never text-ink/text-muted, since those flip
+                  light in dark mode and vanish against this pale, unmoving bg. */}
               <div className="rounded-lg border border-amber-100 bg-amber-50 p-5">
                 <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
                   Routed to this institution
                 </p>
-                <p className="figure mt-1 text-3xl font-semibold text-ink">
+                <p className="figure mt-1 text-3xl font-semibold text-forest-950">
                   {formatMoney(detail.total_routed)}
                 </p>
-                <p className="mt-1 text-sm text-muted">
+                <p className="mt-1 text-sm text-forest-700">
                   Across {detail.contribution_count}{" "}
                   {detail.contribution_count === 1 ? "contribution" : "contributions"}
                 </p>

@@ -219,23 +219,26 @@ export function ReviewDialog({
                 </dl>
 
                 {profile.is_minor && (
+                  // Fixed amber-50 card — text inside stays on fixed literals
+                  // (never text-ink/text-muted/text-faint/text-body), since
+                  // those flip light in dark mode and vanish on this pale bg.
                   <div className="rounded-md border border-amber-300 bg-amber-50 p-4">
-                    <p className="flex items-center gap-2 font-medium text-ink">
+                    <p className="flex items-center gap-2 font-medium text-forest-950">
                       <ShieldAlert className="size-[18px] text-amber-700" aria-hidden />
                       Guardian consent required
                     </p>
                     <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
                       <div>
-                        <dt className="text-xs font-semibold uppercase tracking-wide text-faint">
+                        <dt className="text-xs font-semibold uppercase tracking-wide text-forest-600">
                           Guardian
                         </dt>
-                        <dd className="text-body">{profile.guardian_name || "Not provided"}</dd>
+                        <dd className="text-forest-800">{profile.guardian_name || "Not provided"}</dd>
                       </div>
                       <div>
-                        <dt className="text-xs font-semibold uppercase tracking-wide text-faint">
+                        <dt className="text-xs font-semibold uppercase tracking-wide text-forest-600">
                           Guardian phone
                         </dt>
-                        <dd className="text-body">{profile.guardian_phone || "Not provided"}</dd>
+                        <dd className="text-forest-800">{profile.guardian_phone || "Not provided"}</dd>
                       </div>
                     </dl>
                     <div className="mt-3 flex flex-wrap gap-2">

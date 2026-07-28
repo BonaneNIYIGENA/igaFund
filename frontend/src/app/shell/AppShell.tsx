@@ -115,11 +115,8 @@ export function AppShell({
             </div>
 
             <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-              <div className="hidden items-center gap-1.5 sm:flex">
-                <LanguageToggle />
-                <ThemeToggle />
-              </div>
-
+              <LanguageToggle />
+              <ThemeToggle />
               <NotificationCenter />
 
               <DropdownMenu>
@@ -142,13 +139,6 @@ export function AppShell({
                     <p className="truncate text-xs text-muted">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
-
-                  {/* Theme + language repeated here so they're reachable on narrow screens too. */}
-                  <div className="flex items-center justify-between gap-2 px-3 py-2 sm:hidden">
-                    <LanguageToggle />
-                    <ThemeToggle />
-                  </div>
-                  <DropdownMenuSeparator className="sm:hidden" />
 
                   <DropdownMenuItem asChild>
                     <Link to={`/${user.role}/settings`}>

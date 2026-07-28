@@ -92,8 +92,8 @@ export function ErrorState({
       <span className="grid size-12 place-items-center rounded-full bg-clay-100 text-clay-600">
         <AlertCircle className="size-6" aria-hidden />
       </span>
-      <h3 className="mt-4 text-base font-semibold text-clay-700">{title}</h3>
-      <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-clay-600">{description}</p>
+      <h3 className="mt-4 text-base font-semibold text-danger-ink">{title}</h3>
+      <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-danger-ink">{description}</p>
       {onRetry && (
         <Button variant="secondary" size="sm" className="mt-5" onClick={onRetry}>
           Try again
@@ -107,8 +107,8 @@ export function ErrorState({
 const alertTones = {
   info: { wrap: "bg-info-soft border-forest-200 text-accent-ink", icon: Info },
   success: { wrap: "bg-success-soft border-forest-200 text-accent-ink", icon: CheckCircle2 },
-  warning: { wrap: "bg-warning-soft border-amber-300 text-amber-700", icon: TriangleAlert },
-  danger: { wrap: "bg-danger-soft border-clay-200 text-clay-700", icon: AlertCircle },
+  warning: { wrap: "bg-warning-soft border-amber-300 text-warning-ink", icon: TriangleAlert },
+  danger: { wrap: "bg-danger-soft border-clay-200 text-danger-ink", icon: AlertCircle },
 } as const;
 
 export function Alert({
