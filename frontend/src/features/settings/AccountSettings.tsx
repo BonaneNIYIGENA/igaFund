@@ -188,10 +188,8 @@ export function AccountSettings() {
         {/* ── Profile details ───────────────────────────────────────────── */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">Account information</CardTitle>
-            <CardDescription>
-              Update your display name and email address. Changes are logged to the audit trail.
-            </CardDescription>
+            <CardTitle className="text-base">{t("settings.account.title")}</CardTitle>
+            <CardDescription>{t("settings.account.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="mb-6 flex items-center gap-4">
@@ -206,7 +204,7 @@ export function AccountSettings() {
 
             <form onSubmit={handleProfileSave} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Full name" required error={profileErrors.fullName}>
+                <Field label={t("auth.field.fullName")} required error={profileErrors.fullName}>
                   {(props) => (
                     <Input
                       {...props}
@@ -219,7 +217,7 @@ export function AccountSettings() {
                   )}
                 </Field>
 
-                <Field label="Email address" required error={profileErrors.email}>
+                <Field label={t("auth.field.email")} required error={profileErrors.email}>
                   {(props) => (
                     <Input
                       {...props}
@@ -238,7 +236,7 @@ export function AccountSettings() {
                 <div className="flex items-center gap-2">
                   <UserRound className="size-4 shrink-0 text-accent-ink" aria-hidden />
                   <span>
-                    Account type: <strong className="font-medium text-ink">{ROLE_LABEL[user.role]}</strong>
+                    {t("settings.account.accountType")} <strong className="font-medium text-ink">{ROLE_LABEL[user.role]}</strong>
                   </span>
                 </div>
               </dl>
@@ -246,7 +244,7 @@ export function AccountSettings() {
               <div className="flex justify-end pt-2">
                 <Button type="submit" loading={profileLoading}>
                   <Save className="size-4" aria-hidden />
-                  Save changes
+                  {t("settings.account.saveChanges")}
                 </Button>
               </div>
             </form>
@@ -256,10 +254,8 @@ export function AccountSettings() {
         {/* ── Password & security Card ──────────────────────────────────── */}
         <Card className="lg:row-span-2">
           <CardHeader>
-            <CardTitle className="text-base">Password &amp; security</CardTitle>
-            <CardDescription>
-              Manage your password and authentication security settings.
-            </CardDescription>
+            <CardTitle className="text-base">{t("settings.security.title")}</CardTitle>
+            <CardDescription>{t("settings.security.description")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="rounded-lg border border-line bg-raised p-5 space-y-4">
@@ -268,16 +264,16 @@ export function AccountSettings() {
                   <Lock className="size-5" aria-hidden />
                 </span>
                 <div>
-                  <h4 className="font-semibold text-ink">Account Password</h4>
+                  <h4 className="font-semibold text-ink">{t("settings.security.cardTitle")}</h4>
                   <p className="mt-1 text-sm text-muted leading-relaxed">
-                    To change your password, click below to open the security verification form. You will confirm your current password before setting a new one.
+                    {t("settings.security.cardBody")}
                   </p>
                 </div>
               </div>
 
               <Button onClick={openPasswordModal} className="w-full sm:w-auto">
                 <KeyRound className="size-4" aria-hidden />
-                Change password
+                {t("settings.security.changePassword")}
               </Button>
             </div>
 
@@ -285,7 +281,7 @@ export function AccountSettings() {
 
             <p className="flex items-start gap-2 text-sm text-muted">
               <ShieldCheck className="mt-0.5 size-4 shrink-0 text-accent-ink" aria-hidden />
-              Every security action here is recorded in the system's permanent audit trail.
+              {t("settings.security.auditNote")}
             </p>
           </CardContent>
         </Card>
@@ -294,22 +290,20 @@ export function AccountSettings() {
         {user.role === "admin" && (
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle className="text-base">System Reports &amp; Audit Export</CardTitle>
-              <CardDescription>
-                Download administrative audit logs and official compliance reports.
-              </CardDescription>
+              <CardTitle className="text-base">{t("settings.reports.title")}</CardTitle>
+              <CardDescription>{t("settings.reports.description")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-line bg-raised p-4">
                 <div>
-                  <p className="font-semibold text-ink">System Audit Trail PDF Report</p>
+                  <p className="font-semibold text-ink">{t("settings.reports.cardTitle")}</p>
                   <p className="mt-0.5 text-sm text-muted">
-                    Generate an official PDF export containing every administrative action and ticket recorded on igaFund.
+                    {t("settings.reports.cardBody")}
                   </p>
                 </div>
                 <Button variant="secondary" onClick={exportAuditPdf} loading={exportingAudit}>
                   <FileDown className="size-4" aria-hidden />
-                  Export Audit PDF
+                  {t("settings.reports.export")}
                 </Button>
               </div>
             </CardContent>
@@ -319,18 +313,17 @@ export function AccountSettings() {
         {/* ── Notifications ─────────────────────────────────────────────── */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Notifications</CardTitle>
-            <CardDescription>Choose whether igaFund emails you about your account.</CardDescription>
+            <CardTitle className="text-base">{t("settings.notifications.title")}</CardTitle>
+            <CardDescription>{t("settings.notifications.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <label className="flex cursor-pointer items-start justify-between gap-4 rounded-md border border-line bg-raised p-4">
               <span className="flex items-start gap-3">
                 <Bell className="mt-0.5 size-[18px] shrink-0 text-accent-ink" aria-hidden />
                 <span>
-                  <span className="block font-medium text-ink">Email me about my account</span>
+                  <span className="block font-medium text-ink">{t("settings.notifications.label")}</span>
                   <span className="mt-0.5 block text-sm text-muted">
-                    Profile status changes, funding received, and role updates. In-app notifications
-                    always continue regardless of this setting.
+                    {t("settings.notifications.hint")}
                   </span>
                 </span>
               </span>
@@ -359,12 +352,12 @@ export function AccountSettings() {
         <Card className="border-clay-200">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-5 pt-5 sm:p-6 sm:pt-6">
             <div className="min-w-0">
-              <p className="font-medium text-ink">Sign out</p>
-              <p className="text-sm text-muted">You'll need your password to sign back in.</p>
+              <p className="font-medium text-ink">{t("settings.signOut.title")}</p>
+              <p className="text-sm text-muted">{t("settings.signOut.description")}</p>
             </div>
             <Button variant="dangerSoft" onClick={() => setSignOutOpen(true)}>
               <LogOut aria-hidden />
-              Sign out
+              {t("settings.signOut.action")}
             </Button>
           </CardContent>
         </Card>
@@ -374,11 +367,11 @@ export function AccountSettings() {
       <Dialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
         <DialogContent size="sm">
           <DialogHeader>
-            <DialogTitle>Change your password</DialogTitle>
+            <DialogTitle>{t("settings.passwordModal.title")}</DialogTitle>
             <DialogDescription>
               {!passwordVerified
-                ? "Step 1 of 2: Enter the password you are currently using."
-                : "Step 2 of 2: Enter and confirm your new password."}
+                ? t("settings.passwordModal.step1")
+                : t("settings.passwordModal.step2")}
             </DialogDescription>
           </DialogHeader>
 
@@ -389,10 +382,10 @@ export function AccountSettings() {
                 <input type="text" style={{ display: "none" }} tabIndex={-1} readOnly aria-hidden />
                 <input type="password" style={{ display: "none" }} tabIndex={-1} readOnly aria-hidden />
                 <Field
-                  label="Password you are currently using"
+                  label={t("settings.passwordModal.currentLabel")}
                   required
                   error={verifyError}
-                  hint="Enter your existing password to verify your identity."
+                  hint={t("settings.passwordModal.currentHint")}
                 >
                   {(props) => (
                     <Input
@@ -407,7 +400,7 @@ export function AccountSettings() {
                         setExistingPassword(e.target.value);
                         setVerifyError("");
                       }}
-                      placeholder="Enter your current password"
+                      placeholder={t("settings.passwordModal.currentPlaceholder")}
                     />
                   )}
                 </Field>
@@ -416,21 +409,21 @@ export function AccountSettings() {
               <form id="save-pass-form" onSubmit={handlePasswordSave} className="space-y-4" noValidate>
                 <div className="flex items-center gap-2 rounded-md border border-forest-200 bg-forest-50 px-3 py-2 text-sm text-forest-800">
                   <CheckCircle2 className="size-4 shrink-0 text-forest-600" aria-hidden />
-                  Identity confirmed. Set your new password.
+                  {t("settings.passwordModal.confirmedNotice")}
                 </div>
 
                 <PasswordField
-                  label="New password"
+                  label={t("auth.field.newPassword")}
                   value={newPassword}
                   onChange={(v) => {
                     setNewPassword(v);
                     setPassErrors((s) => ({ ...s, newPassword: undefined }));
                   }}
-                  placeholder="Enter new password"
+                  placeholder={t("settings.passwordModal.newPlaceholder")}
                   error={passErrors.newPassword}
                 />
 
-                <Field label="Confirm new password" required error={passErrors.confirmPassword}>
+                <Field label={t("settings.passwordModal.confirmNewLabel")} required error={passErrors.confirmPassword}>
                   {(props) => (
                     <Input
                       {...props}
@@ -441,7 +434,7 @@ export function AccountSettings() {
                         setConfirmPassword(e.target.value);
                         setPassErrors((s) => ({ ...s, confirmPassword: undefined }));
                       }}
-                      placeholder="Re-enter new password"
+                      placeholder={t("settings.passwordModal.confirmNewPlaceholder")}
                     />
                   )}
                 </Field>
@@ -455,17 +448,17 @@ export function AccountSettings() {
               variant="secondary"
               onClick={() => setPasswordModalOpen(false)}
             >
-              Cancel
+              {t("settings.passwordModal.cancel")}
             </Button>
             {!passwordVerified ? (
               <Button type="submit" form="verify-pass-form" loading={verifyLoading}>
                 <ShieldCheck className="size-4" aria-hidden />
-                Verify password
+                {t("settings.passwordModal.verify")}
               </Button>
             ) : (
               <Button type="submit" form="save-pass-form" loading={passLoading}>
                 <KeyRound className="size-4" aria-hidden />
-                Save password
+                {t("settings.passwordModal.save")}
               </Button>
             )}
           </DialogFooter>
@@ -476,18 +469,18 @@ export function AccountSettings() {
       <Dialog open={signOutOpen} onOpenChange={setSignOutOpen}>
         <DialogContent size="sm">
           <DialogHeader>
-            <DialogTitle>Sign out of igaFund?</DialogTitle>
+            <DialogTitle>{t("settings.signOut.confirmTitle")}</DialogTitle>
             <DialogDescription>
-              Any unsaved changes on this device stay queued until you sign back in.
+              {t("settings.signOut.confirmDescription")}
             </DialogDescription>
           </DialogHeader>
           <DialogBody className="pb-4" />
           <DialogFooter>
             <Button variant="secondary" onClick={() => setSignOutOpen(false)}>
-              Stay signed in
+              {t("settings.signOut.stay")}
             </Button>
             <Button variant="danger" onClick={logout}>
-              Sign out
+              {t("settings.signOut.action")}
             </Button>
           </DialogFooter>
         </DialogContent>

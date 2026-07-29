@@ -31,7 +31,7 @@ export function AmbassadorDashboard() {
         <Button asChild>
           <Link to="/ambassador/enroll">
             <UserPlus aria-hidden />
-            Enroll a student
+            {t("ambassadorStudents.action.enroll")}
           </Link>
         </Button>
       }
@@ -50,32 +50,38 @@ export function AmbassadorDashboard() {
       ) : (
         <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
           <motion.div variants={fadeUp} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatTile label="Students enrolled" value={counts.total} countUp icon={Users} />
+            <StatTile label={t("ambassadorDashboard.stat.enrolled")} value={counts.total} countUp icon={Users} />
             <StatTile
-              label="Awaiting review"
+              label={t("ambassadorDashboard.stat.awaiting")}
               value={counts.pending}
               countUp
               icon={Clock}
               tone={counts.pending > 0 ? "amber" : "plain"}
             />
-            <StatTile label="Verified" value={counts.approved} countUp icon={CheckCircle2} tone="forest" />
+            <StatTile label={t("ambassadorDashboard.stat.verified")} value={counts.approved} countUp icon={CheckCircle2} tone="forest" />
             <StatTile
-              label="Raised for them"
+              label={t("ambassadorDashboard.stat.raised")}
               value={formatMoney(counts.raised)}
               icon={HeartHandshake}
-              hint="Routed to their schools"
+              hint={t("ambassadorDashboard.stat.raisedHint")}
             />
           </motion.div>
 
           {needsAttention.length > 0 && (
             <motion.div variants={fadeUp}>
-              <Alert tone="warning" title={`${needsAttention.length} ${needsAttention.length === 1 ? "student needs" : "students need"} your help`}>
-                They have a profile that isn't with a reviewer yet. Finish their documents and send
-                them for verification.
+              <Alert
+                tone="warning"
+                title={
+                  needsAttention.length === 1
+                    ? t("ambassadorDashboard.needsAttention.oneTitle")
+                    : t("ambassadorDashboard.needsAttention.manyTitle", { count: String(needsAttention.length) })
+                }
+              >
+                {t("ambassadorDashboard.needsAttention.body")}
                 <div className="mt-3.5">
                   <Button size="sm" variant="fund" asChild>
                     <Link to="/ambassador/students">
-                      See who
+                      {t("ambassadorDashboard.needsAttention.seeWho")}
                       <ArrowRight aria-hidden />
                     </Link>
                   </Button>
@@ -87,10 +93,10 @@ export function AmbassadorDashboard() {
           <motion.div variants={fadeUp}>
             <Card>
               <CardHeader className="flex-row items-center justify-between">
-                <CardTitle className="text-base">Recently enrolled</CardTitle>
+                <CardTitle className="text-base">{t("ambassadorDashboard.recentlyEnrolled")}</CardTitle>
                 {students.length > 4 && (
                   <Button variant="link" size="sm" asChild>
-                    <Link to="/ambassador/students">See all {students.length}</Link>
+                    <Link to="/ambassador/students">{t("ambassadorDashboard.seeAll", { count: String(students.length) })}</Link>
                   </Button>
                 )}
               </CardHeader>
@@ -102,7 +108,7 @@ export function AmbassadorDashboard() {
                     description={t("page.ambassadorDashboard.empty.description")}
                     action={
                       <Button asChild>
-                        <Link to="/ambassador/enroll">Enroll your first student</Link>
+                        <Link to="/ambassador/enroll">{t("ambassadorStudents.action.enrollFirst")}</Link>
                       </Button>
                     }
                   />

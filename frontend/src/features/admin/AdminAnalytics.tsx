@@ -33,12 +33,6 @@ import { FundingProgress } from "@/components/ui/Progress";
 import { Alert, EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedback";
 import { AXIS, STATUS_COLOR, SEQUENTIAL, chartFont } from "./chartTheme";
 
-const STATUS_META = [
-  { key: "verified", label: "Verified", color: STATUS_COLOR.verified, icon: CheckCircle2 },
-  { key: "awaiting", label: "Awaiting review", color: STATUS_COLOR.awaiting, icon: Clock },
-  { key: "changes", label: "Changes requested", color: STATUS_COLOR.changes, icon: XCircle },
-] as const;
-
 function ChartTooltip({
   active,
   payload,
@@ -63,6 +57,11 @@ function ChartTooltip({
 
 export function AdminAnalytics() {
   const { t } = useLocale();
+  const STATUS_META = [
+    { key: "verified", label: t("adminAnalytics.status.verified"), color: STATUS_COLOR.verified, icon: CheckCircle2 },
+    { key: "awaiting", label: t("adminAnalytics.status.awaiting"), color: STATUS_COLOR.awaiting, icon: Clock },
+    { key: "changes", label: t("adminAnalytics.status.changes"), color: STATUS_COLOR.changes, icon: XCircle },
+  ] as const;
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +76,7 @@ export function AdminAnalytics() {
       setStats(s);
       setProfiles(p.profiles ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "We couldn't load the analytics.");
+      setError(e instanceof Error ? e.message : t("adminAnalytics.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -101,11 +100,11 @@ export function AdminAnalytics() {
   /** Verification outcomes — status colors, always paired with an icon and a value. */
   const statusData = useMemo(
     () => [
-      { name: "Verified", key: "verified", value: stats?.approved ?? 0, color: STATUS_COLOR.verified },
-      { name: "Awaiting review", key: "awaiting", value: stats?.pending ?? 0, color: STATUS_COLOR.awaiting },
-      { name: "Changes requested", key: "changes", value: stats?.rejected ?? 0, color: STATUS_COLOR.changes },
+      { name: t("adminAnalytics.status.verified"), key: "verified", value: stats?.approved ?? 0, color: STATUS_COLOR.verified },
+      { name: t("adminAnalytics.status.awaiting"), key: "awaiting", value: stats?.pending ?? 0, color: STATUS_COLOR.awaiting },
+      { name: t("adminAnalytics.status.changes"), key: "changes", value: stats?.rejected ?? 0, color: STATUS_COLOR.changes },
     ],
-    [stats],
+    [stats, t],
   );
 
   /** Applications received per month — genuine time series from profile creation dates. */
@@ -168,7 +167,7 @@ export function AdminAnalytics() {
       actions={
         <Button variant="secondary" onClick={exportReport}>
           <FileDown aria-hidden />
-          Export PDF
+          {t("adminAnalytics.action.exportPdf")}
         </Button>
       }
     >
@@ -187,34 +186,34 @@ export function AdminAnalytics() {
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatTile
-              label="Routed to schools"
+              label={t("adminAnalytics.stat.routed")}
               value={formatMoney(totals.raised)}
               icon={HeartHandshake}
               tone="amber"
-              hint="Across every verified profile"
+              hint={t("adminAnalytics.stat.routedHint")}
             />
             <StatTile
-              label="Verified profiles"
+              label={t("adminAnalytics.stat.verifiedProfiles")}
               value={stats?.approved ?? 0}
               countUp
               icon={CheckCircle2}
               tone="forest"
             />
             <StatTile
-              label="Institutions paid"
+              label={t("adminAnalytics.stat.institutionsPaid")}
               value={totals.institutions}
               countUp
               icon={Building2}
             />
-            <StatTile label="Registered users" value={stats?.total_users ?? 0} countUp icon={TrendingUp} />
+            <StatTile label={t("adminAnalytics.stat.registeredUsers")} value={stats?.total_users ?? 0} countUp icon={TrendingUp} />
           </div>
 
           {totals.goal > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Funding across the verified pool</CardTitle>
+                <CardTitle className="text-base">{t("adminAnalytics.fundingPool.title")}</CardTitle>
                 <CardDescription>
-                  Total raised against the combined goal of every approved profile.
+                  {t("adminAnalytics.fundingPool.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -227,8 +226,8 @@ export function AdminAnalytics() {
             <Card>
               <CardHeader className="flex-row items-start justify-between">
                 <div>
-                  <CardTitle className="text-base">Verification outcomes</CardTitle>
-                  <CardDescription>Every profile by its current review state.</CardDescription>
+                  <CardTitle className="text-base">{t("adminAnalytics.outcomes.title")}</CardTitle>
+                  <CardDescription>{t("adminAnalytics.outcomes.description")}</CardDescription>
                 </div>
                 <Button
                   variant="ghost"
@@ -237,26 +236,26 @@ export function AdminAnalytics() {
                   aria-pressed={showTable}
                 >
                   <Table2 aria-hidden />
-                  {showTable ? "Chart" : "Table"}
+                  {showTable ? t("adminAnalytics.toggle.chart") : t("adminAnalytics.toggle.table")}
                 </Button>
               </CardHeader>
               <CardContent>
                 {!hasProfiles ? (
                   <EmptyState
                     icon={CheckCircle2}
-                    title="No profiles yet"
-                    description="Once students apply, their review outcomes appear here."
+                    title={t("adminAnalytics.outcomes.empty.title")}
+                    description={t("adminAnalytics.outcomes.empty.description")}
                   />
                 ) : showTable ? (
                   <table className="w-full text-sm">
-                    <caption className="sr-only-focusable">Profiles by review state</caption>
+                    <caption className="sr-only-focusable">{t("adminAnalytics.table.caption")}</caption>
                     <thead>
                       <tr className="border-b border-line text-left">
                         <th scope="col" className="pb-2 font-semibold text-ink">
-                          State
+                          {t("adminAnalytics.table.state")}
                         </th>
                         <th scope="col" className="pb-2 text-right font-semibold text-ink">
-                          Profiles
+                          {t("adminAnalytics.table.profiles")}
                         </th>
                       </tr>
                     </thead>
@@ -300,7 +299,7 @@ export function AdminAnalytics() {
                         />
                         <Tooltip
                           cursor={{ fill: AXIS.grid }}
-                          content={<ChartTooltip formatter={(v) => `${v} profiles`} />}
+                          content={<ChartTooltip formatter={(v) => t("adminAnalytics.tooltip.profiles", { count: String(v) })} />}
                         />
                         <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={26}>
                           {statusData.map((entry) => (
@@ -333,15 +332,15 @@ export function AdminAnalytics() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Applications received</CardTitle>
-                <CardDescription>New student profiles per month, last 12 months.</CardDescription>
+                <CardTitle className="text-base">{t("adminAnalytics.applications.title")}</CardTitle>
+                <CardDescription>{t("adminAnalytics.applications.description")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {overTime.length === 0 ? (
                   <EmptyState
                     icon={TrendingUp}
-                    title="Not enough history yet"
-                    description="This chart fills in as students apply over time."
+                    title={t("adminAnalytics.applications.empty.title")}
+                    description={t("adminAnalytics.applications.empty.description")}
                   />
                 ) : (
                   <ResponsiveContainer width="100%" height={228}>
@@ -367,7 +366,7 @@ export function AdminAnalytics() {
                       />
                       <Tooltip
                         cursor={{ stroke: AXIS.line }}
-                        content={<ChartTooltip formatter={(v) => `${v} applications`} />}
+                        content={<ChartTooltip formatter={(v) => t("adminAnalytics.tooltip.applications", { count: String(v) })} />}
                       />
                       <Area
                         type="monotone"
@@ -387,17 +386,17 @@ export function AdminAnalytics() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Funds routed by institution</CardTitle>
+              <CardTitle className="text-base">{t("adminAnalytics.byInstitution.title")}</CardTitle>
               <CardDescription>
-                Every franc on this chart was paid to a registered school account.
+                {t("adminAnalytics.byInstitution.description")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {byInstitution.length === 0 ? (
                 <EmptyState
                   icon={Building2}
-                  title="No funds routed yet"
-                  description="Once donors start giving, the institutions receiving those payments appear here."
+                  title={t("adminAnalytics.byInstitution.empty.title")}
+                  description={t("adminAnalytics.byInstitution.empty.description")}
                 />
               ) : (
                 <ResponsiveContainer width="100%" height={Math.max(200, byInstitution.length * 44)}>
@@ -441,10 +440,8 @@ export function AdminAnalytics() {
             </CardContent>
           </Card>
 
-          <Alert tone="info" title="About this data">
-            Figures are aggregated from verified profiles and their recorded contributions.
-            Month-by-month funding totals need per-contribution timestamps from a reporting
-            endpoint, which this build doesn't expose yet.
+          <Alert tone="info" title={t("adminAnalytics.aboutData.title")}>
+            {t("adminAnalytics.aboutData.body")}
           </Alert>
         </div>
       )}

@@ -35,7 +35,7 @@ export function AdminAudit() {
       const res = await endpoints.auditLogs();
       setLogs(res.logs ?? res.audit_logs ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "We couldn't load the audit trail.");
+      setError(e instanceof Error ? e.message : t("adminAudit.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -58,7 +58,7 @@ export function AdminAudit() {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      toast.error("Couldn't export the audit trail. Try again.");
+      toast.error(t("adminAudit.exportFailed"));
     } finally {
       setExporting(false);
     }
@@ -92,14 +92,13 @@ export function AdminAudit() {
       actions={
         <Button variant="secondary" onClick={exportPdf} loading={exporting}>
           <FileDown aria-hidden />
-          Export PDF
+          {t("adminAudit.action.exportPdf")}
         </Button>
       }
     >
       <div className="space-y-5">
-        <Alert tone="info" title="This record is append-only">
-          Entries here cannot be edited or deleted from the interface. Each one names the
-          administrator who acted, what they acted on, and the note they left.
+        <Alert tone="info" title={t("adminAudit.appendOnlyTitle")}>
+          {t("adminAudit.appendOnlyBody")}
         </Alert>
 
         {error ? (
@@ -113,26 +112,26 @@ export function AdminAudit() {
         ) : logs.length === 0 ? (
           <EmptyState
             icon={ScrollText}
-            title="No actions recorded yet"
-            description="The first approval, rejection or ambassador promotion will appear here."
+            title={t("adminAudit.empty.title")}
+            description={t("adminAudit.empty.description")}
           />
         ) : (
           <>
             {/* Filters */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
               <div className="flex-1">
-                <Label htmlFor="audit-search">Search</Label>
+                <Label htmlFor="audit-search">{t("adminAudit.search.label")}</Label>
                 <Input
                   id="audit-search"
                   type="search"
                   className="mt-1.5"
-                  placeholder="Search notes and actions…"
+                  placeholder={t("adminAudit.search.placeholder")}
                   value={search}
                   onChange={(e) => handleSearch(e.target.value)}
                 />
               </div>
               <div className="sm:w-56">
-                <Label htmlFor="audit-action">Action</Label>
+                <Label htmlFor="audit-action">{t("adminAudit.action.label")}</Label>
                 <NativeSelect
                   id="audit-action"
                   className="mt-1.5"
@@ -141,7 +140,7 @@ export function AdminAudit() {
                 >
                   {actions.map((a) => (
                     <option key={a} value={a}>
-                      {a === "all" ? "All actions" : a.replace(/_/g, " ")}
+                      {a === "all" ? t("adminAudit.action.all") : a.replace(/_/g, " ")}
                     </option>
                   ))}
                 </NativeSelect>
@@ -149,17 +148,21 @@ export function AdminAudit() {
             </div>
 
             <p className="text-sm text-muted" aria-live="polite">
-              Showing {visible.length} of {filtered.length} {filtered.length === 1 ? "entry" : "entries"}
+              {t("adminAudit.showing", {
+                shown: String(visible.length),
+                total: String(filtered.length),
+                label: filtered.length === 1 ? t("adminAudit.entry.one") : t("adminAudit.entry.many"),
+              })}
             </p>
 
             {filtered.length === 0 ? (
               <EmptyState
                 icon={SearchX}
-                title="No entries match"
-                description="Try a different search term or action filter."
+                title={t("adminAudit.noMatch.title")}
+                description={t("adminAudit.noMatch.description")}
                 action={
                   <Button variant="secondary" onClick={() => { handleSearch(""); handleAction("all"); }}>
-                    Clear filters
+                    {t("adminAudit.clearFilters")}
                   </Button>
                 }
               />
@@ -170,11 +173,11 @@ export function AdminAudit() {
                   <table className="w-full min-w-[700px] text-sm">
                     <thead>
                       <tr className="border-b border-line bg-surface text-left">
-                        <th className="px-4 py-3 font-semibold text-ink">Action</th>
-                        <th className="px-4 py-3 font-semibold text-ink">Target</th>
-                        <th className="px-4 py-3 font-semibold text-ink">Actor</th>
-                        <th className="px-4 py-3 font-semibold text-ink">Note</th>
-                        <th className="px-4 py-3 font-semibold text-ink whitespace-nowrap">Date & Time</th>
+                        <th className="px-4 py-3 font-semibold text-ink">{t("adminAudit.table.action")}</th>
+                        <th className="px-4 py-3 font-semibold text-ink">{t("adminAudit.table.target")}</th>
+                        <th className="px-4 py-3 font-semibold text-ink">{t("adminAudit.table.actor")}</th>
+                        <th className="px-4 py-3 font-semibold text-ink">{t("adminAudit.table.note")}</th>
+                        <th className="px-4 py-3 font-semibold text-ink whitespace-nowrap">{t("adminAudit.table.dateTime")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -192,7 +195,7 @@ export function AdminAudit() {
                             {log.target_type.replace(/_/g, " ")} #{log.target_id}
                           </td>
                           <td className="px-4 py-3 text-muted whitespace-nowrap">
-                            Admin #{log.actor_id}
+                            {t("adminAudit.adminPrefix", { id: String(log.actor_id) })}
                           </td>
                           <td className="px-4 py-3 text-body max-w-xs">
                             <span className="line-clamp-2">{log.note || "—"}</span>
@@ -210,7 +213,7 @@ export function AdminAudit() {
                 {hasMore && (
                   <div className="flex justify-center pt-2">
                     <Button variant="secondary" onClick={() => setPage((p) => p + 1)}>
-                      Load more ({filtered.length - visible.length} remaining)
+                      {t("adminAudit.loadMore", { count: String(filtered.length - visible.length) })}
                     </Button>
                   </div>
                 )}

@@ -55,12 +55,11 @@ function ageFrom(dob: string) {
   return age;
 }
 
-const STEPS = ["Who they are", "Their studies", "Guardian consent"];
-
 /** Ambassador-assisted enrolment. */
 export function AmbassadorEnroll() {
   const navigate = useNavigate();
   const { t } = useLocale();
+  const STEPS = [t("ambassadorEnroll.step.who"), t("ambassadorEnroll.step.studies"), t("ambassadorEnroll.step.consent")];
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<Form>(EMPTY);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
@@ -98,27 +97,27 @@ export function AmbassadorEnroll() {
     const next: Partial<Record<keyof Form, string>> = {};
 
     if (which === 1) {
-      if (!form.on_behalf_of_name.trim()) next.on_behalf_of_name = "Enter the student's full name.";
+      if (!form.on_behalf_of_name.trim()) next.on_behalf_of_name = t("ambassadorEnroll.validation.fullName");
       if (!form.on_behalf_of_email.trim())
-        next.on_behalf_of_email = "An email creates their account so they can sign in later.";
+        next.on_behalf_of_email = t("ambassadorEnroll.validation.emailRequired");
       else if (!/^\S+@\S+\.\S+$/.test(form.on_behalf_of_email))
-        next.on_behalf_of_email = "That doesn't look like an email address.";
-      if (!form.date_of_birth) next.date_of_birth = "Needed to apply the right consent rules.";
-      if (!form.bio.trim()) next.bio = "Write a few sentences in the student's words.";
-      else if (form.bio.trim().length < 40) next.bio = "A little more detail helps donors decide.";
+        next.on_behalf_of_email = t("ambassadorEnroll.validation.emailInvalid");
+      if (!form.date_of_birth) next.date_of_birth = t("ambassadorEnroll.validation.dob");
+      if (!form.bio.trim()) next.bio = t("ambassadorEnroll.validation.bioRequired");
+      else if (form.bio.trim().length < 40) next.bio = t("ambassadorEnroll.validation.bioShort");
     }
 
     if (which === 2) {
-      if (!form.institution_id) next.institution_id = "Choose the school that receives the funds.";
-      if (!form.funding_goal.trim()) next.funding_goal = "Enter the fees they need.";
-      else if (Number(form.funding_goal) <= 0) next.funding_goal = "Enter an amount above zero.";
+      if (!form.institution_id) next.institution_id = t("ambassadorEnroll.validation.institution");
+      if (!form.funding_goal.trim()) next.funding_goal = t("ambassadorEnroll.validation.fundingGoalRequired");
+      else if (Number(form.funding_goal) <= 0) next.funding_goal = t("ambassadorEnroll.validation.fundingGoalPositive");
     }
 
     if (which === 3 && isMinor) {
-      if (!form.guardian_name.trim()) next.guardian_name = "Required for students under 18.";
-      if (!form.guardian_phone.trim()) next.guardian_phone = "Required for students under 18.";
+      if (!form.guardian_name.trim()) next.guardian_name = t("ambassadorEnroll.validation.guardianName");
+      if (!form.guardian_phone.trim()) next.guardian_phone = t("ambassadorEnroll.validation.guardianPhone");
       if (!form.guardian_consent)
-        next.guardian_consent = "Confirm the guardian has agreed before submitting.";
+        next.guardian_consent = t("ambassadorEnroll.validation.guardianConsent");
     }
 
     setErrors(next);
@@ -158,25 +157,25 @@ export function AmbassadorEnroll() {
 
     try {
       await endpoints.createProfile(payload());
-      toast.success("Student enrolled", {
-        description: "Add their documents next, then send them for review.",
+      toast.success(t("ambassadorEnroll.toast.enrolled"), {
+        description: t("ambassadorEnroll.toast.enrolledDescription"),
       });
       navigate("/ambassador/students");
     } catch (err) {
       if (!navigator.onLine) {
         await saveDraftOffline("/profiles/", "POST", payload());
-        toast.info("Saved on this device", {
-          description: "No signal right now — this enrolment uploads itself when you reconnect.",
+        toast.info(t("ambassadorEnroll.toast.savedOffline"), {
+          description: t("ambassadorEnroll.toast.savedOfflineDescription"),
         });
         navigate("/ambassador/students");
         return;
       }
       setFormError(
         err instanceof ApiError && err.status === 409
-          ? "That email already has an igaFund account. Use a different address."
+          ? t("ambassadorEnroll.error.emailTaken")
           : err instanceof ApiError
             ? err.message
-            : "We couldn't save this enrolment.",
+            : t("ambassadorEnroll.error.saveFailedGeneric"),
       );
     } finally {
       setSaving(false);
@@ -190,14 +189,13 @@ export function AmbassadorEnroll() {
     >
       <div className="max-w-2xl space-y-5">
         {!online && (
-          <Alert tone="warning" title="You're offline">
-            Keep going. Everything you enter is saved on this device and uploads itself the moment
-            you have a signal again.
+          <Alert tone="warning" title={t("ambassadorEnroll.offline.title")}>
+            {t("ambassadorEnroll.offline.body")}
           </Alert>
         )}
 
         {formError && (
-          <Alert tone="danger" title="Couldn't enroll this student">
+          <Alert tone="danger" title={t("ambassadorEnroll.errorTitle")}>
             {formError}
           </Alert>
         )}
@@ -208,14 +206,13 @@ export function AmbassadorEnroll() {
           {step === 1 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Who they are</CardTitle>
+                <CardTitle className="text-base">{t("ambassadorEnroll.who.title")}</CardTitle>
                 <CardDescription>
-                  This creates an account for the student so they can sign in later and follow their
-                  own progress.
+                  {t("ambassadorEnroll.who.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
-                <Field label="Student's full name" required error={errors.on_behalf_of_name}>
+                <Field label={t("ambassadorEnroll.field.fullName")} required error={errors.on_behalf_of_name}>
                   {(props) => (
                     <Input
                       {...props}
@@ -227,10 +224,10 @@ export function AmbassadorEnroll() {
                 </Field>
 
                 <Field
-                  label="Student's email"
+                  label={t("ambassadorEnroll.field.email")}
                   required
                   error={errors.on_behalf_of_email}
-                  hint="If they have no email, use one you can pass on to them."
+                  hint={t("ambassadorEnroll.field.emailHint")}
                 >
                   {(props) => (
                     <Input
@@ -244,7 +241,7 @@ export function AmbassadorEnroll() {
                 </Field>
 
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <Field label="Date of birth" required error={errors.date_of_birth}>
+                  <Field label={t("ambassadorEnroll.field.dob")} required error={errors.date_of_birth}>
                     {(props) => (
                       <Input
                         {...props}
@@ -255,7 +252,7 @@ export function AmbassadorEnroll() {
                       />
                     )}
                   </Field>
-                  <Field label="Phone number" hint="Theirs or a relative's.">
+                  <Field label={t("ambassadorEnroll.field.phone")} hint={t("ambassadorEnroll.field.phoneHint")}>
                     {(props) => (
                       <Input
                         {...props}
@@ -269,10 +266,10 @@ export function AmbassadorEnroll() {
                 </div>
 
                 <Field
-                  label="Their story"
+                  label={t("ambassadorEnroll.field.story")}
                   required
                   error={errors.bio}
-                  hint="Write it as they tell it to you — donors read this first."
+                  hint={t("ambassadorEnroll.field.storyHint")}
                 >
                   {(props) => (
                     <Textarea
@@ -281,7 +278,7 @@ export function AmbassadorEnroll() {
                       maxLength={1500}
                       value={form.bio}
                       onChange={(e) => set("bio", e.target.value)}
-                      placeholder="What are they studying, what do they want to become, and what is standing in the way?"
+                      placeholder={t("ambassadorEnroll.field.storyPlaceholder")}
                     />
                   )}
                 </Field>
@@ -292,14 +289,14 @@ export function AmbassadorEnroll() {
           {step === 2 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Their studies</CardTitle>
+                <CardTitle className="text-base">{t("ambassadorEnroll.studies.title")}</CardTitle>
                 <CardDescription>
-                  Funds are paid to the institution you choose here, never to the student.
+                  {t("ambassadorEnroll.studies.description")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <Field label="Academic level" required>
+                  <Field label={t("ambassadorEnroll.field.academicLevel")} required>
                     {(props) => (
                       <NativeSelect
                         {...props}
@@ -314,7 +311,7 @@ export function AmbassadorEnroll() {
                       </NativeSelect>
                     )}
                   </Field>
-                  <Field label="Field of study">
+                  <Field label={t("ambassadorEnroll.field.fieldOfStudy")}>
                     {(props) => (
                       <Input
                         {...props}
@@ -326,14 +323,14 @@ export function AmbassadorEnroll() {
                   </Field>
                 </div>
 
-                <Field label="School or university" required error={errors.institution_id}>
+                <Field label={t("ambassadorEnroll.field.institution")} required error={errors.institution_id}>
                   {(props) => (
                     <NativeSelect
                       {...props}
                       value={form.institution_id}
                       onChange={(e) => set("institution_id", e.target.value)}
                     >
-                      <option value="">Choose their institution</option>
+                      <option value="">{t("ambassadorEnroll.field.institutionPlaceholder")}</option>
                       {institutions.map((i) => (
                         <option key={i.id} value={i.id}>
                           {i.name} — {i.location}
@@ -344,10 +341,10 @@ export function AmbassadorEnroll() {
                 </Field>
 
                 <Field
-                  label="Funding goal in RWF"
+                  label={t("ambassadorEnroll.field.fundingGoal")}
                   required
                   error={errors.funding_goal}
-                  hint="Total fees for this academic year."
+                  hint={t("ambassadorEnroll.field.fundingGoalHint")}
                 >
                   {(props) => (
                     <Input
@@ -372,15 +369,14 @@ export function AmbassadorEnroll() {
             // light in dark mode and vanish against this pale, unmoving bg.
             <Card className="border-amber-300 bg-amber-50">
               <CardHeader>
-                <CardTitle className="text-base text-forest-950">Guardian consent</CardTitle>
+                <CardTitle className="text-base text-forest-950">{t("ambassadorEnroll.consent.title")}</CardTitle>
                 <CardDescription className="text-forest-700">
-                  This student is {age}. A guardian must consent in writing before their profile can
-                  be published, and their name stays hidden from donors.
+                  {t("ambassadorEnroll.consent.description", { age: String(age) })}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5 [&_label]:text-forest-950">
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <Field label="Guardian's full name" required error={errors.guardian_name}>
+                  <Field label={t("ambassadorEnroll.field.guardianName")} required error={errors.guardian_name}>
                     {(props) => (
                       <Input
                         {...props}
@@ -389,7 +385,7 @@ export function AmbassadorEnroll() {
                       />
                     )}
                   </Field>
-                  <Field label="Guardian's phone" required error={errors.guardian_phone}>
+                  <Field label={t("ambassadorEnroll.field.guardianPhone")} required error={errors.guardian_phone}>
                     {(props) => (
                       <Input
                         {...props}
@@ -411,10 +407,10 @@ export function AmbassadorEnroll() {
                   />
                   <span className="text-sm">
                     <span className="font-medium text-ink">
-                      The guardian has agreed to this profile being published.
+                      {t("ambassadorEnroll.consent.checkboxLabel")}
                     </span>
                     <span className="mt-0.5 block text-muted">
-                      You'll photograph their signed consent form on the next screen.
+                      {t("ambassadorEnroll.consent.checkboxHint")}
                     </span>
                   </span>
                 </label>
@@ -433,17 +429,17 @@ export function AmbassadorEnroll() {
               variant="ghost"
               onClick={() => (step === 1 ? navigate(-1) : setStep((s) => s - 1))}
             >
-              {step === 1 ? "Cancel" : "Back"}
+              {step === 1 ? t("ambassadorEnroll.action.cancel") : t("ambassadorEnroll.action.back")}
             </Button>
 
             {step < totalSteps ? (
               <Button type="button" onClick={next}>
-                Continue
+                {t("ambassadorEnroll.action.continue")}
               </Button>
             ) : (
               <Button type="submit" variant="fund" loading={saving}>
                 <UserPlus aria-hidden />
-                Enroll student
+                {t("ambassadorEnroll.action.submit")}
               </Button>
             )}
           </div>
@@ -455,14 +451,12 @@ export function AmbassadorEnroll() {
           ) : (
             <CloudOff className="mt-0.5 size-4 shrink-0" aria-hidden />
           )}
-          {online
-            ? "You're online — this enrolment submits immediately."
-            : "Offline. This enrolment is queued on your device."}
+          {online ? t("ambassadorEnroll.online.body") : t("ambassadorEnroll.offline.queued")}
         </p>
 
         <p className="flex items-start gap-2 text-sm text-muted">
           <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
-          You'll only ever see students you enrolled yourself.
+          {t("ambassadorEnroll.onlyYourStudents")}
         </p>
       </div>
     </AppShell>

@@ -10,14 +10,6 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedback";
 
 const PAGE_SIZE = 10;
 
-const PROCESS_LABEL: Record<string, string> = {
-  profile_approved: "Verification",
-  profile_submitted: "Submission",
-  ambassador_promoted: "Promotion",
-  contribution_funded: "Payment sent",
-  funding_received: "Funding received",
-};
-
 const PROCESS_TONE: Record<string, "success" | "forest" | "neutral" | "amber"> = {
   profile_approved: "success",
   ambassador_promoted: "forest",
@@ -31,6 +23,13 @@ const PROCESS_TONE: Record<string, "success" | "forest" | "neutral" | "amber"> =
  */
 export function AdminTickets() {
   const { t } = useLocale();
+  const PROCESS_LABEL: Record<string, string> = {
+    profile_approved: t("adminTickets.process.profileApproved"),
+    profile_submitted: t("adminTickets.process.profileSubmitted"),
+    ambassador_promoted: t("adminTickets.process.ambassadorPromoted"),
+    contribution_funded: t("adminTickets.process.contributionFunded"),
+    funding_received: t("adminTickets.process.fundingReceived"),
+  };
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -43,7 +42,7 @@ export function AdminTickets() {
       const res = await endpoints.adminTickets();
       setTickets(res.tickets ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "We couldn't load the ticket record.");
+      setError(e instanceof Error ? e.message : t("adminTickets.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -70,25 +69,29 @@ export function AdminTickets() {
       ) : tickets.length === 0 ? (
         <EmptyState
           icon={Receipt}
-          title="No tickets yet"
-          description="Every completed step — verification, funding, promotion — issues a numbered ticket. They'll collect here."
+          title={t("adminTickets.empty.title")}
+          description={t("adminTickets.empty.description")}
         />
       ) : (
         <div className="space-y-4">
           <p className="text-sm text-muted">
-            Showing {visible.length} of {tickets.length} {tickets.length === 1 ? "ticket" : "tickets"}
+            {t("adminTickets.showing", {
+              shown: String(visible.length),
+              total: String(tickets.length),
+              label: tickets.length === 1 ? t("adminTickets.ticket.one") : t("adminTickets.ticket.many"),
+            })}
           </p>
 
           <div className="overflow-x-auto rounded-lg border border-line">
             <table className="w-full min-w-[680px] text-sm">
               <thead>
                 <tr className="border-b border-line bg-surface text-left">
-                  <th className="px-4 py-3 font-semibold text-ink whitespace-nowrap">Ticket #</th>
-                  <th className="px-4 py-3 font-semibold text-ink">Type</th>
-                  <th className="px-4 py-3 font-semibold text-ink">Title</th>
-                  <th className="px-4 py-3 font-semibold text-ink">Summary</th>
-                  <th className="px-4 py-3 font-semibold text-ink whitespace-nowrap">User ID</th>
-                  <th className="px-4 py-3 font-semibold text-ink whitespace-nowrap">Issued At</th>
+                  <th className="px-4 py-3 font-semibold text-ink whitespace-nowrap">{t("adminTickets.table.number")}</th>
+                  <th className="px-4 py-3 font-semibold text-ink">{t("adminTickets.table.type")}</th>
+                  <th className="px-4 py-3 font-semibold text-ink">{t("adminTickets.table.title")}</th>
+                  <th className="px-4 py-3 font-semibold text-ink">{t("adminTickets.table.summary")}</th>
+                  <th className="px-4 py-3 font-semibold text-ink whitespace-nowrap">{t("adminTickets.table.userId")}</th>
+                  <th className="px-4 py-3 font-semibold text-ink whitespace-nowrap">{t("adminTickets.table.issuedAt")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -126,7 +129,7 @@ export function AdminTickets() {
           {hasMore && (
             <div className="flex justify-center pt-2">
               <Button variant="secondary" onClick={() => setPage((p) => p + 1)}>
-                Load more ({tickets.length - visible.length} remaining)
+                {t("adminTickets.loadMore", { count: String(tickets.length - visible.length) })}
               </Button>
             </div>
           )}

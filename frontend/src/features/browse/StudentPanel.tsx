@@ -9,10 +9,10 @@ import {
   MessageSquareQuote,
   Receipt,
   ShieldCheck,
-  Wallet,
 } from "lucide-react";
 import { endpoints, type ContributionItem, type Profile } from "@/lib/api";
 import { formatMoney, formatRelative, fundingPercent } from "@/lib/format";
+import { useLocale } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
 import { Badge, VerifiedMark } from "@/components/ui/Badge";
 import { FundingProgress } from "@/components/ui/Progress";
@@ -44,6 +44,7 @@ export function StudentPanel({
   onFunded?: () => void;
 }) {
   const { user } = useAuth();
+  const { t } = useLocale();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [contributions, setContributions] = useState<ContributionItem[]>([]);
@@ -59,7 +60,7 @@ export function StudentPanel({
       const res = await endpoints.publicProfile(profileId);
       setProfile(res.profile);
     } catch {
-      setError("This profile is not available.");
+      setError(t("studentPanel.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -83,7 +84,7 @@ export function StudentPanel({
       return;
     }
     if (user.role !== "donor" && user.role !== "admin") {
-      toast.info("Only donor accounts can contribute");
+      toast.info(t("studentPanel.donorOnly"));
       return;
     }
     setContributeOpen(true);
@@ -91,16 +92,17 @@ export function StudentPanel({
 
   const routing: RailStep[] = profile
     ? [
-        { key: "you", label: "You contribute", icon: HeartHandshake, state: "current" },
-        { key: "verified", label: "igaFund confirms the routing details", icon: ShieldCheck, state: "todo" },
-        { key: "wallet", label: "A personal wallet", detail: "Never used", icon: Wallet, state: "bypassed" },
+        { key: "you", label: t("studentPanel.routing.you"), icon: HeartHandshake, state: "current" },
+        { key: "verified", label: t("studentPanel.routing.verified"), icon: ShieldCheck, state: "todo" },
         {
           key: "school",
-          label: profile.institution ? `${profile.institution.name} is paid` : "The institution is paid",
+          label: profile.institution
+            ? t("studentPanel.routing.schoolNamed", { name: profile.institution.name })
+            : t("studentPanel.routing.schoolGeneric"),
           icon: Building2,
           state: "todo",
         },
-        { key: "receipt", label: "You receive a numbered receipt", icon: Receipt, state: "todo" },
+        { key: "receipt", label: t("studentPanel.routing.receipt"), icon: Receipt, state: "todo" },
       ]
     : [];
 
@@ -111,7 +113,7 @@ export function StudentPanel({
       <SidePanel open={open} onOpenChange={onOpenChange}>
         <SidePanelContent width="wide" aria-describedby={undefined}>
           <SidePanelHeader>
-            <SidePanelTitle>{profile?.full_name ?? "Verified Student"}</SidePanelTitle>
+            <SidePanelTitle>{profile?.full_name ?? t("studentPanel.defaultName")}</SidePanelTitle>
           </SidePanelHeader>
 
           <SidePanelBody className="space-y-7">
@@ -134,7 +136,7 @@ export function StudentPanel({
                   <div className="min-w-0">
                     <p className="flex items-center gap-1.5 text-[0.9375rem] text-muted">
                       <GraduationCap className="size-[18px] shrink-0" aria-hidden />
-                      {profile.academic_level ?? "Student"}
+                      {profile.academic_level ?? t("studentPanel.defaultLevel")}
                       {profile.field_of_study ? ` · ${profile.field_of_study}` : ""}
                     </p>
                     {profile.institution && (
@@ -153,15 +155,14 @@ export function StudentPanel({
                 <FundingProgress funded={profile.funded_amount} goal={profile.funding_goal} />
 
                 {profile.is_minor && (
-                  <Alert tone="info" title="This student is under 18">
-                    Their legal name, photograph and contact details are withheld under Rwanda's
-                    data protection law.
+                  <Alert tone="info" title={t("studentPanel.minorTitle")}>
+                    {t("studentPanel.minorBody")}
                   </Alert>
                 )}
 
                 {profile.bio && (
                   <div>
-                    <h3 className="font-display text-lg">Their story</h3>
+                    <h3 className="font-display text-lg">{t("studentPanel.story")}</h3>
                     <p className="mt-2 whitespace-pre-line leading-relaxed text-body">
                       {profile.bio}
                     </p>
@@ -169,7 +170,7 @@ export function StudentPanel({
                 )}
 
                 <div>
-                  <h3 className="font-display text-lg">Where your money goes</h3>
+                  <h3 className="font-display text-lg">{t("studentPanel.whereMoneyGoes")}</h3>
                   <div className="mt-3 rounded-lg border border-line bg-surface p-5">
                     <RoutingRail steps={routing} />
                   </div>
@@ -178,19 +179,19 @@ export function StudentPanel({
                 {profile.institution && (
                   <div className="rounded-md bg-sunk p-4">
                     <p className="text-xs font-semibold uppercase tracking-wide text-faint">
-                      Paid directly to
+                      {t("studentPanel.paidDirectlyTo")}
                     </p>
                     <p className="mt-1.5 font-medium text-ink">{profile.institution.name}</p>
                     <p className="text-sm text-muted">{profile.institution.location}</p>
                     <Badge tone="forest" className="mt-3" icon={ShieldCheck}>
-                      Registered institution
+                      {t("studentPanel.registeredInstitution")}
                     </Badge>
                   </div>
                 )}
 
                 {contributions.filter((c) => c.message).length > 0 && (
                   <div>
-                    <h3 className="font-display text-lg">Messages from supporters</h3>
+                    <h3 className="font-display text-lg">{t("studentPanel.messagesFromSupporters")}</h3>
                     <ul className="mt-3 space-y-2.5">
                       {contributions
                         .filter((c) => c.message)
@@ -224,21 +225,21 @@ export function StudentPanel({
                 variant="ghost"
                 onClick={() => {
                   const url = `${window.location.origin}/students/${profile.id}`;
-                  navigator.clipboard?.writeText(url).then(() => toast.success("Link copied"));
+                  navigator.clipboard?.writeText(url).then(() => toast.success(t("studentPanel.linkCopied")));
                 }}
               >
                 <LinkIcon aria-hidden />
-                Copy link
+                {t("studentPanel.copyLink")}
               </Button>
 
               {complete ? (
                 <Badge tone="success" size="md">
-                  Goal reached
+                  {t("studentPanel.goalReached")}
                 </Badge>
               ) : (
                 <Button variant="fund" size="lg" onClick={handleFund}>
                   <HeartHandshake aria-hidden />
-                  Fund {formatMoney(profile.funding_goal - profile.funded_amount)} needed
+                  {t("studentPanel.fundNeeded", { amount: formatMoney(profile.funding_goal - profile.funded_amount) })}
                 </Button>
               )}
             </SidePanelFooter>

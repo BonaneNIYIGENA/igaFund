@@ -5,6 +5,7 @@ import { Bell, Check, CheckCheck, CircleAlert, Info, PartyPopper } from "lucide-
 import { endpoints, type NotificationItem } from "@/lib/api";
 import { formatRelative } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { useLocale } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Menu";
 
@@ -21,6 +22,7 @@ function toneFor(type: string) {
 
 /** The notification centre, present in every role's header. */
 export function NotificationCenter() {
+  const { t } = useLocale();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -61,8 +63,8 @@ export function NotificationCenter() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="relative grid size-11 cursor-pointer place-items-center rounded-sm text-forest-800 transition-colors hover:bg-forest-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700"
-          aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
+          className="relative grid size-11 cursor-pointer place-items-center rounded-sm text-accent-ink transition-colors hover:bg-forest-100 hover:text-forest-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700"
+          aria-label={unread > 0 ? t("notificationCenter.ariaUnread", { count: String(unread) }) : t("notificationCenter.ariaNoUnread")}
         >
           <Bell className="size-[19px]" aria-hidden />
           <AnimatePresence>
@@ -83,11 +85,11 @@ export function NotificationCenter() {
 
       <PopoverContent className="w-[min(24rem,calc(100vw-1.5rem))] overflow-hidden p-0">
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
-          <h2 className="text-sm font-semibold text-ink">Notifications</h2>
+          <h2 className="text-sm font-semibold text-ink">{t("notificationCenter.title")}</h2>
           {unread > 0 && (
             <Button variant="link" size="sm" onClick={markAll} className="text-sm">
               <CheckCheck aria-hidden />
-              Mark all read
+              {t("notificationCenter.markAllRead")}
             </Button>
           )}
         </div>
@@ -98,9 +100,9 @@ export function NotificationCenter() {
               <span className="mx-auto grid size-11 place-items-center rounded-full bg-forest-50 text-forest-600">
                 <Bell className="size-5" aria-hidden />
               </span>
-              <p className="mt-3 text-sm font-medium text-ink">You're all caught up</p>
+              <p className="mt-3 text-sm font-medium text-ink">{t("notificationCenter.empty.title")}</p>
               <p className="mt-1 text-sm text-muted">
-                Updates about your profile and funding will appear here.
+                {t("notificationCenter.empty.description")}
               </p>
             </div>
           ) : (
@@ -129,7 +131,7 @@ export function NotificationCenter() {
                         </span>
                       </span>
                       {!item.read && (
-                        <span className="mt-2 size-2 shrink-0 rounded-full bg-amber-500" aria-label="Unread" />
+                        <span className="mt-2 size-2 shrink-0 rounded-full bg-amber-500" aria-label={t("notificationCenter.unreadAria")} />
                       )}
                     </button>
                   </li>
@@ -142,7 +144,7 @@ export function NotificationCenter() {
         {items.length > 0 && unread === 0 && (
           <p className="flex items-center justify-center gap-1.5 border-t border-line bg-raised py-2.5 text-xs text-muted">
             <Check className="size-3.5" aria-hidden />
-            Everything read
+            {t("notificationCenter.everythingRead")}
           </p>
         )}
       </PopoverContent>

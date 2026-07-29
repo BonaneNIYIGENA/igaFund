@@ -8,11 +8,11 @@ import {
   Receipt,
   ShieldCheck,
   Trash2,
-  Wallet,
 } from "lucide-react";
 import { ApiError, api, endpoints, type ContributionItem, type Profile } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 import { sanitizeText, validateAmount } from "@/lib/validation";
+import { useLocale } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Textarea } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Feedback";
@@ -42,6 +42,7 @@ export function ContributeDialog({
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }) {
+  const { t } = useLocale();
   const [amount, setAmount] = useState("25000");
   const [message, setMessage] = useState("");
   const [anonymous, setAnonymous] = useState(false);
@@ -77,12 +78,12 @@ export function ContributeDialog({
   async function uploadProof(file: File) {
     setProofError("");
     if (file.size > 10 * 1024 * 1024) {
-      setProofError("That file is over 10 MB. Use a smaller photo or a compressed PDF.");
+      setProofError(t("contributeDialog.proof.tooBig"));
       return;
     }
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
     if (!["pdf", "png", "jpg", "jpeg"].includes(ext)) {
-      setProofError("Upload a PDF, PNG or JPG of your transfer confirmation.");
+      setProofError(t("contributeDialog.proof.badType"));
       return;
     }
 
@@ -94,7 +95,7 @@ export function ContributeDialog({
       setProofUrl(res.url);
       setProofName(file.name);
     } catch (err) {
-      setProofError(err instanceof ApiError ? err.message : "The upload didn't finish. Try again.");
+      setProofError(err instanceof ApiError ? err.message : t("contributeDialog.proof.uploadFailed"));
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -105,7 +106,7 @@ export function ContributeDialog({
     e.preventDefault();
     const amountProblem = validateAmount(amount, { min: MINIMUM, label: "amount" });
     setAmountError(amountProblem);
-    if (!proofUrl) setProofError("Attach your payment slip before confirming.");
+    if (!proofUrl) setProofError(t("contributeDialog.proof.required"));
     if (amountProblem || !proofUrl) return;
 
     setSubmitting(true);
@@ -119,14 +120,15 @@ export function ContributeDialog({
         proof_image_url: proofUrl,
       });
       setReceipt(res.contribution);
-      toast.success("Contribution routed", {
-        description: `${formatMoney(numericAmount)} is on its way to ${
-          profile.institution?.name ?? "the institution"
-        }.`,
+      toast.success(t("contributeDialog.toast.routed"), {
+        description: t("contributeDialog.toast.routedDescription", {
+          amount: formatMoney(numericAmount),
+          institution: profile.institution?.name ?? t("contributeDialog.defaultInstitution"),
+        }),
       });
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The contribution did not go through.");
+      setError(err instanceof ApiError ? err.message : t("contributeDialog.submitFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -134,20 +136,26 @@ export function ContributeDialog({
 
   const receiptRail: RailStep[] = receipt
     ? [
-        { key: "given", label: `You gave ${formatMoney(receipt.amount)}`, icon: HeartHandshake, state: "done" },
-        { key: "verified", label: "Routing details confirmed", icon: ShieldCheck, state: "done" },
-        { key: "wallet", label: "A personal wallet", detail: "Not used", icon: Wallet, state: "bypassed" },
+        {
+          key: "given",
+          label: t("contributeDialog.receipt.gave", { amount: formatMoney(receipt.amount) }),
+          icon: HeartHandshake,
+          state: "done",
+        },
+        { key: "verified", label: t("contributeDialog.receipt.verified"), icon: ShieldCheck, state: "done" },
         {
           key: "school",
-          label: `Paid to ${receipt.institution?.name ?? profile.institution?.name ?? "the institution"}`,
+          label: t("contributeDialog.receipt.paidTo", {
+            institution: receipt.institution?.name ?? profile.institution?.name ?? t("contributeDialog.defaultInstitution"),
+          }),
           detail: receipt.institution?.location ?? undefined,
           icon: Building2,
           state: "done",
         },
         {
           key: "receipt",
-          label: "Receipt issued",
-          detail: receipt.receipt_ref ? `Reference ${receipt.receipt_ref}` : undefined,
+          label: t("contributeDialog.receipt.issued"),
+          detail: receipt.receipt_ref ? t("contributeDialog.receipt.reference", { ref: receipt.receipt_ref }) : undefined,
           icon: Receipt,
           state: "done",
         },
@@ -163,10 +171,12 @@ export function ContributeDialog({
               <span className="mb-3 grid size-12 place-items-center rounded-full bg-success-soft text-accent-ink">
                 <CheckCircle2 className="size-6" aria-hidden />
               </span>
-              <SidePanelTitle>Your contribution is routed</SidePanelTitle>
+              <SidePanelTitle>{t("contributeDialog.receipt.title")}</SidePanelTitle>
               <SidePanelDescription>
-                {formatMoney(receipt.amount)} recorded against{" "}
-                {profile.full_name ?? "this student"}'s fees.
+                {t("contributeDialog.receipt.description", {
+                  amount: formatMoney(receipt.amount),
+                  student: profile.full_name ?? t("contributeDialog.defaultStudent"),
+                })}
               </SidePanelDescription>
             </SidePanelHeader>
 
@@ -176,13 +186,13 @@ export function ContributeDialog({
               {receipt.ticket_number && (
                 <div className="mt-6 rounded-md border border-line bg-surface p-5">
                   <p className="text-xs font-semibold uppercase tracking-wide text-faint">
-                    Transaction ticket
+                    {t("contributeDialog.receipt.ticketLabel")}
                   </p>
                   <p className="figure mt-1 text-lg font-semibold text-ink">
                     {receipt.ticket_number}
                   </p>
                   <p className="mt-1 text-sm text-muted">
-                    Keep this reference. It also appears in your receipts.
+                    {t("contributeDialog.receipt.ticketHint")}
                   </p>
                 </div>
               )}
@@ -190,33 +200,35 @@ export function ContributeDialog({
 
             <SidePanelFooter>
               <Button variant="secondary" onClick={() => onOpenChange(false)}>
-                Close
+                {t("contributeDialog.action.close")}
               </Button>
               <Button asChild>
-                <a href="/donor/receipts">View my receipts</a>
+                <a href="/donor/receipts">{t("contributeDialog.action.viewReceipts")}</a>
               </Button>
             </SidePanelFooter>
           </>
         ) : (
           <form onSubmit={submit} className="contents" noValidate>
             <SidePanelHeader>
-              <SidePanelTitle>Fund {profile.full_name ?? "this student"}</SidePanelTitle>
+              <SidePanelTitle>
+                {t("contributeDialog.title", { student: profile.full_name ?? t("contributeDialog.defaultStudent") })}
+              </SidePanelTitle>
               <SidePanelDescription>
                 {profile.institution
-                  ? `Paid straight to ${profile.institution.name}. It never passes through a personal account.`
-                  : "Paid straight to the student's registered institution."}
+                  ? t("contributeDialog.descriptionNamed", { institution: profile.institution.name })
+                  : t("contributeDialog.descriptionGeneric")}
               </SidePanelDescription>
             </SidePanelHeader>
 
             <SidePanelBody className="space-y-6">
               {error && (
-                <Alert tone="danger" title="That didn't go through">
+                <Alert tone="danger" title={t("contributeDialog.errorTitle")}>
                   {error}
                 </Alert>
               )}
 
               <div>
-                <p className="text-sm font-medium text-ink">Choose an amount</p>
+                <p className="text-sm font-medium text-ink">{t("contributeDialog.chooseAmount")}</p>
                 <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {PRESETS.map((preset) => (
                     <button
@@ -240,13 +252,13 @@ export function ContributeDialog({
               </div>
 
               <Field
-                label="Amount in RWF"
+                label={t("contributeDialog.field.amount")}
                 required
                 error={amountError}
                 hint={
                   remaining > 0
-                    ? `${formatMoney(remaining)} still needed to reach the goal.`
-                    : `Minimum ${formatMoney(MINIMUM)}.`
+                    ? t("contributeDialog.field.amountHintRemaining", { amount: formatMoney(remaining) })
+                    : t("contributeDialog.field.amountHintMinimum", { amount: formatMoney(MINIMUM) })
                 }
               >
                 {(props) => (
@@ -266,10 +278,10 @@ export function ContributeDialog({
               {/* Proof of payment is required — the record is the whole promise. */}
               <div>
                 <p className="text-sm font-medium text-ink">
-                  Payment slip <span className="text-clay-500">*</span>
+                  {t("contributeDialog.paymentSlip")} <span className="text-clay-500">*</span>
                 </p>
                 <p className="mt-1 text-sm text-muted">
-                  Attach the confirmation from your bank or mobile money transfer.
+                  {t("contributeDialog.paymentSlipHint")}
                 </p>
 
                 {proofUrl ? (
@@ -279,7 +291,7 @@ export function ContributeDialog({
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-ink">{proofName}</p>
-                      <p className="text-xs text-muted">Attached</p>
+                      <p className="text-xs text-muted">{t("contributeDialog.attached")}</p>
                     </div>
                     <Button
                       type="button"
@@ -290,7 +302,7 @@ export function ContributeDialog({
                         setProofUrl("");
                         setProofName("");
                       }}
-                      aria-label="Remove payment slip"
+                      aria-label={t("contributeDialog.removeSlip")}
                     >
                       <Trash2 aria-hidden />
                     </Button>
@@ -319,9 +331,9 @@ export function ContributeDialog({
                       onClick={() => fileRef.current?.click()}
                     >
                       <FileUp aria-hidden />
-                      {uploading ? "Uploading…" : "Attach payment slip"}
+                      {uploading ? t("contributeDialog.uploading") : t("contributeDialog.attachSlip")}
                     </Button>
-                    <p className="mt-2.5 text-xs text-muted">PDF, PNG or JPG, up to 10 MB.</p>
+                    <p className="mt-2.5 text-xs text-muted">{t("contributeDialog.slipHint")}</p>
                   </div>
                 )}
 
@@ -333,8 +345,8 @@ export function ContributeDialog({
               </div>
 
               <Field
-                label="Message to the student"
-                hint="Optional. They will read this on their dashboard."
+                label={t("contributeDialog.field.message")}
+                hint={t("contributeDialog.field.messageHint")}
               >
                 {(props) => (
                   <Textarea
@@ -343,7 +355,7 @@ export function ContributeDialog({
                     maxLength={400}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Keep going — your work matters."
+                    placeholder={t("contributeDialog.field.messagePlaceholder")}
                   />
                 )}
               </Field>
@@ -356,10 +368,9 @@ export function ContributeDialog({
                   className="mt-0.5 size-[18px] shrink-0 cursor-pointer accent-[var(--color-forest-700)]"
                 />
                 <span className="text-sm">
-                  <span className="font-medium text-ink">Give anonymously</span>
+                  <span className="font-medium text-ink">{t("contributeDialog.anonymous.label")}</span>
                   <span className="mt-0.5 block text-muted">
-                    Your name is hidden from the student and the public page. It stays on the
-                    receipt and in the audit trail.
+                    {t("contributeDialog.anonymous.hint")}
                   </span>
                 </span>
               </label>
@@ -367,10 +378,10 @@ export function ContributeDialog({
 
             <SidePanelFooter>
               <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("contributeDialog.action.cancel")}
               </Button>
               <Button type="submit" variant="fund" loading={submitting}>
-                Give {formatMoney(numericAmount)}
+                {t("contributeDialog.action.give", { amount: formatMoney(numericAmount) })}
               </Button>
             </SidePanelFooter>
           </form>

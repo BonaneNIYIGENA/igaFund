@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { FileUp, Send } from "lucide-react";
 import { ApiError, endpoints, type Profile } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
+import { useLocale } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Menu";
@@ -10,6 +11,7 @@ import { AmbassadorDocuments } from "./AmbassadorDocuments";
 
 /** One enrolled student. */
 export function StudentRow({ student, onChange }: { student: Profile; onChange: () => void }) {
+  const { t } = useLocale();
   const [submitting, setSubmitting] = useState(false);
   const [docsOpen, setDocsOpen] = useState(false);
 
@@ -19,13 +21,15 @@ export function StudentRow({ student, onChange }: { student: Profile; onChange: 
     setSubmitting(true);
     try {
       await endpoints.submitProfile(student.id);
-      toast.success("Sent for review", {
-        description: `${student.full_name ?? "The student"} is now in the verification queue.`,
+      toast.success(t("studentRow.toast.sent"), {
+        description: t("studentRow.toast.sentDescription", {
+          name: student.full_name ?? t("studentRow.toast.sentDefaultName"),
+        }),
       });
       onChange();
     } catch (err) {
-      toast.error("Not ready to submit", {
-        description: err instanceof ApiError ? err.message : "Try again in a moment.",
+      toast.error(t("studentRow.toast.notReady"), {
+        description: err instanceof ApiError ? err.message : t("studentRow.toast.notReadyGeneric"),
       });
     } finally {
       setSubmitting(false);
@@ -39,7 +43,7 @@ export function StudentRow({ student, onChange }: { student: Profile; onChange: 
 
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium text-ink">
-            {student.full_name ?? "Student"}
+            {student.full_name ?? t("studentRow.defaultName")}
           </p>
           <p className="truncate text-sm text-muted">
             {student.academic_level ?? "—"}
@@ -49,8 +53,8 @@ export function StudentRow({ student, onChange }: { student: Profile; onChange: 
             <span className="figure font-medium text-accent-ink">
               {formatMoney(student.funded_amount)}
             </span>{" "}
-            of <span className="figure">{formatMoney(student.funding_goal)}</span> ·{" "}
-            {student.document_count} {student.document_count === 1 ? "document" : "documents"}
+            {t("studentRow.of")} <span className="figure">{formatMoney(student.funding_goal)}</span> ·{" "}
+            {student.document_count} {student.document_count === 1 ? t("studentRow.document") : t("studentRow.documents")}
           </p>
         </div>
 
@@ -61,7 +65,7 @@ export function StudentRow({ student, onChange }: { student: Profile; onChange: 
         <div className="flex w-full gap-2 sm:w-auto">
           <Button variant="secondary" size="sm" onClick={() => setDocsOpen(true)} className="flex-1 sm:flex-none">
             <FileUp aria-hidden />
-            Documents
+            {t("studentRow.action.documents")}
           </Button>
           {canSubmit && (
             <Button
@@ -72,7 +76,7 @@ export function StudentRow({ student, onChange }: { student: Profile; onChange: 
               className="flex-1 sm:flex-none"
             >
               <Send aria-hidden />
-              Submit
+              {t("studentRow.action.submit")}
             </Button>
           )}
         </div>

@@ -28,22 +28,20 @@ import {
   DialogTitle,
 } from "@/components/ui/Dialog";
 
-const TYPES = [
-  { value: "secondary", label: "Secondary school" },
-  { value: "university", label: "University" },
-  { value: "tvet", label: "TVET / vocational" },
-];
-
-const TYPE_LABEL: Record<string, string> = {
-  secondary: "Secondary",
-  university: "University",
-  tvet: "TVET",
-};
-
 const PAGE_SIZE = 10;
 
 export function AdminInstitutions() {
   const { t } = useLocale();
+  const TYPES = [
+    { value: "secondary", label: t("adminInstitutions.type.secondary") },
+    { value: "university", label: t("adminInstitutions.type.university") },
+    { value: "tvet", label: t("adminInstitutions.type.tvet") },
+  ];
+  const TYPE_LABEL: Record<string, string> = {
+    secondary: t("adminInstitutions.typeShort.secondary"),
+    university: t("adminInstitutions.typeShort.university"),
+    tvet: t("adminInstitutions.typeShort.tvet"),
+  };
   const [institutions, setInstitutions] = useState<InstitutionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -66,7 +64,7 @@ export function AdminInstitutions() {
       const res = await endpoints.institutions();
       setInstitutions(res.institutions ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "We couldn't load the institutions.");
+      setError(e instanceof Error ? e.message : t("adminInstitutions.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -79,10 +77,10 @@ export function AdminInstitutions() {
   async function create(e: React.FormEvent) {
     e.preventDefault();
     const next: Record<string, string> = {};
-    if (!name.trim()) next.name = "Enter the institution's registered name.";
-    if (!location.trim()) next.location = "Enter the district or city.";
+    if (!name.trim()) next.name = t("adminInstitutions.validation.name");
+    if (!location.trim()) next.location = t("adminInstitutions.validation.location");
     if (!bankReference.trim())
-      next.bankReference = "Without a routing reference, no funds can be sent here.";
+      next.bankReference = t("adminInstitutions.validation.bankReference");
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
@@ -95,7 +93,9 @@ export function AdminInstitutions() {
         type,
         bank_reference: bankReference.trim(),
       });
-      toast.success("Institution added", { description: `${name.trim()} can now receive funds.` });
+      toast.success(t("adminInstitutions.toast.added"), {
+        description: t("adminInstitutions.toast.addedDescription", { name: name.trim() }),
+      });
       setOpen(false);
       setName("");
       setLocation("");
@@ -103,7 +103,7 @@ export function AdminInstitutions() {
       setType("secondary");
       await load();
     } catch (err) {
-      setFormError(err instanceof ApiError ? err.message : "We couldn't add this institution.");
+      setFormError(err instanceof ApiError ? err.message : t("adminInstitutions.toast.addFailedGeneric"));
     } finally {
       setSaving(false);
     }
@@ -129,26 +129,25 @@ export function AdminInstitutions() {
       actions={
         <Button onClick={() => setOpen(true)}>
           <Plus aria-hidden />
-          Add institution
+          {t("adminInstitutions.action.add")}
         </Button>
       }
     >
       <div className="space-y-5">
-        <Alert tone="info" title="This list is the routing allow-list">
-          A contribution can only be paid to an institution registered here. A student who hasn't
-          chosen one cannot receive funds at all.
+        <Alert tone="info" title={t("adminInstitutions.allowListTitle")}>
+          {t("adminInstitutions.allowListBody")}
         </Alert>
 
         {/* Stats cards — shown whenever data is loaded */}
         {!loading && !error && institutions.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {[
-              { label: "Total registered", value: totalCount, icon: Building2 },
-              { label: "Secondary schools", value: secondaryCount, icon: Building2 },
-              { label: "TVET / vocational", value: tvetCount, icon: Building2 },
-              { label: "Universities", value: universityCount, icon: Building2 },
+              { label: t("adminInstitutions.stat.total"), value: totalCount, icon: Building2 },
+              { label: t("adminInstitutions.stat.secondary"), value: secondaryCount, icon: Building2 },
+              { label: t("adminInstitutions.stat.tvet"), value: tvetCount, icon: Building2 },
+              { label: t("adminInstitutions.stat.university"), value: universityCount, icon: Building2 },
               {
-                label: "Most applications",
+                label: t("adminInstitutions.stat.mostApplications"),
                 value: topInstitution ? topInstitution.applicants : 0,
                 sub: topInstitution?.name,
                 icon: Users,
@@ -179,9 +178,9 @@ export function AdminInstitutions() {
         ) : institutions.length === 0 ? (
           <EmptyState
             icon={Building2}
-            title="No institutions registered"
-            description="Add the first school or university. Until one exists, students can't complete their profile and no funds can be routed."
-            action={<Button onClick={() => setOpen(true)}>Add the first institution</Button>}
+            title={t("adminInstitutions.empty.title")}
+            description={t("adminInstitutions.empty.description")}
+            action={<Button onClick={() => setOpen(true)}>{t("adminInstitutions.empty.action")}</Button>}
           />
         ) : (
           <>
@@ -215,14 +214,14 @@ export function AdminInstitutions() {
                         <div>
                           <dt className="flex items-center gap-1 text-xs text-muted">
                             <Users className="size-3" aria-hidden />
-                            Applied
+                            {t("adminInstitutions.applied")}
                           </dt>
                           <dd className="figure mt-0.5 font-semibold text-ink">
                             {inst.applicants}
                           </dd>
                         </div>
                         <div>
-                          <dt className="text-xs text-muted">Verified</dt>
+                          <dt className="text-xs text-muted">{t("adminInstitutions.verified")}</dt>
                           <dd className="figure mt-0.5 font-semibold text-ink">
                             {inst.approved}
                           </dd>
@@ -230,7 +229,7 @@ export function AdminInstitutions() {
                         <div>
                           <dt className="flex items-center gap-1 text-xs text-muted">
                             <HeartHandshake className="size-3" aria-hidden />
-                            Routed
+                            {t("adminInstitutions.routed")}
                           </dt>
                           <dd className="figure mt-0.5 font-semibold text-amber-700">
                             {formatMoney(inst.total_routed)}
@@ -239,7 +238,7 @@ export function AdminInstitutions() {
                       </dl>
 
                       <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-accent-ink group-hover:underline">
-                        See students and payments
+                        {t("adminInstitutions.seeStudentsAndPayments")}
                         <ArrowRight className="size-4" aria-hidden />
                       </p>
                     </button>
@@ -251,7 +250,7 @@ export function AdminInstitutions() {
           {hasMore && (
             <div className="flex justify-center pt-2">
               <Button variant="secondary" onClick={() => setPage((p) => p + 1)}>
-                Load more ({institutions.length - visibleInstitutions.length} remaining)
+                {t("adminInstitutions.loadMore", { count: String(institutions.length - visibleInstitutions.length) })}
               </Button>
             </div>
           )}
@@ -263,21 +262,20 @@ export function AdminInstitutions() {
         <DialogContent size="sm">
           <form onSubmit={create} className="contents" noValidate>
             <DialogHeader>
-              <DialogTitle>Add an institution</DialogTitle>
+              <DialogTitle>{t("adminInstitutions.dialog.title")}</DialogTitle>
               <DialogDescription>
-                Only add schools whose account details you have confirmed. This list decides where
-                money can go.
+                {t("adminInstitutions.dialog.description")}
               </DialogDescription>
             </DialogHeader>
 
             <DialogBody className="space-y-5 pb-6">
               {formError && (
-                <Alert tone="danger" title="Couldn't add it">
+                <Alert tone="danger" title={t("adminInstitutions.dialog.addFailedTitle")}>
                   {formError}
                 </Alert>
               )}
 
-              <Field label="Registered name" required error={errors.name}>
+              <Field label={t("adminInstitutions.field.name")} required error={errors.name}>
                 {(props) => (
                   <Input
                     {...props}
@@ -288,7 +286,7 @@ export function AdminInstitutions() {
                 )}
               </Field>
 
-              <Field label="District or city" required error={errors.location}>
+              <Field label={t("adminInstitutions.field.location")} required error={errors.location}>
                 {(props) => (
                   <Input
                     {...props}
@@ -299,12 +297,12 @@ export function AdminInstitutions() {
                 )}
               </Field>
 
-              <Field label="Type" required>
+              <Field label={t("adminInstitutions.field.type")} required>
                 {(props) => (
                   <NativeSelect {...props} value={type} onChange={(e) => setType(e.target.value)}>
-                    {TYPES.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
+                    {TYPES.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
                       </option>
                     ))}
                   </NativeSelect>
@@ -312,10 +310,10 @@ export function AdminInstitutions() {
               </Field>
 
               <Field
-                label="Routing reference"
+                label={t("adminInstitutions.field.bankReference")}
                 required
                 error={errors.bankReference}
-                hint="The institution's account reference. Payments are recorded against it."
+                hint={t("adminInstitutions.field.bankReferenceHint")}
               >
                 {(props) => (
                   <Input
@@ -331,10 +329,10 @@ export function AdminInstitutions() {
 
             <DialogFooter>
               <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
-                Cancel
+                {t("adminInstitutions.dialog.cancel")}
               </Button>
               <Button type="submit" loading={saving}>
-                Add institution
+                {t("adminInstitutions.action.add")}
               </Button>
             </DialogFooter>
           </form>

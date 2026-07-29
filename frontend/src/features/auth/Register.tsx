@@ -18,16 +18,6 @@ import { PasswordField } from "@/components/ui/PasswordField";
 import { Alert } from "@/components/ui/Feedback";
 import { cn } from "@/lib/cn";
 
-const SIGNUP_ROLES: {
-  value: Extract<Role, "student" | "donor">;
-  label: string;
-  blurb: string;
-  icon: typeof GraduationCap;
-}[] = [
-  { value: "student", label: "A student", blurb: "I need help paying my school fees", icon: GraduationCap },
-  { value: "donor", label: "A donor", blurb: "I want to help pay someone's school fees", icon: HeartHandshake },
-];
-
 function isMinorFromDOB(dobString: string): boolean {
   if (!dobString) return false;
   const dob = new Date(dobString);
@@ -43,6 +33,17 @@ function isMinorFromDOB(dobString: string): boolean {
 export function Register() {
   const { register } = useAuth();
   const { t } = useLocale();
+
+  const SIGNUP_ROLES: {
+    value: Extract<Role, "student" | "donor">;
+    label: string;
+    blurb: string;
+    icon: typeof GraduationCap;
+  }[] = [
+    { value: "student", label: t("auth.register.roleStudent"), blurb: t("auth.register.roleStudentBlurb"), icon: GraduationCap },
+    { value: "donor", label: t("auth.register.roleDonor"), blurb: t("auth.register.roleDonorBlurb"), icon: HeartHandshake },
+  ];
+
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from;
@@ -138,31 +139,31 @@ export function Register() {
 
   return (
     <AuthLayout
-      title={role === "student" ? "Create your student account" : "Create your donor account"}
+      title={role === "student" ? t("auth.register.studentTitle") : t("auth.register.donorTitle")}
       description={
         role === "student"
-          ? "Register to create your profile and apply for educational funding."
-          : "Register to discover and directly fund underprivileged students."
+          ? t("auth.register.studentDescription")
+          : t("auth.register.donorDescription")
       }
       footer={
-        <>
-          Already have an account?{" "}
-          <Link to="/login" className="font-medium text-accent-ink underline-offset-4 hover:underline">
-            Sign in
-          </Link>
-        </>
+        <div className="space-y-3">
+          <p>{t("auth.footer.haveAccount")}</p>
+          <Button variant="secondary" size="md" block asChild>
+            <Link to="/login">{t("auth.action.signIn")}</Link>
+          </Button>
+        </div>
       }
     >
       <form onSubmit={submit} className="space-y-5" noValidate>
         {formError && (
-          <Alert tone="danger" title="Couldn't create your account">
+          <Alert tone="danger" title={t("auth.register.couldntCreate")}>
             {formError}
           </Alert>
         )}
 
         {/* ── Role Selector Tabs ── */}
         <fieldset>
-          <legend className="text-sm font-medium text-ink">I am registering as…</legend>
+          <legend className="text-sm font-medium text-ink">{t("auth.register.registeringAs")}</legend>
           <div className="mt-2.5 grid gap-2.5 sm:grid-cols-2">
             {SIGNUP_ROLES.map((option) => {
               const selected = role === option.value;
@@ -201,7 +202,7 @@ export function Register() {
 
         {/* ── Personal Info ── */}
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Full name" required error={errors.fullName}>
+          <Field label={t("auth.field.fullName")} required error={errors.fullName}>
             {(props) => (
               <Input
                 {...props}
@@ -216,7 +217,7 @@ export function Register() {
             )}
           </Field>
 
-          <Field label="Email" required error={errors.email}>
+          <Field label={t("auth.field.email")} required error={errors.email}>
             {(props) => (
               <Input
                 {...props}
@@ -237,10 +238,10 @@ export function Register() {
         {role === "student" && (
           <div className="space-y-3">
             <Field
-              label="Date of Birth"
+              label={t("auth.field.dateOfBirth")}
               required
               error={errors.dateOfBirth}
-              hint="Required by Rwandan law to determine legal age and document consent requirements."
+              hint={t("auth.register.dobHint")}
             >
               {(props) => (
                 <Input
@@ -256,8 +257,8 @@ export function Register() {
             </Field>
 
             {isMinor && (
-              <Alert tone="warning" title="Minor Status Notice (Rwandan Law)">
-                Under Rwandan law (under 18 years old), your profile will require a Guardian Consent PDF document signed by your parent/guardian and stamped by local officials (Umurenge / Akagari) after logging in before your profile can be submitted for verification.
+              <Alert tone="warning" title={t("auth.register.minorNoticeTitle")}>
+                {t("auth.register.minorNoticeBody")}
               </Alert>
             )}
           </div>
@@ -266,7 +267,7 @@ export function Register() {
         {/* ── Password Fields (Entered Twice) ── */}
         <div className="space-y-4">
           <PasswordField
-            label="Password"
+            label={t("auth.field.password")}
             value={password}
             onChange={(v) => {
               setPassword(v);
@@ -276,7 +277,7 @@ export function Register() {
             error={errors.password?.startsWith("Complete") ? undefined : errors.password}
           />
 
-          <Field label="Confirm Password" required error={errors.confirmPassword}>
+          <Field label={t("auth.field.confirmPassword")} required error={errors.confirmPassword}>
             {(props) => (
               <Input
                 {...props}
@@ -294,11 +295,11 @@ export function Register() {
         </div>
 
         <Button type="submit" size="lg" block loading={loading}>
-          Create {role === "student" ? "student" : "donor"} account
+          {role === "student" ? t("auth.action.createStudentAccount") : t("auth.action.createDonorAccount")}
         </Button>
 
         <p className="text-center text-xs leading-relaxed text-muted">
-          Welcome emails with getting started steps are sent automatically upon account creation.
+          {t("auth.register.welcomeEmailNote")}
         </p>
       </form>
     </AuthLayout>

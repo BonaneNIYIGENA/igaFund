@@ -15,7 +15,7 @@ import { formatDate } from "@/lib/format";
 import { AppShell } from "@/app/shell/AppShell";
 import { useLocale } from "@/lib/i18n";
 import { useMyProfile, editability } from "./useMyProfile";
-import { DOC_LABEL, DocumentViewer, docIcon } from "@/features/documents/DocumentViewer";
+import { docLabel, DocumentViewer, docIcon } from "@/features/documents/DocumentViewer";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -26,25 +26,17 @@ import { cn } from "@/lib/cn";
 const MAX_MB = 10;
 const ACCEPTED = ".pdf,.png,.jpg,.jpeg";
 
-const BASE_REQUIRED_TYPES: { type: DocType; why: string }[] = [
-  { type: "transcript", why: "Proves your results and current level" },
-  { type: "id_card", why: "Confirms you are who you say you are" },
-];
+const BASE_REQUIRED_TYPES = ["transcript", "id_card"] as const;
 
 export function StudentDocuments() {
   const { t } = useLocale();
   const { profile, loading: profileLoading, error: profileError, reload } = useMyProfile();
   const { canEdit } = editability(profile);
 
-  const requiredTypes = [
-    ...BASE_REQUIRED_TYPES,
+  const requiredTypes: { type: DocType; why: string }[] = [
+    ...BASE_REQUIRED_TYPES.map((type) => ({ type, why: t(`doc.why.${type}` as const) })),
     ...(profile?.is_minor
-      ? [
-          {
-            type: "guardian_consent" as const,
-            why: "Mandatory for minors under 18 under Rwandan law (must be signed by parent/guardian and stamped by local officials)",
-          },
-        ]
+      ? [{ type: "guardian_consent" as const, why: t("doc.why.guardian_consent") }]
       : []),
   ];
 
@@ -82,12 +74,12 @@ export function StudentDocuments() {
     setError("");
 
     if (file.size > MAX_MB * 1024 * 1024) {
-      setError(`${file.name} is larger than ${MAX_MB} MB. Try a smaller photo or a compressed PDF.`);
+      setError(t("studentDocuments.toast.uploadFailedTooBig", { file: file.name, max: String(MAX_MB) }));
       return;
     }
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
     if (!["pdf", "png", "jpg", "jpeg"].includes(ext)) {
-      setError(`We can't read .${ext} files. Upload a PDF, PNG or JPG.`);
+      setError(t("studentDocuments.toast.uploadFailedType", { ext }));
       return;
     }
 
@@ -97,11 +89,11 @@ export function StudentDocuments() {
       form.append("file", file);
       form.append("doc_type", docType);
       await endpoints.uploadDocument(profile.id, form);
-      toast.success("Document uploaded", { description: DOC_LABEL[docType] });
+      toast.success(t("studentDocuments.toast.uploaded"), { description: docLabel(t, docType) });
       await loadDocs();
       await reload();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The upload didn't finish. Try again.");
+      setError(err instanceof ApiError ? err.message : t("studentDocuments.toast.uploadFailedGeneric"));
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -112,11 +104,11 @@ export function StudentDocuments() {
     if (!profile) return;
     try {
       await endpoints.deleteDocument(profile.id, doc.id);
-      toast.success("Document removed");
+      toast.success(t("studentDocuments.toast.removed"));
       await loadDocs();
       await reload();
     } catch (err) {
-      toast.error("Couldn't remove it", {
+      toast.error(t("studentDocuments.toast.removeFailed"), {
         description: err instanceof Error ? err.message : undefined,
       });
     }
@@ -133,7 +125,7 @@ export function StudentDocuments() {
           description={t("page.studentDocuments.emptyNoProfile.description")}
           action={
             <Button asChild>
-              <Link to="/student/profile">Create my profile</Link>
+              <Link to="/student/profile">{t("common.createMyProfile")}</Link>
             </Button>
           }
         />
@@ -153,11 +145,11 @@ export function StudentDocuments() {
       ) : (
         <div className="max-w-3xl space-y-5">
           {missing.length > 0 && canEdit && (
-            <Alert tone="warning" title="Still needed before review">
+            <Alert tone="warning" title={t("studentDocuments.required.title")}>
               <ul className="mt-1 space-y-1">
                 {missing.map((m) => (
                   <li key={m.type}>
-                    <span className="font-medium">{DOC_LABEL[m.type]}</span> — {m.why}
+                    <span className="font-medium">{docLabel(t, m.type)}</span> — {m.why}
                   </li>
                 ))}
               </ul>
@@ -165,37 +157,37 @@ export function StudentDocuments() {
           )}
 
           {!canEdit && (
-            <Alert tone="info" title="Documents are locked">
-              Your profile is with a reviewer, so documents can't be added or removed right now.
+            <Alert tone="info" title={t("studentDocuments.locked.title")}>
+              {t("studentDocuments.locked.body")}
             </Alert>
           )}
 
           {canEdit && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Upload a document</CardTitle>
+                <CardTitle className="text-base">{t("studentDocuments.upload.title")}</CardTitle>
                 <CardDescription>
-                  A clear photo from your phone is fine. PDF, PNG or JPG, up to {MAX_MB} MB.
+                  {t("studentDocuments.upload.description", { max: String(MAX_MB) })}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {error && (
-                  <Alert tone="danger" title="Upload failed">
+                  <Alert tone="danger" title={t("studentDocuments.upload.failedTitle")}>
                     {error}
                   </Alert>
                 )}
 
                 <div>
-                  <Label htmlFor="doc-type">What is this document?</Label>
+                  <Label htmlFor="doc-type">{t("studentDocuments.upload.whatIsThis")}</Label>
                   <NativeSelect
                     id="doc-type"
                     className="mt-1.5"
                     value={docType}
                     onChange={(e) => setDocType(e.target.value as DocType)}
                   >
-                    {Object.entries(DOC_LABEL).map(([value, label]) => (
+                    {(["transcript", "id_card", "recommendation", "guardian_consent"] as const).map((value) => (
                       <option key={value} value={value}>
-                        {label}
+                        {docLabel(t, value)}
                       </option>
                     ))}
                   </NativeSelect>
@@ -222,9 +214,9 @@ export function StudentDocuments() {
                     <UploadCloud className="size-6" aria-hidden />
                   </span>
                   <p className="mt-4 font-medium text-ink">
-                    Drag a file here, or choose one
+                    {t("studentDocuments.upload.dropHint")}
                   </p>
-                  <p className="mt-1 text-sm text-muted">{DOC_LABEL[docType]}</p>
+                  <p className="mt-1 text-sm text-muted">{docLabel(t, docType)}</p>
 
                   <input
                     ref={inputRef}
@@ -246,7 +238,7 @@ export function StudentDocuments() {
                     onClick={() => inputRef.current?.click()}
                   >
                     <FileUp aria-hidden />
-                    {uploading ? "Uploading…" : "Choose a file"}
+                    {uploading ? t("studentDocuments.upload.uploading") : t("studentDocuments.upload.chooseFile")}
                   </Button>
                 </div>
               </CardContent>
@@ -256,7 +248,7 @@ export function StudentDocuments() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                Your documents{docs.length > 0 && ` (${docs.length})`}
+                {t("studentDocuments.list.title")}{docs.length > 0 && ` (${docs.length})`}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -268,12 +260,13 @@ export function StudentDocuments() {
                 </div>
               ) : docs.length === 0 ? (
                 <p className="py-8 text-center text-sm text-muted">
-                  Nothing uploaded yet. Start with your academic transcript.
+                  {t("studentDocuments.list.empty")}
                 </p>
               ) : (
                 <ul className="divide-y divide-line">
                   {docs.map((doc) => {
                     const Icon = docIcon(doc.original_filename);
+                    const label = docLabel(t, doc.doc_type);
                     return (
                       <li key={doc.id} className="flex items-center gap-3 py-3.5 first:pt-0 last:pb-0">
                         <span className="grid size-10 shrink-0 place-items-center rounded-sm bg-forest-50 text-forest-700">
@@ -282,7 +275,7 @@ export function StudentDocuments() {
 
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-[0.9375rem] font-medium text-ink">
-                            {DOC_LABEL[doc.doc_type] ?? doc.doc_type}
+                            {label}
                           </p>
                           <p className="truncate text-sm text-muted">
                             {doc.original_filename} · {formatDate(doc.uploaded_at)}
@@ -291,7 +284,7 @@ export function StudentDocuments() {
 
                         {doc.verified && (
                           <Badge tone="success" icon={CheckCircle2} className="hidden sm:inline-flex">
-                            Checked
+                            {t("studentDocuments.list.checked")}
                           </Badge>
                         )}
 
@@ -299,7 +292,7 @@ export function StudentDocuments() {
                           variant="ghost"
                           size="iconSm"
                           onClick={() => setViewing(doc)}
-                          aria-label={`Open ${DOC_LABEL[doc.doc_type] ?? doc.doc_type}`}
+                          aria-label={label}
                         >
                           <Eye aria-hidden />
                         </Button>
@@ -309,7 +302,7 @@ export function StudentDocuments() {
                             variant="ghost"
                             size="iconSm"
                             onClick={() => remove(doc)}
-                            aria-label={`Remove ${DOC_LABEL[doc.doc_type] ?? doc.doc_type}`}
+                            aria-label={label}
                             className="text-clay-600 hover:bg-clay-100"
                           >
                             <Trash2 aria-hidden />
@@ -325,8 +318,7 @@ export function StudentDocuments() {
 
           <p className="flex items-start gap-2 text-sm text-muted">
             <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
-            Documents are stored privately and served only to you and igaFund reviewers. They are
-            never given a public link.
+            {t("studentDocuments.privacyNote")}
           </p>
         </div>
       )}

@@ -3,7 +3,8 @@ import { toast } from "sonner";
 import { Eye, FileUp, Trash2, UploadCloud } from "lucide-react";
 import { ApiError, endpoints, type Doc, type DocType, type Profile } from "@/lib/api";
 import { formatDate } from "@/lib/format";
-import { DOC_LABEL, DocumentViewer, docIcon } from "@/features/documents/DocumentViewer";
+import { useLocale } from "@/lib/i18n";
+import { docLabel, DocumentViewer, docIcon } from "@/features/documents/DocumentViewer";
 import { Button } from "@/components/ui/Button";
 import { Label, NativeSelect } from "@/components/ui/Field";
 import { Alert, Skeleton } from "@/components/ui/Feedback";
@@ -29,6 +30,7 @@ export function AmbassadorDocuments({
   onOpenChange: (open: boolean) => void;
   onChange: () => void;
 }) {
+  const { t } = useLocale();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [docType, setDocType] = useState<DocType>("transcript");
@@ -58,7 +60,7 @@ export function AmbassadorDocuments({
   async function upload(file: File) {
     setError("");
     if (file.size > 10 * 1024 * 1024) {
-      setError(`${file.name} is over 10 MB. Take a smaller photo or compress the PDF.`);
+      setError(t("ambassadorDocuments.toast.uploadFailedTooBig", { file: file.name }));
       return;
     }
     setUploading(true);
@@ -67,10 +69,10 @@ export function AmbassadorDocuments({
       form.append("file", file);
       form.append("doc_type", docType);
       await endpoints.uploadDocument(profile.id, form);
-      toast.success("Document uploaded");
+      toast.success(t("ambassadorDocuments.toast.uploaded"));
       await reload();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "The upload didn't finish.");
+      setError(err instanceof ApiError ? err.message : t("ambassadorDocuments.toast.uploadFailedGeneric"));
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -80,10 +82,10 @@ export function AmbassadorDocuments({
   async function remove(doc: Doc) {
     try {
       await endpoints.deleteDocument(profile.id, doc.id);
-      toast.success("Document removed");
+      toast.success(t("ambassadorDocuments.toast.removed"));
       await reload();
     } catch (err) {
-      toast.error("Couldn't remove it", { description: err instanceof Error ? err.message : undefined });
+      toast.error(t("ambassadorDocuments.toast.removeFailed"), { description: err instanceof Error ? err.message : undefined });
     }
   }
 
@@ -92,40 +94,40 @@ export function AmbassadorDocuments({
       <SidePanel open={open} onOpenChange={onOpenChange}>
         <SidePanelContent aria-describedby={undefined}>
           <SidePanelHeader>
-            <SidePanelTitle>{profile.full_name ?? "Student"}'s documents</SidePanelTitle>
+            <SidePanelTitle>
+              {t("ambassadorDocuments.title", { name: profile.full_name ?? t("ambassadorDocuments.defaultStudent") })}
+            </SidePanelTitle>
             <SidePanelDescription>
-              {editable
-                ? "Photograph the transcript and ID with your phone — that's enough for a reviewer."
-                : "This profile is with a reviewer, so documents are locked."}
+              {editable ? t("ambassadorDocuments.editableHint") : t("ambassadorDocuments.lockedHint")}
             </SidePanelDescription>
           </SidePanelHeader>
 
           <SidePanelBody className="space-y-5">
             {error && (
-              <Alert tone="danger" title="Upload failed">
+              <Alert tone="danger" title={t("ambassadorDocuments.uploadFailedTitle")}>
                 {error}
               </Alert>
             )}
 
             {profile.is_minor && (
-              <Alert tone="warning" title="This student is under 18">
-                A signed guardian consent form is required before a reviewer can approve them.
+              <Alert tone="warning" title={t("ambassadorDocuments.minorTitle")}>
+                {t("ambassadorDocuments.minorBody")}
               </Alert>
             )}
 
             {editable && (
               <div className="space-y-3">
                 <div>
-                  <Label htmlFor={`amb-doc-type-${profile.id}`}>Document type</Label>
+                  <Label htmlFor={`amb-doc-type-${profile.id}`}>{t("ambassadorDocuments.docType")}</Label>
                   <NativeSelect
                     id={`amb-doc-type-${profile.id}`}
                     className="mt-1.5"
                     value={docType}
                     onChange={(e) => setDocType(e.target.value as DocType)}
                   >
-                    {Object.entries(DOC_LABEL).map(([value, label]) => (
+                    {(["transcript", "id_card", "recommendation", "guardian_consent"] as const).map((value) => (
                       <option key={value} value={value}>
-                        {label}
+                        {docLabel(t, value)}
                       </option>
                     ))}
                   </NativeSelect>
@@ -135,7 +137,7 @@ export function AmbassadorDocuments({
                   <span className="mx-auto grid size-11 place-items-center rounded-full bg-forest-100 text-forest-700">
                     <UploadCloud className="size-5" aria-hidden />
                   </span>
-                  <p className="mt-3 text-sm text-muted">{DOC_LABEL[docType]}</p>
+                  <p className="mt-3 text-sm text-muted">{docLabel(t, docType)}</p>
                   <input
                     ref={inputRef}
                     type="file"
@@ -156,7 +158,7 @@ export function AmbassadorDocuments({
                     onClick={() => inputRef.current?.click()}
                   >
                     <FileUp aria-hidden />
-                    {uploading ? "Uploading…" : "Take or choose a photo"}
+                    {uploading ? t("ambassadorDocuments.uploading") : t("ambassadorDocuments.chooseFile")}
                   </Button>
                 </div>
               </div>
@@ -164,7 +166,7 @@ export function AmbassadorDocuments({
 
             <div>
               <p className="text-sm font-medium text-ink">
-                On file{docs.length > 0 && ` (${docs.length})`}
+                {t("ambassadorDocuments.onFile")}{docs.length > 0 && ` (${docs.length})`}
               </p>
               {loading ? (
                 <div className="mt-3 space-y-2">
@@ -173,12 +175,13 @@ export function AmbassadorDocuments({
                 </div>
               ) : docs.length === 0 ? (
                 <p className="mt-3 rounded-md bg-sunk px-4 py-6 text-center text-sm text-muted">
-                  Nothing uploaded yet.
+                  {t("ambassadorDocuments.empty")}
                 </p>
               ) : (
                 <ul className="mt-3 divide-y divide-line rounded-md border border-line">
                   {docs.map((doc) => {
                     const Icon = docIcon(doc.original_filename);
+                    const label = docLabel(t, doc.doc_type);
                     return (
                       <li key={doc.id} className="flex items-center gap-3 px-3 py-3">
                         <span className="grid size-9 shrink-0 place-items-center rounded-sm bg-forest-50 text-forest-700">
@@ -186,7 +189,7 @@ export function AmbassadorDocuments({
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-ink">
-                            {DOC_LABEL[doc.doc_type] ?? doc.doc_type}
+                            {label}
                           </p>
                           <p className="truncate text-xs text-muted">
                             {formatDate(doc.uploaded_at)}
@@ -196,7 +199,7 @@ export function AmbassadorDocuments({
                           variant="ghost"
                           size="iconSm"
                           onClick={() => setViewing(doc)}
-                          aria-label={`Open ${DOC_LABEL[doc.doc_type] ?? doc.doc_type}`}
+                          aria-label={label}
                         >
                           <Eye aria-hidden />
                         </Button>
@@ -206,7 +209,7 @@ export function AmbassadorDocuments({
                             size="iconSm"
                             className="text-clay-600 hover:bg-clay-100"
                             onClick={() => remove(doc)}
-                            aria-label={`Remove ${DOC_LABEL[doc.doc_type] ?? doc.doc_type}`}
+                            aria-label={label}
                           >
                             <Trash2 aria-hidden />
                           </Button>
@@ -221,7 +224,7 @@ export function AmbassadorDocuments({
 
           <SidePanelFooter>
             <Button variant="secondary" onClick={() => onOpenChange(false)}>
-              Done
+              {t("ambassadorDocuments.done")}
             </Button>
           </SidePanelFooter>
         </SidePanelContent>

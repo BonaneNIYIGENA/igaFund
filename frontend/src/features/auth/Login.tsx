@@ -47,22 +47,22 @@ export function Login() {
       title={t("page.login.title")}
       description={t("page.login.description")}
       footer={
-        <>
-          New to igaFund?{" "}
-          <Link to="/register" className="font-medium text-accent-ink underline-offset-4 hover:underline">
-            Create an account
-          </Link>
-        </>
+        <div className="space-y-3">
+          <p>{t("auth.footer.noAccount")}</p>
+          <Button variant="secondary" size="md" block asChild>
+            <Link to="/register">{t("auth.footer.createAccount")}</Link>
+          </Button>
+        </div>
       }
     >
       <form onSubmit={submit} className="space-y-5" noValidate>
         {error && (
-          <Alert tone="danger" title="Couldn't sign you in">
+          <Alert tone="danger" title={t("auth.login.couldntSignIn")}>
             {error}
           </Alert>
         )}
 
-        <Field label="Email">
+        <Field label={t("auth.field.email")}>
           {(props) => (
             <Input
               {...props}
@@ -71,16 +71,17 @@ export function Login() {
               required
               value={email}
               onChange={(e) => setEmail(stripEmailInput(e.target.value))}
-              placeholder="e.g. donor@igafund.local or your email"
+              placeholder={t("auth.login.emailPlaceholder")}
             />
           )}
         </Field>
 
         <PasswordField
+          label={t("auth.field.password")}
           value={password}
           onChange={setPassword}
           autoComplete="current-password"
-          placeholder="Enter your password"
+          placeholder={t("auth.login.passwordPlaceholder")}
           showMeter={false}
         />
 
@@ -89,12 +90,12 @@ export function Login() {
             to="/forgot-password"
             className="text-sm font-medium text-accent-ink underline-offset-4 hover:underline"
           >
-            Forgot your password?
+            {t("auth.footer.forgotPassword")}
           </Link>
         </div>
 
         <Button type="submit" size="lg" block loading={loading}>
-          Sign in
+          {t("auth.action.signIn")}
         </Button>
       </form>
     </AuthLayout>

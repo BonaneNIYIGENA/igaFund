@@ -62,32 +62,32 @@ export function ResetPassword() {
       description={t("page.resetPassword.description")}
       footer={
         <>
-          Link expired?{" "}
+          {t("auth.footer.linkExpired")}{" "}
           <Link
             to="/forgot-password"
             className="font-medium text-accent-ink underline-offset-4 hover:underline"
           >
-            Request a new one
+            {t("auth.footer.requestNewOne")}
           </Link>
         </>
       }
     >
       <form onSubmit={submit} className="space-y-5" noValidate>
         {error && (
-          <Alert tone="danger" title="Couldn't update your password">
+          <Alert tone="danger" title={t("auth.resetPassword.couldntUpdate")}>
             {error}
           </Alert>
         )}
 
         {!token ? (
-          <Alert tone="danger" title="Invalid reset link">
-            This password reset link is missing a valid token. Please check the link in your email or{" "}
-            <Link to="/forgot-password" className="underline font-medium">request a new link</Link>.
+          <Alert tone="danger" title={t("auth.resetPassword.invalidLinkTitle")}>
+            {t("auth.resetPassword.invalidLinkBody")}{" "}
+            <Link to="/forgot-password" className="underline font-medium">{t("auth.resetPassword.requestNewLink")}</Link>.
           </Alert>
         ) : null}
 
         <PasswordField
-          label="New password"
+          label={t("auth.field.newPassword")}
           value={password}
           onChange={(v) => {
             setPassword(v);
@@ -97,8 +97,8 @@ export function ResetPassword() {
         />
 
         <Field
-          label="Confirm new password"
-          error={mismatch ? "The two passwords don't match." : undefined}
+          label={t("auth.field.confirmNewPassword")}
+          error={mismatch ? t("auth.resetPassword.mismatch") : undefined}
         >
           {(props) => (
             <Input
@@ -113,7 +113,7 @@ export function ResetPassword() {
         </Field>
 
         <Button type="submit" size="lg" block loading={loading}>
-          Update password
+          {t("auth.action.updatePassword")}
         </Button>
       </form>
     </AuthLayout>

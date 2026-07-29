@@ -4,6 +4,7 @@ import { Building2, GraduationCap, ShieldCheck } from "lucide-react";
 import type { Profile } from "@/lib/api";
 import { fadeUp } from "@/lib/motion";
 import { fundingPercent } from "@/lib/format";
+import { useLocale } from "@/lib/i18n";
 import { FundingProgress } from "@/components/ui/Progress";
 import { Avatar } from "@/components/ui/Menu";
 import { FollowButton } from "@/features/donor/FollowButton";
@@ -21,6 +22,7 @@ export function StudentCard({
   onOpen?: (id: number) => void;
   className?: string;
 }) {
+  const { t } = useLocale();
   const percent = fundingPercent(profile.funded_amount, profile.funding_goal);
   const fullyFunded = percent >= 100;
   const anonymous = profile.full_name === "Verified Student";
@@ -36,12 +38,12 @@ export function StudentCard({
           <Avatar name={anonymous ? "?" : (profile.full_name ?? "?")} src={profile.photo_url} size="md" />
           <div className="min-w-0 flex-1">
             <h3 className="truncate font-semibold leading-tight text-ink">
-              {profile.full_name ?? "Verified Student"}
+              {profile.full_name ?? t("studentCard.defaultName")}
             </h3>
             <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
               <GraduationCap className="size-4 shrink-0" aria-hidden />
               <span className="truncate">
-                {profile.academic_level ?? "Student"}
+                {profile.academic_level ?? t("studentCard.defaultLevel")}
                 {profile.field_of_study ? ` · ${profile.field_of_study}` : ""}
               </span>
             </p>
@@ -50,10 +52,10 @@ export function StudentCard({
             <FollowButton profileId={profile.id} size="sm" />
             <span
               className="grid size-7 shrink-0 place-items-center rounded-full bg-forest-100 text-forest-700"
-              title="Verified by igaFund"
+              title={t("studentCard.verifiedBy")}
             >
               <ShieldCheck className="size-4" aria-hidden />
-              <span className="sr-only-focusable">Verified by igaFund</span>
+              <span className="sr-only-focusable">{t("studentCard.verifiedBy")}</span>
             </span>
           </div>
         </div>
@@ -79,7 +81,7 @@ export function StudentCard({
             fullyFunded ? "text-accent-ink" : "text-accent-ink group-hover:underline",
           )}
         >
-          {fullyFunded ? "Goal reached — see the record" : "View profile and fund"}
+          {fullyFunded ? t("studentCard.goalReached") : t("studentCard.viewAndFund")}
         </p>
       </Link>
     </motion.article>

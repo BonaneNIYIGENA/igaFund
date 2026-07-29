@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { ApiError, endpoints, type Doc, type Profile } from "@/lib/api";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
-import { DOC_LABEL, DocumentViewer, docIcon } from "@/features/documents/DocumentViewer";
+import { useLocale } from "@/lib/i18n";
+import { docLabel, DocumentViewer, docIcon } from "@/features/documents/DocumentViewer";
 import { Button } from "@/components/ui/Button";
 import { Badge, StatusBadge } from "@/components/ui/Badge";
 import { Field, Textarea } from "@/components/ui/Field";
@@ -42,6 +43,7 @@ export function ReviewDialog({
   onOpenChange: (open: boolean) => void;
   onReviewed: () => void;
 }) {
+  const { t } = useLocale();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +63,7 @@ export function ReviewDialog({
       setProfile(res.profile);
       setDocs(res.documents ?? []);
     } catch {
-      setError("We couldn't load this profile.");
+      setError(t("reviewDialog.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -83,7 +85,7 @@ export function ReviewDialog({
         prev.map((d) => (d.id === doc.id ? { ...d, verified: !d.verified } : d)),
       );
     } catch {
-      toast.error("Couldn't update that document");
+      toast.error(t("reviewDialog.verifyFailed"));
     }
   }
 
@@ -96,12 +98,15 @@ export function ReviewDialog({
       if (action === "approve") await endpoints.approveProfile(profileId, note.trim());
       else await endpoints.rejectProfile(profileId, note.trim());
 
-      toast.success(action === "approve" ? "Profile approved" : "Changes requested", {
-        description:
-          action === "approve"
-            ? "The student is now visible to donors and has been notified."
-            : "The student has been told what to fix and can resubmit.",
-      });
+      toast.success(
+        action === "approve" ? t("reviewDialog.decision.approvedToast") : t("reviewDialog.decision.rejectedToast"),
+        {
+          description:
+            action === "approve"
+              ? t("reviewDialog.decision.approvedDescription")
+              : t("reviewDialog.decision.rejectedDescription"),
+        },
+      );
       onReviewed();
       onOpenChange(false);
     } catch (err) {
@@ -109,7 +114,7 @@ export function ReviewDialog({
         setError(err.message);
         setBlockers(err.blockers ?? []);
       } else {
-        setError("The decision didn't save. Try again.");
+        setError(t("reviewDialog.decision.saveFailed"));
       }
     } finally {
       setBusy(null);
@@ -127,9 +132,9 @@ export function ReviewDialog({
       <SidePanel open={open} onOpenChange={onOpenChange}>
         <SidePanelContent width="wide" aria-describedby={undefined}>
           <SidePanelHeader>
-            <SidePanelTitle>Review application</SidePanelTitle>
+            <SidePanelTitle>{t("reviewDialog.title")}</SidePanelTitle>
             <SidePanelDescription>
-              Check the documents against the details, then record your decision.
+              {t("reviewDialog.description")}
             </SidePanelDescription>
           </SidePanelHeader>
 
@@ -140,7 +145,7 @@ export function ReviewDialog({
                 <Skeleton className="h-40 w-full rounded-md" />
               </div>
             ) : !profile ? (
-              <Alert tone="danger">{error || "This profile could not be loaded."}</Alert>
+              <Alert tone="danger">{error || t("reviewDialog.errorFallback")}</Alert>
             ) : (
               <>
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -154,7 +159,7 @@ export function ReviewDialog({
                 </div>
 
                 {profile.edit_request_reason && (
-                  <Alert tone="info" title="This is a change request on an approved profile">
+                  <Alert tone="info" title={t("reviewDialog.editRequestTitle")}>
                     “{profile.edit_request_reason}”
                   </Alert>
                 )}
@@ -164,13 +169,13 @@ export function ReviewDialog({
                     <UserRound className="mt-0.5 size-4 shrink-0 text-accent-ink" aria-hidden />
                     <div>
                       <dt className="text-xs font-semibold uppercase tracking-wide text-faint">
-                        Date of birth
+                        {t("reviewDialog.field.dob")}
                       </dt>
                       <dd className="text-sm text-body">
                         {formatDate(profile.date_of_birth)}
                         {profile.is_minor && (
                           <Badge tone="warning" className="ml-2">
-                            Minor
+                            {t("reviewDialog.badge.minor")}
                           </Badge>
                         )}
                       </dd>
@@ -180,7 +185,7 @@ export function ReviewDialog({
                     <Phone className="mt-0.5 size-4 shrink-0 text-accent-ink" aria-hidden />
                     <div>
                       <dt className="text-xs font-semibold uppercase tracking-wide text-faint">
-                        Phone
+                        {t("reviewDialog.field.phone")}
                       </dt>
                       <dd className="text-sm text-body">{profile.phone || "—"}</dd>
                     </div>
@@ -189,7 +194,7 @@ export function ReviewDialog({
                     <GraduationCap className="mt-0.5 size-4 shrink-0 text-accent-ink" aria-hidden />
                     <div>
                       <dt className="text-xs font-semibold uppercase tracking-wide text-faint">
-                        Studies
+                        {t("reviewDialog.field.studies")}
                       </dt>
                       <dd className="text-sm text-body">
                         {profile.academic_level ?? "—"}
@@ -201,16 +206,16 @@ export function ReviewDialog({
                     <Building2 className="mt-0.5 size-4 shrink-0 text-accent-ink" aria-hidden />
                     <div>
                       <dt className="text-xs font-semibold uppercase tracking-wide text-faint">
-                        Institution
+                        {t("reviewDialog.field.institution")}
                       </dt>
                       <dd className="text-sm text-body">
-                        {profile.institution?.name ?? "Not set"}
+                        {profile.institution?.name ?? t("reviewDialog.institutionNotSet")}
                       </dd>
                     </div>
                   </div>
                   <div className="sm:col-span-2">
                     <dt className="text-xs font-semibold uppercase tracking-wide text-faint">
-                      Funding goal
+                      {t("reviewDialog.field.fundingGoal")}
                     </dt>
                     <dd className="figure mt-0.5 text-lg font-semibold text-ink">
                       {formatMoney(profile.funding_goal)}
@@ -225,50 +230,50 @@ export function ReviewDialog({
                   <div className="rounded-md border border-amber-300 bg-amber-50 p-4">
                     <p className="flex items-center gap-2 font-medium text-forest-950">
                       <ShieldAlert className="size-[18px] text-amber-700" aria-hidden />
-                      Guardian consent required
+                      {t("reviewDialog.guardian.title")}
                     </p>
                     <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
                       <div>
                         <dt className="text-xs font-semibold uppercase tracking-wide text-forest-600">
-                          Guardian
+                          {t("reviewDialog.guardian.name")}
                         </dt>
-                        <dd className="text-forest-800">{profile.guardian_name || "Not provided"}</dd>
+                        <dd className="text-forest-800">{profile.guardian_name || t("reviewDialog.guardian.notProvided")}</dd>
                       </div>
                       <div>
                         <dt className="text-xs font-semibold uppercase tracking-wide text-forest-600">
-                          Guardian phone
+                          {t("reviewDialog.guardian.phone")}
                         </dt>
-                        <dd className="text-forest-800">{profile.guardian_phone || "Not provided"}</dd>
+                        <dd className="text-forest-800">{profile.guardian_phone || t("reviewDialog.guardian.notProvided")}</dd>
                       </div>
                     </dl>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Badge tone={profile.guardian_consent ? "success" : "danger"}>
-                        {profile.guardian_consent ? "Consent confirmed" : "Consent not confirmed"}
+                        {profile.guardian_consent ? t("reviewDialog.guardian.consentConfirmed") : t("reviewDialog.guardian.consentNotConfirmed")}
                       </Badge>
                       <Badge tone={consentDoc ? "success" : "danger"}>
-                        {consentDoc ? "Consent form uploaded" : "No consent form"}
+                        {consentDoc ? t("reviewDialog.guardian.formUploaded") : t("reviewDialog.guardian.formMissing")}
                       </Badge>
                       <Badge tone={consentDoc?.verified ? "success" : "warning"}>
-                        {consentDoc?.verified ? "Form verified" : "Form not verified"}
+                        {consentDoc?.verified ? t("reviewDialog.guardian.formVerified") : t("reviewDialog.guardian.formNotVerified")}
                       </Badge>
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <h4 className="text-sm font-semibold text-ink">Their story</h4>
+                  <h4 className="text-sm font-semibold text-ink">{t("reviewDialog.story.title")}</h4>
                   <p className="mt-2 whitespace-pre-line rounded-md bg-raised p-4 text-sm leading-relaxed text-body">
-                    {profile.bio || "No story provided."}
+                    {profile.bio || t("reviewDialog.story.empty")}
                   </p>
                 </div>
 
                 <div>
                   <h4 className="text-sm font-semibold text-ink">
-                    Documents ({docs.length})
+                    {t("reviewDialog.documentsTitle", { count: String(docs.length) })}
                   </h4>
                   {docs.length === 0 ? (
                     <Alert tone="warning" className="mt-2">
-                      No documents were uploaded. There is nothing to verify this student against.
+                      {t("reviewDialog.documentsEmpty")}
                     </Alert>
                   ) : (
                     <ul className="mt-2 divide-y divide-line rounded-md border border-line">
@@ -281,7 +286,7 @@ export function ReviewDialog({
                             </span>
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-sm font-medium text-ink">
-                                {DOC_LABEL[doc.doc_type] ?? doc.doc_type}
+                                {docLabel(t, doc.doc_type)}
                               </p>
                               <p className="truncate text-xs text-muted">
                                 {doc.original_filename} · {formatDate(doc.uploaded_at)}
@@ -289,7 +294,7 @@ export function ReviewDialog({
                             </div>
                             <Button variant="secondary" size="sm" onClick={() => setViewing(doc)}>
                               <Eye aria-hidden />
-                              Open
+                              {t("reviewDialog.action.open")}
                             </Button>
                             <Button
                               variant={doc.verified ? "soft" : "ghost"}
@@ -298,7 +303,7 @@ export function ReviewDialog({
                               aria-pressed={doc.verified}
                             >
                               <CheckCircle2 aria-hidden />
-                              {doc.verified ? "Verified" : "Mark verified"}
+                              {doc.verified ? t("reviewDialog.action.verified") : t("reviewDialog.action.markVerified")}
                             </Button>
                           </li>
                         );
@@ -308,7 +313,7 @@ export function ReviewDialog({
                 </div>
 
                 {error && (
-                  <Alert tone="danger" title="Can't record that decision">
+                  <Alert tone="danger" title={t("reviewDialog.decision.blockedTitle")}>
                     {error}
                     {blockers.length > 0 && (
                       <ul className="mt-2 list-inside list-disc space-y-1">
@@ -321,18 +326,17 @@ export function ReviewDialog({
                 )}
 
                 {!minorReady && !error && (
-                  <Alert tone="warning" title="Approval is blocked for this minor">
-                    Guardian consent must be confirmed on the profile, and the signed consent form
-                    must be uploaded and marked verified above.
+                  <Alert tone="warning" title={t("reviewDialog.decision.minorBlockedTitle")}>
+                    {t("reviewDialog.decision.minorBlockedBody")}
                   </Alert>
                 )}
 
                 <Field
-                  label="Review note"
+                  label={t("reviewDialog.note.label")}
                   required
-                  hint="Recorded permanently in the audit trail and shown to the student. At least 5 characters."
+                  hint={t("reviewDialog.note.hint")}
                   error={
-                    note.length > 0 && !noteValid ? "Write a little more — the student reads this." : undefined
+                    note.length > 0 && !noteValid ? t("reviewDialog.note.tooShort") : undefined
                   }
                 >
                   {(props) => (
@@ -341,14 +345,14 @@ export function ReviewDialog({
                       rows={3}
                       value={note}
                       onChange={(e) => setNote(e.target.value)}
-                      placeholder="Transcript and national ID checked against the profile details."
+                      placeholder={t("reviewDialog.note.placeholder")}
                     />
                   )}
                 </Field>
 
                 {profile.reviewed_at && (
                   <p className="text-xs text-faint">
-                    Last reviewed {formatDateTime(profile.reviewed_at)}
+                    {t("reviewDialog.lastReviewed", { when: formatDateTime(profile.reviewed_at) })}
                   </p>
                 )}
               </>
@@ -357,7 +361,7 @@ export function ReviewDialog({
 
           <SidePanelFooter>
             <Button variant="secondary" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t("reviewDialog.action.cancel")}
             </Button>
             <Button
               variant="dangerSoft"
@@ -366,7 +370,7 @@ export function ReviewDialog({
               onClick={() => decide("reject")}
             >
               <XCircle aria-hidden />
-              Request changes
+              {t("reviewDialog.action.requestChanges")}
             </Button>
             <Button
               loading={busy === "approve"}
@@ -374,7 +378,7 @@ export function ReviewDialog({
               onClick={() => decide("approve")}
             >
               <ShieldCheck aria-hidden />
-              Approve
+              {t("reviewDialog.action.approve")}
             </Button>
           </SidePanelFooter>
         </SidePanelContent>

@@ -44,7 +44,7 @@ export function ForgotPassword() {
         description={t("page.forgotPassword.checkEmail.description")}
         footer={
           <Link to="/login" className="font-medium text-accent-ink underline-offset-4 hover:underline">
-            Back to sign in
+            {t("auth.footer.backToSignIn")}
           </Link>
         }
       >
@@ -54,13 +54,12 @@ export function ForgotPassword() {
           <span className="grid size-11 place-items-center rounded-full bg-forest-100 text-forest-700">
             <MailCheck className="size-5" aria-hidden />
           </span>
-          <p className="mt-4 font-medium text-forest-950">Sent to {email}</p>
+          <p className="mt-4 font-medium text-forest-950">{t("auth.forgotPassword.sentTo", { email })}</p>
           <p className="mt-1.5 text-sm leading-relaxed text-forest-700">
-            The link expires in 30 minutes. If nothing arrives, check your spam folder or try a
-            different address.
+            {t("auth.forgotPassword.expiryNote")}
           </p>
           <Button variant="secondary" className="mt-5" onClick={() => setSent(false)}>
-            Use a different email
+            {t("auth.action.useDifferentEmail")}
           </Button>
         </div>
       </AuthLayout>
@@ -73,9 +72,9 @@ export function ForgotPassword() {
       description={t("page.forgotPassword.description")}
       footer={
         <>
-          Remembered it?{" "}
+          {t("auth.footer.rememberedIt")}{" "}
           <Link to="/login" className="font-medium text-accent-ink underline-offset-4 hover:underline">
-            Sign in
+            {t("auth.action.signIn")}
           </Link>
         </>
       }
@@ -84,19 +83,19 @@ export function ForgotPassword() {
         {error && <Alert tone="danger">{error}</Alert>}
 
         {notFound && (
-          <Alert tone="warning" title="No account found">
-            <p>There's no igaFund account registered with that email.</p>
+          <Alert tone="warning" title={t("auth.forgotPassword.noAccountTitle")}>
+            <p>{t("auth.forgotPassword.noAccountBody")}</p>
             <Link
               to="/register"
               className="mt-2.5 inline-flex items-center gap-1.5 font-medium text-accent-ink underline-offset-4 hover:underline"
             >
               <UserX className="size-4" aria-hidden />
-              Create an account instead
+              {t("auth.footer.createAccountInstead")}
             </Link>
           </Alert>
         )}
 
-        <Field label="Email">
+        <Field label={t("auth.field.email")}>
           {(props) => (
             <Input
               {...props}
@@ -111,7 +110,7 @@ export function ForgotPassword() {
         </Field>
 
         <Button type="submit" size="lg" block loading={loading}>
-          Send reset link
+          {t("auth.action.sendResetLink")}
         </Button>
       </form>
     </AuthLayout>

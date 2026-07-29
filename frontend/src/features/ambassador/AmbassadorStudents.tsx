@@ -38,7 +38,7 @@ export function AmbassadorStudents() {
         <Button asChild>
           <Link to="/ambassador/enroll">
             <UserPlus aria-hidden />
-            Enroll a student
+            {t("ambassadorStudents.action.enroll")}
           </Link>
         </Button>
       }
@@ -54,7 +54,7 @@ export function AmbassadorStudents() {
           description={t("page.ambassadorStudents.empty.description")}
           action={
             <Button asChild>
-              <Link to="/ambassador/enroll">Enroll your first student</Link>
+              <Link to="/ambassador/enroll">{t("ambassadorStudents.action.enrollFirst")}</Link>
             </Button>
           }
         />
@@ -64,20 +64,20 @@ export function AmbassadorStudents() {
             value={tab}
             onValueChange={setTab}
             tabs={[
-              { value: "all", label: "All", count: counts.total },
-              { value: "draft", label: "Draft", count: counts.draft },
-              { value: "pending", label: "Under review", count: counts.pending },
-              { value: "approved", label: "Verified", count: counts.approved },
-              { value: "rejected", label: "Needs changes", count: counts.rejected },
+              { value: "all", label: t("ambassadorStudents.tab.all"), count: counts.total },
+              { value: "draft", label: t("ambassadorStudents.tab.draft"), count: counts.draft },
+              { value: "pending", label: t("ambassadorStudents.tab.pending"), count: counts.pending },
+              { value: "approved", label: t("ambassadorStudents.tab.approved"), count: counts.approved },
+              { value: "rejected", label: t("ambassadorStudents.tab.rejected"), count: counts.rejected },
             ]}
           />
 
           <Input
             type="search"
-            placeholder="Search by name, level or school"
+            placeholder={t("ambassadorStudents.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            aria-label="Search your students"
+            aria-label={t("ambassadorStudents.searchLabel")}
             className="max-w-sm"
           />
 
@@ -86,8 +86,8 @@ export function AmbassadorStudents() {
               {visible.length === 0 ? (
                 <EmptyState
                   icon={SearchX}
-                  title="Nobody here"
-                  description="No student matches this filter. Try another tab or clear your search."
+                  title={t("ambassadorStudents.noneFound.title")}
+                  description={t("ambassadorStudents.noneFound.description")}
                   action={
                     <Button
                       variant="secondary"
@@ -96,7 +96,7 @@ export function AmbassadorStudents() {
                         setSearch("");
                       }}
                     >
-                      Clear filters
+                      {t("ambassadorStudents.clearFilters")}
                     </Button>
                   }
                 />

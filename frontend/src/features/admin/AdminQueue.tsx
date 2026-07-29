@@ -6,6 +6,7 @@ import { formatMoney, formatRelative } from "@/lib/format";
 import { stagger, fadeUp } from "@/lib/motion";
 import { AppShell } from "@/app/shell/AppShell";
 import { useLocale } from "@/lib/i18n";
+import { usePolling } from "@/lib/usePolling";
 import { ReviewDialog } from "./ReviewDialog";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -14,17 +15,16 @@ import { UnderlineTabs } from "@/components/ui/Tabs";
 import { Avatar } from "@/components/ui/Menu";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedback";
 
-const TABS = [
-  { value: "pending", label: "Awaiting review" },
-  { value: "approved", label: "Verified" },
-  { value: "rejected", label: "Changes requested" },
-  { value: "draft", label: "Drafts" },
-];
-
 const PAGE_SIZE = 10;
 
 export function AdminQueue() {
   const { t } = useLocale();
+  const TABS = [
+    { value: "pending", label: t("adminQueue.tab.pending") },
+    { value: "approved", label: t("adminQueue.tab.approved") },
+    { value: "rejected", label: t("adminQueue.tab.rejected") },
+    { value: "draft", label: t("adminQueue.tab.draft") },
+  ];
   const [tab, setTab] = useState("pending");
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
@@ -33,17 +33,17 @@ export function AdminQueue() {
   const [reviewing, setReviewing] = useState<number | null>(null);
   const [page, setPage] = useState(1);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    if (!silent) setError("");
     try {
       const res = await endpoints.adminProfiles(tab);
       setProfiles(res.profiles ?? []);
       if (tab === "pending") setPendingCount((res.profiles ?? []).length);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "We couldn't load the review queue.");
+      if (!silent) setError(e instanceof Error ? e.message : t("adminQueue.errorLoad"));
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [tab]);
 
@@ -60,6 +60,17 @@ export function AdminQueue() {
       .catch(() => undefined);
   }, [tab]);
 
+  // New applications and status changes show up without a manual reload.
+  usePolling(() => {
+    load(true);
+    if (tab !== "pending") {
+      endpoints
+        .adminProfiles("pending")
+        .then((res) => setPendingCount((res.profiles ?? []).length))
+        .catch(() => undefined);
+    }
+  });
+
   return (
     <AppShell
       title={t("page.adminQueue.title")}
@@ -69,8 +80,8 @@ export function AdminQueue() {
         <UnderlineTabs
           value={tab}
           onValueChange={setTab}
-          tabs={TABS.map((t) =>
-            t.value === "pending" ? { ...t, count: pendingCount } : t,
+          tabs={TABS.map((tabItem) =>
+            tabItem.value === "pending" ? { ...tabItem, count: pendingCount } : tabItem,
           )}
         />
 
@@ -87,17 +98,17 @@ export function AdminQueue() {
             icon={tab === "pending" ? CheckCircle2 : GraduationCap}
             title={
               tab === "pending"
-                ? "The queue is clear"
+                ? t("adminQueue.empty.pending.title")
                 : tab === "approved"
-                  ? "No verified profiles yet"
+                  ? t("adminQueue.empty.approved.title")
                   : tab === "rejected"
-                    ? "Nothing awaiting changes"
-                    : "No drafts in progress"
+                    ? t("adminQueue.empty.rejected.title")
+                    : t("adminQueue.empty.draft.title")
             }
             description={
               tab === "pending"
-                ? "Every submitted application has been reviewed. New submissions will appear here and you'll be notified."
-                : "Profiles move here as they progress through verification."
+                ? t("adminQueue.empty.pending.description")
+                : t("adminQueue.empty.other.description")
             }
           />
         ) : (
@@ -122,11 +133,11 @@ export function AdminQueue() {
                             </p>
                             {profile.is_minor && (
                               <Badge tone="warning" icon={ShieldAlert}>
-                                Minor
+                                {t("adminQueue.badge.minor")}
                               </Badge>
                             )}
                             {profile.edit_request_reason && (
-                              <Badge tone="amber">Change request</Badge>
+                              <Badge tone="amber">{t("adminQueue.badge.changeRequest")}</Badge>
                             )}
                           </div>
                           <p className="truncate text-sm text-muted">
@@ -139,7 +150,7 @@ export function AdminQueue() {
                             </span>
                             <span>
                               {profile.document_count}{" "}
-                              {profile.document_count === 1 ? "document" : "documents"}
+                              {profile.document_count === 1 ? t("adminQueue.document") : t("adminQueue.documents")}
                             </span>
                             {profile.submitted_at && (
                               <span className="inline-flex items-center gap-1.5">
@@ -159,7 +170,7 @@ export function AdminQueue() {
                           className="w-full sm:w-auto"
                         >
                           <ShieldCheck aria-hidden />
-                          {profile.status === "pending" ? "Review" : "Open"}
+                          {profile.status === "pending" ? t("adminQueue.action.review") : t("adminQueue.action.open")}
                         </Button>
                       </div>
                     </CardContent>
@@ -170,7 +181,7 @@ export function AdminQueue() {
             {profiles.length > page * PAGE_SIZE && (
               <div className="flex justify-center pt-2">
                 <Button variant="secondary" onClick={() => setPage((p) => p + 1)}>
-                  Load more ({profiles.length - page * PAGE_SIZE} remaining)
+                  {t("adminQueue.loadMore", { count: String(profiles.length - page * PAGE_SIZE) })}
                 </Button>
               </div>
             )}

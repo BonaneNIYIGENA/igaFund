@@ -12,23 +12,23 @@ import { Input, Label, NativeSelect } from "@/components/ui/Field";
 import { EmptyState, ErrorState, SkeletonCard } from "@/components/ui/Feedback";
 
 const LEVELS = ["all", "S4", "S5", "S6", "Year 1", "Year 2", "Year 3", "Year 4", "TVET"];
-const SORTS = [
-  { value: "need", label: "Furthest from goal" },
-  { value: "newest", label: "Recently verified" },
-  { value: "closest", label: "Closest to goal" },
-] as const;
 
 const PAGE_SIZE = 10;
 
 export function DonorBrowse() {
   const { t } = useLocale();
+  const SORTS = [
+    { value: "need", label: t("donorBrowse.sort.need") },
+    { value: "newest", label: t("donorBrowse.sort.newest") },
+    { value: "closest", label: t("donorBrowse.sort.closest") },
+  ] as const;
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewing, setViewing] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [level, setLevel] = useState("all");
-  const [sort, setSort] = useState<(typeof SORTS)[number]["value"]>("need");
+  const [sort, setSort] = useState<"need" | "newest" | "closest">("need");
   const [page, setPage] = useState(1);
 
   async function load() {
@@ -38,7 +38,7 @@ export function DonorBrowse() {
       const res = await endpoints.publicProfiles({ academic_level: level });
       setProfiles(res.profiles ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "We couldn't load the student pool.");
+      setError(e instanceof Error ? e.message : t("donorBrowse.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -76,18 +76,18 @@ export function DonorBrowse() {
       <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1">
-            <Label htmlFor="donor-search">Search</Label>
+            <Label htmlFor="donor-search">{t("donorBrowse.search.label")}</Label>
             <Input
               id="donor-search"
               type="search"
               className="mt-1.5"
-              placeholder="Name, school, or field of study"
+              placeholder={t("donorBrowse.search.placeholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <div className="sm:w-44">
-            <Label htmlFor="donor-level">Level</Label>
+            <Label htmlFor="donor-level">{t("donorBrowse.level.label")}</Label>
             <NativeSelect
               id="donor-level"
               className="mt-1.5"
@@ -96,13 +96,13 @@ export function DonorBrowse() {
             >
               {LEVELS.map((l) => (
                 <option key={l} value={l}>
-                  {l === "all" ? "All levels" : l}
+                  {l === "all" ? t("donorBrowse.level.all") : l}
                 </option>
               ))}
             </NativeSelect>
           </div>
           <div className="sm:w-52">
-            <Label htmlFor="donor-sort">Sort by</Label>
+            <Label htmlFor="donor-sort">{t("donorBrowse.sort.label")}</Label>
             <NativeSelect
               id="donor-sort"
               className="mt-1.5"
@@ -119,7 +119,9 @@ export function DonorBrowse() {
         </div>
 
         <p className="text-sm text-muted" aria-live="polite">
-          {loading ? "Loading…" : `${visible.length} ${visible.length === 1 ? "student" : "students"}`}
+          {loading
+            ? t("donorBrowse.loading")
+            : `${visible.length} ${visible.length === 1 ? t("donorBrowse.count.one") : t("donorBrowse.count.many")}`}
         </p>
 
         {error ? (
@@ -134,14 +136,14 @@ export function DonorBrowse() {
           profiles.length === 0 ? (
             <EmptyState
               icon={ShieldCheck}
-              title="No verified students right now"
-              description="Profiles appear the moment an administrator approves them. We'll notify you when new students join."
+              title={t("donorBrowse.empty.noneVerified.title")}
+              description={t("donorBrowse.empty.noneVerified.description")}
             />
           ) : (
             <EmptyState
               icon={SearchX}
-              title="Nothing matches that search"
-              description="Try a different term, or clear your filters to see every verified student."
+              title={t("donorBrowse.empty.noMatch.title")}
+              description={t("donorBrowse.empty.noMatch.description")}
               action={
                 <Button
                   variant="secondary"
@@ -150,7 +152,7 @@ export function DonorBrowse() {
                     setLevel("all");
                   }}
                 >
-                  Clear filters
+                  {t("donorBrowse.clearFilters")}
                 </Button>
               }
             />
@@ -171,7 +173,7 @@ export function DonorBrowse() {
             {visible.length > page * PAGE_SIZE && (
               <div className="mt-8 flex justify-center">
                 <Button variant="secondary" onClick={() => setPage((p) => p + 1)}>
-                  Load more ({visible.length - page * PAGE_SIZE} remaining)
+                  {t("donorBrowse.loadMore", { count: String(visible.length - page * PAGE_SIZE) })}
                 </Button>
               </div>
             )}

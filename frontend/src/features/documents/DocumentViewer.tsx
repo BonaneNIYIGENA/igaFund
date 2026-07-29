@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Download, FileText, ImageIcon, Loader2 } from "lucide-react";
 import { apiFileUrl, endpoints, type Doc } from "@/lib/api";
+import { useLocale, type TranslateFn } from "@/lib/i18n";
+import type { TranslationKey } from "@/lib/i18n/dictionaries";
 import { Button } from "@/components/ui/Button";
 import { ErrorState } from "@/components/ui/Feedback";
 import {
@@ -13,12 +15,17 @@ import {
   SidePanelTitle,
 } from "@/components/ui/SidePanel";
 
-export const DOC_LABEL: Record<string, string> = {
-  id_card: "National ID or student card",
-  transcript: "Academic transcript",
-  recommendation: "Recommendation letter",
-  guardian_consent: "Guardian consent form",
+const DOC_TYPE_KEY: Record<string, TranslationKey> = {
+  id_card: "doc.type.id_card",
+  transcript: "doc.type.transcript",
+  recommendation: "doc.type.recommendation",
+  guardian_consent: "doc.type.guardian_consent",
 };
+
+export function docLabel(t: TranslateFn, docType: string): string {
+  const key = DOC_TYPE_KEY[docType];
+  return key ? t(key) : docType;
+}
 
 /** Opens a verification document. */
 export function DocumentViewer({
@@ -32,6 +39,7 @@ export function DocumentViewer({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { t } = useLocale();
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -48,9 +56,7 @@ export function DocumentViewer({
         if (revoke) revoked = resolved;
         setUrl(resolved);
       })
-      .catch(() =>
-        setError("This document could not be opened. It may have been removed from storage."),
-      )
+      .catch(() => setError(t("doc.viewer.openFailed")))
       .finally(() => setLoading(false));
 
     return () => {
@@ -64,7 +70,7 @@ export function DocumentViewer({
     <SidePanel open={open} onOpenChange={onOpenChange}>
       <SidePanelContent width="wide" aria-describedby={undefined}>
         <SidePanelHeader>
-          <SidePanelTitle>{doc ? (DOC_LABEL[doc.doc_type] ?? doc.doc_type) : "Document"}</SidePanelTitle>
+          <SidePanelTitle>{doc ? docLabel(t, doc.doc_type) : t("doc.viewer.defaultTitle")}</SidePanelTitle>
           <SidePanelDescription>{doc?.original_filename}</SidePanelDescription>
         </SidePanelHeader>
 
@@ -73,22 +79,22 @@ export function DocumentViewer({
             <div className="grid h-80 place-items-center rounded-md bg-sunk">
               <span className="flex flex-col items-center gap-3 text-muted">
                 <Loader2 className="size-6 animate-spin" aria-hidden />
-                <span className="text-sm">Opening document…</span>
+                <span className="text-sm">{t("doc.viewer.opening")}</span>
               </span>
             </div>
           ) : error ? (
-            <ErrorState title="Can't open this file" description={error} />
+            <ErrorState title={t("doc.viewer.openFailedTitle")} description={error} />
           ) : url ? (
             isPdf ? (
               <iframe
                 src={url}
-                title={doc?.original_filename ?? "Document"}
+                title={doc?.original_filename ?? t("doc.viewer.defaultTitle")}
                 className="h-[60vh] w-full rounded-md border border-line bg-surface"
               />
             ) : (
               <img
                 src={url}
-                alt={doc ? DOC_LABEL[doc.doc_type] ?? "Uploaded document" : "Document"}
+                alt={doc ? docLabel(t, doc.doc_type) : t("doc.viewer.defaultTitle")}
                 className="mx-auto max-h-[60vh] w-auto rounded-md border border-line"
               />
             )
@@ -97,13 +103,13 @@ export function DocumentViewer({
 
         <SidePanelFooter>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            Close
+            {t("doc.viewer.close")}
           </Button>
           {url && (
             <Button asChild>
               <a href={url} download={doc?.original_filename}>
                 <Download aria-hidden />
-                Download
+                {t("doc.viewer.download")}
               </a>
             </Button>
           )}

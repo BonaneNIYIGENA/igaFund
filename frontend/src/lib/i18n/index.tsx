@@ -3,11 +3,13 @@ import { DICTIONARIES, type Locale, type TranslationKey } from "./dictionaries";
 
 const STORAGE_KEY = "iga-locale";
 
+export type TranslateFn = (key: TranslationKey, vars?: Record<string, string>) => string;
+
 type LocaleValue = {
   locale: Locale;
   setLocale: (l: Locale) => void;
   toggle: () => void;
-  t: (key: TranslationKey, vars?: Record<string, string>) => string;
+  t: TranslateFn;
 };
 
 const LocaleContext = createContext<LocaleValue | null>(null);

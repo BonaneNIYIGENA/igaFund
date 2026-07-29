@@ -13,18 +13,17 @@ import { Input } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
 import { Alert, Skeleton } from "@/components/ui/Feedback";
 
-const ROLES: { value: string; label: string }[] = [
-  { value: "all", label: "All roles" },
-  { value: "student", label: "Students" },
-  { value: "donor", label: "Donors" },
-  { value: "ambassador", label: "Ambassadors" },
-  { value: "admin", label: "Admins" },
-];
-
 const PAGE_SIZE = 10;
 
 export function AdminUsers() {
   const { t } = useLocale();
+  const ROLES: { value: string; label: string }[] = [
+    { value: "all", label: t("adminUsers.role.all") },
+    { value: "student", label: t("adminUsers.role.student") },
+    { value: "donor", label: t("adminUsers.role.donor") },
+    { value: "ambassador", label: t("adminUsers.role.ambassador") },
+    { value: "admin", label: t("adminUsers.role.admin") },
+  ];
   const [users, setUsers] = useState<User[]>([]);
   const [roleFilter, setRoleFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -41,7 +40,7 @@ export function AdminUsers() {
     endpoints
       .adminUsers(roleFilter, search)
       .then((res) => setUsers(res.users ?? []))
-      .catch(() => toast.error("Failed to load user accounts"))
+      .catch(() => toast.error(t("adminUsers.loadFailed")))
       .finally(() => setLoading(false));
   }
 
@@ -57,10 +56,10 @@ export function AdminUsers() {
   async function handleRoleChange(userId: number, newRole: Role) {
     try {
       const res = await endpoints.changeUserRole(userId, newRole);
-      toast.success(`Role updated to ${newRole}`);
+      toast.success(t("adminUsers.roleUpdated", { role: newRole }));
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: res.user.role } : u)));
     } catch (err: any) {
-      toast.error(err.message || "Failed to update role");
+      toast.error(err.message || t("adminUsers.roleUpdateFailed"));
     }
   }
 
@@ -68,22 +67,22 @@ export function AdminUsers() {
     e.preventDefault();
     if (!suspendTarget) return;
     if (suspendNote.trim().length < 5) {
-      toast.error("Audit note must be at least 5 characters long.");
+      toast.error(t("adminUsers.noteTooShort"));
       return;
     }
 
     setSuspendLoading(true);
     try {
       const res = await endpoints.suspendUser(suspendTarget.id, suspendNote.trim());
-      const actionStr = res.user.is_suspended ? "suspended" : "reactivated";
-      toast.success(`User ${suspendTarget.full_name} has been ${actionStr}.`);
+      const actionStr = res.user.is_suspended ? t("adminUsers.actionSuspended") : t("adminUsers.actionReactivated");
+      toast.success(t("adminUsers.userSuspended", { name: suspendTarget.full_name, action: actionStr }));
       setUsers((prev) =>
         prev.map((u) => (u.id === suspendTarget.id ? { ...u, is_suspended: res.user.is_suspended } : u))
       );
       setSuspendTarget(null);
       setSuspendNote("");
     } catch (err: any) {
-      toast.error(err.message || "Failed to update suspension status");
+      toast.error(err.message || t("adminUsers.suspendUpdateFailed"));
     } finally {
       setSuspendLoading(false);
     }
@@ -118,12 +117,12 @@ export function AdminUsers() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search name or email..."
+              placeholder={t("adminUsers.searchPlaceholder")}
               className="w-64 text-sm"
             />
             <Button type="submit" variant="secondary" size="sm">
               <Search className="size-4" aria-hidden />
-              Search
+              {t("adminUsers.search")}
             </Button>
           </form>
         </motion.div>
@@ -132,7 +131,7 @@ export function AdminUsers() {
         <motion.div variants={fadeUp}>
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Registered Users ({users.length})</CardTitle>
+              <CardTitle className="text-base">{t("adminUsers.registeredUsers", { count: String(users.length) })}</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -142,17 +141,17 @@ export function AdminUsers() {
                   ))}
                 </div>
               ) : users.length === 0 ? (
-                <p className="py-10 text-center text-sm text-muted">No users found matching your query.</p>
+                <p className="py-10 text-center text-sm text-muted">{t("adminUsers.noneFound")}</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
                       <tr className="border-b border-line text-xs font-semibold uppercase tracking-wider text-muted">
-                        <th className="pb-3 pl-2">User</th>
-                        <th className="pb-3">Role</th>
-                        <th className="pb-3">Status</th>
-                        <th className="pb-3">Joined</th>
-                        <th className="pb-3 pr-2 text-right">Actions</th>
+                        <th className="pb-3 pl-2">{t("adminUsers.table.user")}</th>
+                        <th className="pb-3">{t("adminUsers.table.role")}</th>
+                        <th className="pb-3">{t("adminUsers.table.status")}</th>
+                        <th className="pb-3">{t("adminUsers.table.joined")}</th>
+                        <th className="pb-3 pr-2 text-right">{t("adminUsers.table.actions")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-line">
@@ -168,17 +167,17 @@ export function AdminUsers() {
                               onChange={(e) => handleRoleChange(u.id, e.target.value as Role)}
                               className="rounded-md border border-line bg-surface px-2 py-1 text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-forest-600"
                             >
-                              <option value="student">Student</option>
-                              <option value="donor">Donor</option>
-                              <option value="ambassador">Ambassador</option>
-                              <option value="admin">Admin</option>
+                              <option value="student">{t("adminUsers.roleOption.student")}</option>
+                              <option value="donor">{t("adminUsers.roleOption.donor")}</option>
+                              <option value="ambassador">{t("adminUsers.roleOption.ambassador")}</option>
+                              <option value="admin">{t("adminUsers.roleOption.admin")}</option>
                             </select>
                           </td>
                           <td className="py-3">
                             {u.is_suspended ? (
-                              <Badge tone="danger">Deactivated</Badge>
+                              <Badge tone="danger">{t("adminUsers.status.deactivated")}</Badge>
                             ) : (
-                              <Badge tone="success">Active</Badge>
+                              <Badge tone="success">{t("adminUsers.status.active")}</Badge>
                             )}
                           </td>
                           <td className="py-3 text-xs text-muted">
@@ -196,12 +195,12 @@ export function AdminUsers() {
                               {u.is_suspended ? (
                                 <>
                                   <UserCheck className="size-3.5 text-accent-ink" aria-hidden />
-                                  Reactivate
+                                  {t("adminUsers.action.reactivate")}
                                 </>
                               ) : (
                                 <>
                                   <UserX className="size-3.5" aria-hidden />
-                                  Deactivate
+                                  {t("adminUsers.action.deactivate")}
                                 </>
                               )}
                             </Button>
@@ -216,7 +215,7 @@ export function AdminUsers() {
               {users.length > page * PAGE_SIZE && (
                 <div className="flex justify-center pt-4">
                   <Button variant="secondary" size="sm" onClick={() => setPage((p) => p + 1)}>
-                    Load more ({users.length - page * PAGE_SIZE} remaining)
+                    {t("adminUsers.loadMore", { count: String(users.length - page * PAGE_SIZE) })}
                   </Button>
                 </div>
               )}
@@ -234,22 +233,22 @@ export function AdminUsers() {
                 </span>
                 <div>
                   <h3 className="font-semibold text-base">
-                    {suspendTarget.is_suspended ? "Reactivate Account" : "Deactivate Account"}
+                    {suspendTarget.is_suspended ? t("adminUsers.modal.reactivateTitle") : t("adminUsers.modal.deactivateTitle")}
                   </h3>
                   <p className="text-xs text-muted">{suspendTarget.full_name} ({suspendTarget.email})</p>
                 </div>
               </div>
 
-              <Alert tone={suspendTarget.is_suspended ? "info" : "warning"} title="BR7 Mandatory Written Audit Note">
+              <Alert tone={suspendTarget.is_suspended ? "info" : "warning"} title={t("adminUsers.modal.auditNoteTitle")}>
                 {suspendTarget.is_suspended
-                  ? "Reactivating will restore sign-in access for this account."
-                  : "Deactivating will immediately block sign-in access and mark the account as inactive."}
+                  ? t("adminUsers.modal.reactivateBody")
+                  : t("adminUsers.modal.deactivateBody")}
               </Alert>
 
               <form onSubmit={handleSuspendConfirm} className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-ink mb-1">
-                    Audit Note / Reason *
+                    {t("adminUsers.modal.noteLabel")}
                   </label>
                   <textarea
                     value={suspendNote}
@@ -257,21 +256,21 @@ export function AdminUsers() {
                     required
                     minLength={5}
                     rows={3}
-                    placeholder="State the justification for this action (min 5 characters)..."
+                    placeholder={t("adminUsers.modal.notePlaceholder")}
                     className="w-full rounded-md border border-line p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-forest-600"
                   />
                 </div>
 
                 <div className="flex justify-end gap-2.5">
                   <Button type="button" variant="ghost" onClick={() => setSuspendTarget(null)}>
-                    Cancel
+                    {t("adminUsers.modal.cancel")}
                   </Button>
                   <Button
                     type="submit"
                     variant={suspendTarget.is_suspended ? "secondary" : "danger"}
                     loading={suspendLoading}
                   >
-                    Confirm {suspendTarget.is_suspended ? "Reactivation" : "Deactivation"}
+                    {suspendTarget.is_suspended ? t("adminUsers.modal.confirmReactivation") : t("adminUsers.modal.confirmDeactivation")}
                   </Button>
                 </div>
               </form>
