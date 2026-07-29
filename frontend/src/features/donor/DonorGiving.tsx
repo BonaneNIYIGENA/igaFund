@@ -13,6 +13,7 @@ import { endpoints, type ContributionItem, type Profile } from "@/lib/api";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { AppShell } from "@/app/shell/AppShell";
 import { useLocale } from "@/lib/i18n";
+import { usePolling } from "@/lib/usePolling";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -35,16 +36,16 @@ export function DonorGiving() {
   const [viewing, setViewing] = useState<number | null>(null);
   const watchlist = useWatchlist();
 
-  async function load() {
-    setLoading(true);
+  async function load(silent = false) {
+    if (!silent) setLoading(true);
     setError("");
     try {
       const res = await endpoints.myContributions();
       setGiven(res.contributions ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "We couldn't load your giving history.");
+      if (!silent) setError(e instanceof Error ? e.message : "We couldn't load your giving history.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
@@ -63,6 +64,10 @@ export function DonorGiving() {
   useEffect(() => {
     load();
   }, []);
+
+  // Keeps totals and the contribution list current if a payment lands while
+  // this page is already open, without the donor needing to reload.
+  usePolling(() => load(true));
 
   useEffect(() => {
     if (tab === "following") loadFollowing();

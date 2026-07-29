@@ -14,6 +14,7 @@ import { formatMoney, formatRelative } from "@/lib/format";
 import { fadeUp, stagger } from "@/lib/motion";
 import { AppShell } from "@/app/shell/AppShell";
 import { useLocale } from "@/lib/i18n";
+import { usePolling } from "@/lib/usePolling";
 import { useAuth } from "@/features/auth/AuthContext";
 import { StudentCard } from "@/features/browse/StudentCard";
 import { Button } from "@/components/ui/Button";
@@ -28,7 +29,8 @@ export function DonorDashboard() {
   const [suggested, setSuggested] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  function load(silent = false) {
+    if (!silent) setLoading(true);
     Promise.all([
       endpoints.myContributions().catch(() => ({ contributions: [] })),
       endpoints.publicProfiles().catch(() => ({ profiles: [] })),
@@ -48,8 +50,17 @@ export function DonorDashboard() {
             .slice(0, 3),
         );
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!silent) setLoading(false);
+      });
+  }
+
+  useEffect(() => {
+    load();
   }, []);
+
+  // Keeps totals and suggested students current without a manual reload.
+  usePolling(() => load(true));
 
   const totalGiven = given.reduce((sum, c) => sum + (c.amount ?? 0), 0);
   const studentsHelped = new Set(given.map((c) => c.profile_id)).size;

@@ -20,6 +20,7 @@ import { AppShell } from "@/app/shell/AppShell";
 import { useLocale } from "@/lib/i18n";
 import { useAuth } from "@/features/auth/AuthContext";
 import { useMyProfile, journeyFor } from "./useMyProfile";
+import { usePolling } from "@/lib/usePolling";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/Badge";
@@ -31,7 +32,7 @@ import { Alert, EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedbac
 export function StudentDashboard() {
   const { user } = useAuth();
   const { t } = useLocale();
-  const { profile, loading, error, reload } = useMyProfile();
+  const { profile, loading, error, reload } = useMyProfile({ poll: true });
   const [supporters, setSupporters] = useState<ContributionItem[]>([]);
 
   useEffect(() => {
@@ -41,6 +42,16 @@ export function StudentDashboard() {
       .then((res) => setSupporters(res.contributions ?? []))
       .catch(() => setSupporters([]));
   }, [profile]);
+
+  // Funding can arrive while this page is open — keep the supporters list
+  // current without the student needing to reload.
+  usePolling(() => {
+    if (!profile) return;
+    endpoints
+      .profileContributions(profile.id)
+      .then((res) => setSupporters(res.contributions ?? []))
+      .catch(() => undefined);
+  });
 
   const firstName = user?.full_name.split(" ")[0] ?? "there";
   const j = journeyFor(profile);

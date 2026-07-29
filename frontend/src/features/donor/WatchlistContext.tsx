@@ -25,11 +25,29 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       return;
     }
-    endpoints
-      .watchedProfiles()
-      .then((res) => setWatchedIds(new Set(res.watched_ids ?? [])))
-      .catch(() => setWatchedIds(new Set()))
-      .finally(() => setLoading(false));
+
+    let cancelled = false;
+    function refresh() {
+      endpoints
+        .watchedProfiles()
+        .then((res) => {
+          if (!cancelled) setWatchedIds(new Set(res.watched_ids ?? []));
+        })
+        .catch(() => {
+          if (!cancelled) setWatchedIds(new Set());
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    }
+
+    refresh();
+    // Keeps the following count fresh across tabs/devices without a manual reload.
+    const id = setInterval(refresh, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
   }, [user?.role]);
 
   const toggle = useCallback(async (profileId: number) => {

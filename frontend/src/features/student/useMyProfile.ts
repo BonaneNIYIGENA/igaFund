@@ -1,28 +1,40 @@
 import { useCallback, useEffect, useState } from "react";
 import { endpoints, type Profile } from "@/lib/api";
+import { usePolling } from "@/lib/usePolling";
 
-/** The signed-in student's (or ambassador's own) profile. */
-export function useMyProfile() {
+/**
+ * The signed-in student's (or ambassador's own) profile.
+ *
+ * `poll: true` keeps funding/status current in the background — safe for a
+ * read-only view like the dashboard, but left off by default because a
+ * silent refresh would otherwise overwrite in-progress edits on the profile
+ * form the moment a background fetch lands.
+ */
+export function useMyProfile({ poll = false }: { poll?: boolean } = {}) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    if (!silent) setError("");
     try {
       const res = await endpoints.myProfiles();
       setProfile((res.profiles ?? [])[0] ?? null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "We couldn't load your profile.");
+      if (!silent) setError(e instanceof Error ? e.message : "We couldn't load your profile.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  usePolling(() => {
+    if (poll) load(true);
+  });
 
   return { profile, setProfile, loading, error, reload: load };
 }
