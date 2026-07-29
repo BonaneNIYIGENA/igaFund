@@ -5,6 +5,7 @@ import { Search, SearchX, ShieldCheck } from "lucide-react";
 import { endpoints, type Profile } from "@/lib/api";
 import { stagger } from "@/lib/motion";
 import { PublicHeader } from "@/components/ui/PublicHeader";
+import { PublicFooter } from "@/components/ui/PublicFooter";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { Input, NativeSelect, Label } from "@/components/ui/Field";
@@ -79,11 +80,7 @@ export function BrowseStudents() {
 
       <main className="mx-auto max-w-360 px-4 py-10 sm:px-6 sm:py-14">
         <div className="max-w-2xl">
-          <p className="inline-flex items-center gap-2 rounded-full border border-forest-200 bg-forest-50 px-3 py-1.5 text-sm font-medium text-forest-700">
-            <ShieldCheck className="size-4" aria-hidden />
-            Every profile here has been approved by an administrator
-          </p>
-          <h1 className="mt-5 font-display text-4xl tracking-tight sm:text-5xl">
+          <h1 className="font-display text-4xl tracking-tight sm:text-5xl">
             Students waiting on fees
           </h1>
           <p className="mt-3 text-lg leading-relaxed text-muted">
@@ -201,6 +198,8 @@ export function BrowseStudents() {
           )}
         </div>
       </main>
+
+      <PublicFooter />
 
       <StudentPanel
         profileId={viewing}

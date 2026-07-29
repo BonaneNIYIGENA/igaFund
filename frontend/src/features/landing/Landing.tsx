@@ -6,43 +6,24 @@ import {
   Building2,
   FileCheck2,
   HeartHandshake,
-  Menu,
   Receipt,
   ShieldCheck,
-  Wallet,
 } from "lucide-react";
 import { endpoints, type Profile } from "@/lib/api";
 import { formatCompact } from "@/lib/format";
 import { fadeUp, staggerSlow } from "@/lib/motion";
 import { Button } from "@/components/ui/Button";
-import { Logo } from "@/components/ui/Logo";
 import { RoutingFlow, type RailStep } from "@/components/ui/RoutingRail";
 import { StudentCard } from "@/features/browse/StudentCard";
 import { SkeletonCard } from "@/components/ui/Feedback";
 import { useAuth } from "@/features/auth/AuthContext";
 import { PublicHeader } from "@/components/ui/PublicHeader";
-import { LanguageToggle } from "@/app/shell/LanguageToggle";
-import { ThemeToggle } from "@/app/shell/ThemeToggle";
-import {
-  CONTACT_EMAIL,
-  CONTACT_PHONE_DISPLAY,
-  CONTACT_WHATSAPP_URL,
-  WhatsAppIcon,
-  SOCIAL_LINKS,
-} from "@/lib/contact";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/Dialog";
+import { PublicFooter } from "@/components/ui/PublicFooter";
 
 /** The money path. */
 const MONEY_PATH: RailStep[] = [
   { key: "donor", label: "A donor gives", detail: "Card or mobile money", icon: HeartHandshake, state: "done" },
   { key: "igafund", label: "igaFund verifies", detail: "Profile and documents checked", icon: ShieldCheck, state: "done" },
-  { key: "wallet", label: "A personal wallet", detail: "Never touched", icon: Wallet, state: "bypassed" },
   { key: "school", label: "The school is paid", detail: "Straight to the institution account", icon: Building2, state: "done" },
   { key: "receipt", label: "Everyone gets a receipt", detail: "Timestamped, in the audit trail", icon: Receipt, state: "done" },
 ];
@@ -77,17 +58,9 @@ export function Landing() {
         <section className="grain relative overflow-hidden px-4 pb-16 pt-14 sm:px-6 sm:pb-20 sm:pt-20">
           <div className="mx-auto max-w-360">
             <motion.div variants={staggerSlow} initial="hidden" animate="show" className="max-w-3xl">
-              <motion.p
-                variants={fadeUp}
-                className="inline-flex items-center gap-2 rounded-full border border-forest-200 bg-forest-50 px-3.5 py-1.5 text-sm font-medium text-forest-700"
-              >
-                <ShieldCheck className="size-4" aria-hidden />
-                Rwanda pilot · Verified profiles only
-              </motion.p>
-
               <motion.h1
                 variants={fadeUp}
-                className="mt-6 font-display text-[2.5rem] leading-[1.05] tracking-[-0.02em] sm:text-6xl lg:text-[4.25rem]"
+                className="font-display text-[2.5rem] leading-[1.05] tracking-[-0.02em] sm:text-6xl lg:text-[4.25rem]"
               >
                 School fees that reach
                 <br />
@@ -115,19 +88,6 @@ export function Landing() {
                 </Button>
               </motion.div>
             </motion.div>
-
-            {/* The signature device, stated once, at full size. */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35, type: "spring", stiffness: 200, damping: 26 }}
-              className="mt-14 rounded-2xl border border-line bg-surface p-6 shadow-lg sm:p-9"
-            >
-              <p className="text-sm font-medium uppercase tracking-[0.08em] text-faint">
-                Where a contribution actually goes
-              </p>
-              <RoutingFlow steps={MONEY_PATH} className="mt-7" />
-            </motion.div>
           </div>
         </section>
 
@@ -136,6 +96,19 @@ export function Landing() {
             <h2 className="max-w-2xl font-display text-3xl tracking-tight sm:text-4xl">
               Three things we can prove, not just promise
             </h2>
+
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ type: "spring", stiffness: 200, damping: 26 }}
+              className="mt-9 rounded-2xl border border-line bg-canvas p-6 shadow-sm sm:p-9"
+            >
+              <p className="text-sm font-medium uppercase tracking-[0.08em] text-faint">
+                Where a contribution actually goes
+              </p>
+              <RoutingFlow steps={MONEY_PATH} className="mt-7" />
+            </motion.div>
 
             <motion.ul
               variants={staggerSlow}
@@ -265,65 +238,7 @@ export function Landing() {
         </section>
       </main>
 
-      <footer className="border-t border-line bg-surface px-4 py-10 sm:px-6">
-        <div className="mx-auto flex max-w-360 flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <Logo size="lg" />
-            <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted">
-              Verified educational funding for underprivileged youth in Sub-Saharan Africa.
-              Piloting in Rwanda.
-            </p>
-          </div>
-          <div className="flex flex-col gap-1.5 text-sm text-muted">
-            <p className="font-semibold text-ink">Contact us</p>
-            <p>
-              Email:{" "}
-              <a href={`mailto:${CONTACT_EMAIL}`} className="text-accent-ink hover:underline">
-                {CONTACT_EMAIL}
-              </a>
-            </p>
-            <p>
-              WhatsApp &amp; phone:{" "}
-              <a
-                href={CONTACT_WHATSAPP_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="text-accent-ink hover:underline"
-              >
-                {CONTACT_PHONE_DISPLAY}
-              </a>
-            </p>
-            <p>Location: Kigali, Rwanda</p>
-          </div>
-
-          <div className="flex flex-col gap-2.5">
-            <p className="text-sm font-semibold text-ink">Follow us</p>
-            <div className="flex flex-wrap gap-2.5">
-              <a
-                href={CONTACT_WHATSAPP_URL}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Chat with us on WhatsApp"
-                className="grid size-9 place-items-center rounded-full border border-line bg-raised text-muted transition-colors hover:bg-sunk hover:text-accent-ink"
-              >
-                <WhatsAppIcon className="size-4" aria-hidden />
-              </a>
-              {SOCIAL_LINKS.map((s) => (
-                <span
-                  key={s.label}
-                  title={`${s.label} — coming soon`}
-                  className="grid size-9 place-items-center rounded-full border border-line bg-raised text-faint"
-                >
-                  <s.icon className="size-4" aria-hidden />
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-        <p className="mx-auto mt-8 max-w-360 text-center text-xs text-faint">
-          © 2026 igaFund. Let's make an impact together.
-        </p>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
