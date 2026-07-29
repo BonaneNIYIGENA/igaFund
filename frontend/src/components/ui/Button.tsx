@@ -18,7 +18,11 @@ const buttonVariants = cva(
         fund: "bg-amber-500 text-forest-950 shadow-sm hover:bg-amber-600 hover:text-white hover:shadow-lift",
         danger: "bg-clay-500 text-white hover:bg-clay-600",
         dangerSoft: "bg-clay-100 text-clay-700 hover:bg-clay-200",
-        ghost: "text-forest-800 hover:bg-forest-100",
+        // Resting text is adaptive (this button sits directly on whatever
+        // page background surrounds it, not its own fixed-tint chip), but the
+        // hover chip is a fixed light tint in both themes, so its label must
+        // switch to a fixed dark literal on hover — see igafund-dark-mode-tokens.
+        ghost: "text-accent-ink hover:bg-forest-100 hover:text-forest-800",
         link: "text-accent-ink underline-offset-4 hover:underline p-0 h-auto",
       },
       size: {

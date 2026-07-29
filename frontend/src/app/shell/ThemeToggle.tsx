@@ -14,7 +14,7 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-label={t("header.theme", { mode: goingTo })}
       title={t("header.theme", { mode: goingTo })}
-      className="grid size-11 cursor-pointer place-items-center rounded-sm text-forest-800 transition-colors hover:bg-forest-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700"
+      className="grid size-11 cursor-pointer place-items-center rounded-sm text-accent-ink transition-colors hover:bg-forest-100 hover:text-forest-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700"
     >
       {theme === "dark" ? <Sun className="size-[19px]" aria-hidden /> : <Moon className="size-[19px]" aria-hidden />}
     </button>
