@@ -66,7 +66,11 @@ class StudentProfile(db.Model):
         age = today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
         return age < 18
 
-    def to_dict(self, public=False):
+    def to_dict(self, public=False, viewer_may_see_minor_media=False):
+        """`viewer_may_see_minor_media` only relaxes photo/video visibility for a
+        minor — never their name, which stays masked for every viewer regardless
+        of role. It's set by the caller for an authenticated donor or admin, and
+        left False for anonymous/public requests (NFR3)."""
         d = {
             "id": self.id,
             "status": self.status,
@@ -81,8 +85,11 @@ class StudentProfile(db.Model):
             "is_minor": self.is_minor(),
             "full_name": self.user.full_name if (self.user and not self.is_minor()) else "Verified Student",
         }
-        # NFR3: a minor's likeness is never public, whatever the consent flag says.
-        if not self.is_minor() and self.media_consent:
+        # NFR3: a minor's likeness is never public. It can only be shown to a
+        # signed-in donor or admin, and only once a guardian has consented —
+        # never to an anonymous visitor, whatever the consent flag says.
+        may_show_media = not self.is_minor() or (viewer_may_see_minor_media and self.guardian_consent)
+        if may_show_media and self.media_consent:
             if self.video_url:
                 d["video_url"] = self.video_url
             if self.photo_url:

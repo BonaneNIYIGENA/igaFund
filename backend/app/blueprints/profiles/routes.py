@@ -3,7 +3,7 @@ import os
 import uuid
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, current_app, send_file
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt, verify_jwt_in_request
 from werkzeug.utils import secure_filename
 from marshmallow import ValidationError
 
@@ -72,6 +72,26 @@ def _can_view(profile, uid, role):
     return _can_manage(profile, uid, role)
 
 
+def _enforce_minor_media_rule(profile):
+    """NFR3 safety net: a minor's photo/video can only be set once a guardian
+    has consented, regardless of which endpoint touched the profile."""
+    if profile.is_minor() and not profile.guardian_consent:
+        profile.photo_url = None
+        profile.video_url = None
+        profile.media_consent = False
+
+
+def _viewer_may_see_minor_media():
+    """True for a signed-in donor or admin; False for an anonymous visitor.
+    Never raises — an absent or invalid token just means "anonymous"."""
+    try:
+        verify_jwt_in_request(optional=True)
+    except Exception:
+        return False
+    claims = get_jwt() or {}
+    return claims.get("role") in (Role.DONOR.value, Role.ADMIN.value)
+
+
 
 @profiles_bp.get("/")
 @jwt_required()
@@ -103,7 +123,9 @@ def list_profiles():
 
 @profiles_bp.get("/public")
 def list_public_profiles():
-    """Publicly browsable list of approved student profiles with PII & minor visual media hidden."""
+    """Publicly browsable list of approved student profiles with PII masked.
+    Minors' photos additionally stay hidden unless the viewer is a signed-in
+    donor or admin (NFR3) — anonymous visitors never see a minor's face."""
     academic_level = request.args.get("academic_level")
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
@@ -113,8 +135,9 @@ def list_public_profiles():
         q = q.filter_by(academic_level=academic_level)
 
     pagination = q.order_by(StudentProfile.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    may_see_minor_media = _viewer_may_see_minor_media()
     return jsonify({
-        "profiles": [p.to_dict(public=True) for p in pagination.items],
+        "profiles": [p.to_dict(public=True, viewer_may_see_minor_media=may_see_minor_media) for p in pagination.items],
         "total": pagination.total,
         "pages": pagination.pages,
         "current_page": page
@@ -127,7 +150,8 @@ def get_public_profile(profile_id):
     profile = db.session.get(StudentProfile, profile_id)
     if not profile or profile.status != ProfileStatus.APPROVED.value:
         return jsonify({"error": "Not found."}), 404
-    return jsonify({"profile": profile.to_dict(public=True)}), 200
+    may_see_minor_media = _viewer_may_see_minor_media()
+    return jsonify({"profile": profile.to_dict(public=True, viewer_may_see_minor_media=may_see_minor_media)}), 200
 
 
 @profiles_bp.post("/")
@@ -182,8 +206,10 @@ def create_profile():
         guardian_phone=data.get("guardian_phone"),
         guardian_consent=data.get("guardian_consent", False),
         video_url=data.get("video_url"),
+        photo_url=data.get("photo_url"),
         media_consent=data.get("media_consent", False),
     )
+    _enforce_minor_media_rule(profile)
     db.session.add(profile)
     db.session.commit()
 
@@ -230,6 +256,7 @@ def update_profile(profile_id):
 
     for key, val in data.items():
         setattr(profile, key, val)
+    _enforce_minor_media_rule(profile)
     db.session.commit()
 
     return jsonify({"profile": profile.to_dict()}), 200
@@ -466,7 +493,8 @@ def delete_document(profile_id, doc_id):
 @profiles_bp.post("/<int:profile_id>/photo")
 @jwt_required()
 def upload_profile_photo(profile_id):
-    """Public-facing portrait for an adult who has given media consent."""
+    """A portrait — shown publicly for an adult with media consent, or shown
+    only to signed-in donors/admins for a minor with guardian consent (NFR3)."""
     profile = db.session.get(StudentProfile, profile_id)
     if not profile:
         return jsonify({"error": "Not found."}), 404
@@ -474,8 +502,10 @@ def upload_profile_photo(profile_id):
     uid, role = _actor()
     if not _can_manage(profile, uid, role):
         return jsonify({"error": "Forbidden."}), 403
-    if profile.is_minor():
-        return jsonify({"error": "Photographs of students under 18 cannot be published."}), 403
+    if profile.is_minor() and not profile.guardian_consent:
+        return jsonify({
+            "error": "A guardian must consent before a photo can be added for a student under 18.",
+        }), 403
 
     file = request.files.get("file")
     if not file:
@@ -546,5 +576,5 @@ def list_watched_profiles():
         .all()
     )
     watched_ids = {r.profile_id for r in rows}
-    profiles = [r.profile.to_dict(public=True) for r in rows if r.profile]
+    profiles = [r.profile.to_dict(public=True, viewer_may_see_minor_media=True) for r in rows if r.profile]
     return jsonify({"profiles": profiles, "watched_ids": list(watched_ids)}), 200
