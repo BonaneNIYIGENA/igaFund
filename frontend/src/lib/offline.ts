@@ -1,4 +1,73 @@
-/** Offline draft queue — payloads are AES-GCM encrypted at rest (FR6.2). */
+/**
+ * Offline draft queue — payloads are AES-GCM encrypted at rest (FR6.2).
+ *
+ * Also exports cross-platform network helpers that prefer Capacitor's native
+ * Network plugin (more reliable on Android) and fall back to navigator.onLine
+ * when running in a regular browser.
+ */
+
+// ---------- Cross-platform network helpers ----------
+
+let _capacitorNetwork: typeof import("@capacitor/network").Network | null = null;
+
+// Lazy-load Capacitor Network plugin — it's a no-op in a plain browser.
+async function getCapNetwork() {
+  if (_capacitorNetwork !== null) return _capacitorNetwork;
+  try {
+    const mod = await import("@capacitor/network");
+    _capacitorNetwork = mod.Network;
+    return _capacitorNetwork;
+  } catch {
+    _capacitorNetwork = null;
+    return null;
+  }
+}
+
+/** Check current connectivity (native-first, browser fallback). */
+export async function isOnline(): Promise<boolean> {
+  const net = await getCapNetwork();
+  if (net) {
+    const status = await net.getStatus();
+    return status.connected;
+  }
+  return navigator.onLine;
+}
+
+/**
+ * Subscribe to connectivity changes. Returns an unsubscribe function.
+ * Uses Capacitor Network on Android/iOS, falls back to window events.
+ */
+export function onNetworkChange(cb: (online: boolean) => void): () => void {
+  let cleanup: (() => void) | null = null;
+
+  // Set up browser fallback immediately.
+  const onOnline = () => cb(true);
+  const onOffline = () => cb(false);
+  window.addEventListener("online", onOnline);
+  window.addEventListener("offline", onOffline);
+
+  // Attempt to upgrade to Capacitor listener (runs in parallel).
+  getCapNetwork().then((net) => {
+    if (!net) return;
+    // Remove browser listeners — Capacitor will handle it.
+    window.removeEventListener("online", onOnline);
+    window.removeEventListener("offline", onOffline);
+    const handle = net.addListener("networkStatusChange", (status) => {
+      cb(status.connected);
+    });
+    cleanup = () => {
+      handle.then((h) => h.remove());
+    };
+  });
+
+  return () => {
+    window.removeEventListener("online", onOnline);
+    window.removeEventListener("offline", onOffline);
+    cleanup?.();
+  };
+}
+
+// ---------- Offline draft queue ----------
 
 interface StoredDraft {
   id?: number;
