@@ -28,3 +28,15 @@ backend/uploads/
 
 # editor config (local only)
 .vscode/
+
+# Capacitor Android — track the project but not build outputs
+frontend/android/.gradle/
+frontend/android/app/build/
+frontend/android/build/
+frontend/android/.idea/
+frontend/android/local.properties
+
+# Temporary asset-generation scripts (not needed at runtime)
+frontend/generate-icons.mjs
+frontend/generate-android-icons.mjs
+frontend/generate-splashes.mjs
