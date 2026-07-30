@@ -37,6 +37,7 @@ export const en = {
   "header.language": "Change language",
   "header.online": "Online",
   "header.offline": "Offline — changes will sync when you reconnect",
+  "header.downloadApp": "Get the Android app",
 
   "landing.mission": "Mission",
   "landing.howItWorks": "How it works",
@@ -750,6 +751,7 @@ export const rw: typeof en = {
   "header.language": "Hindura ururimi",
   "header.online": "Ufite interineti",
   "header.offline": "Nta interineti — impinduka zizohuzwa iyo igarutse",
+  "header.downloadApp": "Kuramo porogaramu ya Android",
 
   "landing.mission": "Intego",
   "landing.howItWorks": "Uko bikora",

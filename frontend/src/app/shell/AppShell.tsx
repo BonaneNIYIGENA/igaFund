@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CircleHelp, LogOut, UserRound } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { CircleHelp, Download, LogOut, UserRound } from "lucide-react";
 import { useAuth } from "@/features/auth/AuthContext";
 import { useLocale } from "@/lib/i18n";
 import { NAV_BY_ROLE, ROLE_LABEL_KEY } from "./nav";
@@ -41,6 +42,12 @@ export function AppShell({
 
   const items = NAV_BY_ROLE[user.role];
   const primary = items.filter((i) => i.primary).slice(0, 5);
+
+  // The Android app only exists for the two field roles (offline enrolment
+  // and low-connectivity dashboards). Once inside that app there is nothing
+  // to download — the button only makes sense on the web version.
+  const showApkDownload =
+    (user.role === "student" || user.role === "ambassador") && !Capacitor.isNativePlatform();
 
   return (
     <div className="min-h-dvh bg-canvas">
@@ -115,6 +122,26 @@ export function AppShell({
             </div>
 
             <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+              {showApkDownload && (
+                <a
+                  href="/downloads/igaFund.apk"
+                  download
+                  className="hidden items-center gap-2 rounded-full border border-line-strong bg-surface px-3.5 py-2 text-sm font-medium text-ink transition-colors hover:border-forest-300 hover:bg-forest-50 sm:inline-flex"
+                >
+                  <Download className="size-4" aria-hidden />
+                  {t("header.downloadApp")}
+                </a>
+              )}
+              {showApkDownload && (
+                <a
+                  href="/downloads/igaFund.apk"
+                  download
+                  aria-label={t("header.downloadApp")}
+                  className="grid size-11 cursor-pointer place-items-center rounded-sm text-accent-ink transition-colors hover:bg-forest-100 hover:text-forest-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest-700 sm:hidden"
+                >
+                  <Download className="size-[19px]" aria-hidden />
+                </a>
+              )}
               <LanguageToggle />
               <ThemeToggle />
               <NotificationCenter />

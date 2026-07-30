@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 import { MotionConfig } from "framer-motion";
 import { Toaster, toast } from "sonner";
 import { api } from "@/lib/api";
@@ -9,6 +10,7 @@ import { LocaleProvider } from "@/lib/i18n";
 import { AuthProvider, useAuth, HOME_FOR_ROLE } from "@/features/auth/AuthContext";
 import { Protected } from "@/features/auth/guard";
 import { WatchlistProvider } from "@/features/donor/WatchlistContext";
+import { OfflineBanner } from "@/components/ui/OfflineBanner";
 
 import { Landing } from "@/features/landing/Landing";
 import { Help } from "@/features/help/Help";
@@ -60,6 +62,11 @@ function RoleHome() {
   return <Navigate to={HOME_FOR_ROLE[user.role]} replace />;
 }
 
+// The marketing/landing page is for web visitors only. Inside the Android
+// app (student/ambassador only), there is nothing to market to — go
+// straight to sign-in.
+const isNativeApp = Capacitor.isNativePlatform();
+
 function OfflineSync() {
   useEffect(() => {
     async function handleOnline() {
@@ -91,6 +98,7 @@ export function App() {
             <AuthProvider>
               <WatchlistProvider>
                 <OfflineSync />
+                <OfflineBanner />
                 <Toaster
                   position="bottom-center"
                   closeButton
@@ -106,7 +114,7 @@ export function App() {
 
                 <Routes>
                   {/* Public */}
-                  <Route path="/" element={<Landing />} />
+                  <Route path="/" element={isNativeApp ? <Navigate to="/login" replace /> : <Landing />} />
                   {/* :id opens this same directory with the profile panel over it —
                       there is no separate full-page detail view to keep in sync. */}
                   <Route path="/students" element={<BrowseStudents />} />
