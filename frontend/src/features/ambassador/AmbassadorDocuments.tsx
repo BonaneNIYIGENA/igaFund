@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Eye, FileUp, Trash2, UploadCloud } from "lucide-react";
+import { Award, CheckCircle2, Eye, FileText, FileUp, IdCard, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
 import { ApiError, endpoints, type Doc, type DocType, type Profile } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { useLocale } from "@/lib/i18n";
-import { docLabel, DocumentViewer, docIcon } from "@/features/documents/DocumentViewer";
+import { docLabel, DocumentViewer } from "@/features/documents/DocumentViewer";
 import { Button } from "@/components/ui/Button";
 import { Label, NativeSelect } from "@/components/ui/Field";
 import { Alert, Skeleton } from "@/components/ui/Feedback";
@@ -17,6 +17,13 @@ import {
   SidePanelHeader,
   SidePanelTitle,
 } from "@/components/ui/SidePanel";
+
+const CHECKLIST_ICON: Record<DocType, typeof FileText> = {
+  transcript: FileText,
+  id_card: IdCard,
+  recommendation: Award,
+  guardian_consent: ShieldCheck,
+};
 
 /** Documents for a student an ambassador enrolled. */
 export function AmbassadorDocuments({
@@ -40,6 +47,12 @@ export function AmbassadorDocuments({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const editable = profile.status === "draft" || profile.status === "rejected";
+  const checklistTypes: DocType[] = [
+    "transcript",
+    "id_card",
+    "recommendation",
+    ...(profile.is_minor ? (["guardian_consent"] as const) : []),
+  ];
 
   useEffect(() => {
     if (!open) return;
@@ -169,55 +182,63 @@ export function AmbassadorDocuments({
                 {t("ambassadorDocuments.onFile")}{docs.length > 0 && ` (${docs.length})`}
               </p>
               {loading ? (
-                <div className="mt-3 space-y-2">
-                  <Skeleton className="h-14 w-full rounded-md" />
-                  <Skeleton className="h-14 w-full rounded-md" />
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Skeleton className="h-24 w-full rounded-md" />
+                  <Skeleton className="h-24 w-full rounded-md" />
                 </div>
-              ) : docs.length === 0 ? (
-                <p className="mt-3 rounded-md bg-sunk px-4 py-6 text-center text-sm text-muted">
-                  {t("ambassadorDocuments.empty")}
-                </p>
               ) : (
-                <ul className="mt-3 divide-y divide-line rounded-md border border-line">
-                  {docs.map((doc) => {
-                    const Icon = docIcon(doc.original_filename);
-                    const label = docLabel(t, doc.doc_type);
-                    return (
-                      <li key={doc.id} className="flex items-center gap-3 px-3 py-3">
-                        <span className="grid size-9 shrink-0 place-items-center rounded-sm bg-forest-50 text-forest-700">
-                          <Icon className="size-4" aria-hidden />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-ink">
-                            {label}
-                          </p>
-                          <p className="truncate text-xs text-muted">
-                            {formatDate(doc.uploaded_at)}
-                          </p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="iconSm"
-                          onClick={() => setViewing(doc)}
-                          aria-label={label}
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {checklistTypes.map((type) => {
+                    const doc = docs.find((d) => d.doc_type === type);
+                    const Icon = CHECKLIST_ICON[type];
+                    const label = docLabel(t, type);
+
+                    if (!doc) {
+                      return (
+                        <div
+                          key={type}
+                          className="flex flex-col items-start gap-1.5 rounded-md border-2 border-dashed border-line-strong bg-raised p-3"
                         >
-                          <Eye aria-hidden />
-                        </Button>
-                        {editable && (
-                          <Button
-                            variant="ghost"
-                            size="iconSm"
-                            className="text-clay-600 hover:bg-clay-100"
-                            onClick={() => remove(doc)}
-                            aria-label={label}
-                          >
-                            <Trash2 aria-hidden />
-                          </Button>
-                        )}
-                      </li>
+                          <span className="grid size-8 shrink-0 place-items-center rounded-sm bg-surface text-muted">
+                            <Icon className="size-4" aria-hidden />
+                          </span>
+                          <span className="text-xs font-medium text-ink">{label}</span>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        key={type}
+                        className="flex flex-col gap-1.5 rounded-md border border-forest-200 bg-forest-50 p-3"
+                      >
+                        <div className="flex items-start justify-between gap-1">
+                          <span className="grid size-8 shrink-0 place-items-center rounded-sm bg-forest-100 text-forest-700">
+                            <CheckCircle2 className="size-4" aria-hidden />
+                          </span>
+                          <div className="flex shrink-0 gap-0.5">
+                            <Button variant="ghost" size="iconSm" onClick={() => setViewing(doc)} aria-label={label}>
+                              <Eye aria-hidden />
+                            </Button>
+                            {editable && (
+                              <Button
+                                variant="ghost"
+                                size="iconSm"
+                                className="text-clay-600 hover:bg-clay-100"
+                                onClick={() => remove(doc)}
+                                aria-label={label}
+                              >
+                                <Trash2 aria-hidden />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="truncate text-xs font-medium text-ink">{label}</p>
+                        <p className="truncate text-[0.6875rem] text-muted">{formatDate(doc.uploaded_at)}</p>
+                      </div>
                     );
                   })}
-                </ul>
+                </div>
               )}
             </div>
           </SidePanelBody>

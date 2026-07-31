@@ -2,10 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
+  Award,
   CheckCircle2,
   Eye,
+  FileText,
   FileUp,
-  Info,
+  IdCard,
+  ShieldCheck,
   Trash2,
   UploadCloud,
   UserRound,
@@ -15,7 +18,7 @@ import { formatDate } from "@/lib/format";
 import { AppShell } from "@/app/shell/AppShell";
 import { useLocale } from "@/lib/i18n";
 import { useMyProfile, editability } from "./useMyProfile";
-import { docLabel, DocumentViewer, docIcon } from "@/features/documents/DocumentViewer";
+import { docLabel, DocumentViewer } from "@/features/documents/DocumentViewer";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -27,6 +30,13 @@ const MAX_MB = 10;
 const ACCEPTED = ".pdf,.png,.jpg,.jpeg";
 
 const BASE_REQUIRED_TYPES = ["transcript", "id_card"] as const;
+
+const CHECKLIST_ICON: Record<DocType, typeof FileText> = {
+  transcript: FileText,
+  id_card: IdCard,
+  recommendation: Award,
+  guardian_consent: ShieldCheck,
+};
 
 export function StudentDocuments() {
   const { t } = useLocale();
@@ -115,6 +125,14 @@ export function StudentDocuments() {
   }
 
   const missing = requiredTypes.filter((r) => !docs.some((d) => d.doc_type === r.type));
+
+  const requiredTypeSet = new Set(requiredTypes.map((r) => r.type));
+  const checklistTypes: DocType[] = [
+    "transcript",
+    "id_card",
+    "recommendation",
+    ...(profile?.is_minor ? (["guardian_consent"] as const) : []),
+  ];
 
   if (!profileLoading && !profile) {
     return (
@@ -253,73 +271,94 @@ export function StudentDocuments() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 2 }, (_, i) => (
-                    <Skeleton key={i} className="h-16 w-full rounded-md" />
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {Array.from({ length: 4 }, (_, i) => (
+                    <Skeleton key={i} className="h-28 w-full rounded-md" />
                   ))}
                 </div>
-              ) : docs.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted">
-                  {t("studentDocuments.list.empty")}
-                </p>
               ) : (
-                <ul className="divide-y divide-line">
-                  {docs.map((doc) => {
-                    const Icon = docIcon(doc.original_filename);
-                    const label = docLabel(t, doc.doc_type);
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {checklistTypes.map((type) => {
+                    const doc = docs.find((d) => d.doc_type === type);
+                    const Icon = CHECKLIST_ICON[type];
+                    const label = docLabel(t, type);
+                    const required = requiredTypeSet.has(type);
+
+                    if (!doc) {
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          disabled={!canEdit}
+                          onClick={() => {
+                            setDocType(type);
+                            inputRef.current?.click();
+                          }}
+                          className={cn(
+                            "flex flex-col items-start gap-2 rounded-lg border-2 border-dashed p-4 text-left transition-colors duration-200",
+                            canEdit
+                              ? "cursor-pointer border-line-strong bg-raised hover:border-forest-300 hover:bg-sunk"
+                              : "cursor-not-allowed border-line-strong bg-raised opacity-60",
+                          )}
+                        >
+                          <span className="grid size-9 shrink-0 place-items-center rounded-sm bg-surface text-muted">
+                            <Icon className="size-[18px]" aria-hidden />
+                          </span>
+                          <span className="text-sm font-medium text-ink">{label}</span>
+                          <span className="text-xs text-muted">
+                            {required ? t("studentDocuments.checklist.required") : t("studentDocuments.checklist.optional")}
+                          </span>
+                        </button>
+                      );
+                    }
+
                     return (
-                      <li key={doc.id} className="flex items-center gap-3 py-3.5 first:pt-0 last:pb-0">
-                        <span className="grid size-10 shrink-0 place-items-center rounded-sm bg-forest-50 text-forest-700">
-                          <Icon className="size-[18px]" aria-hidden />
-                        </span>
-
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[0.9375rem] font-medium text-ink">
-                            {label}
-                          </p>
-                          <p className="truncate text-sm text-muted">
-                            {doc.original_filename} · {formatDate(doc.uploaded_at)}
-                          </p>
+                      <div
+                        key={type}
+                        className="flex flex-col gap-2 rounded-lg border border-forest-200 bg-forest-50 p-4"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="grid size-9 shrink-0 place-items-center rounded-sm bg-forest-100 text-forest-700">
+                            <CheckCircle2 className="size-[18px]" aria-hidden />
+                          </span>
+                          <div className="flex shrink-0 gap-1">
+                            <Button
+                              variant="ghost"
+                              size="iconSm"
+                              onClick={() => setViewing(doc)}
+                              aria-label={label}
+                            >
+                              <Eye aria-hidden />
+                            </Button>
+                            {canEdit && (
+                              <Button
+                                variant="ghost"
+                                size="iconSm"
+                                onClick={() => remove(doc)}
+                                aria-label={label}
+                                className="text-clay-600 hover:bg-clay-100"
+                              >
+                                <Trash2 aria-hidden />
+                              </Button>
+                            )}
+                          </div>
                         </div>
-
+                        <p className="truncate text-sm font-medium text-ink">{label}</p>
+                        <p className="truncate text-xs text-muted">
+                          {doc.original_filename} · {formatDate(doc.uploaded_at)}
+                        </p>
                         {doc.verified && (
-                          <Badge tone="success" icon={CheckCircle2} className="hidden sm:inline-flex">
+                          <Badge tone="success" icon={CheckCircle2} className="w-fit">
                             {t("studentDocuments.list.checked")}
                           </Badge>
                         )}
-
-                        <Button
-                          variant="ghost"
-                          size="iconSm"
-                          onClick={() => setViewing(doc)}
-                          aria-label={label}
-                        >
-                          <Eye aria-hidden />
-                        </Button>
-
-                        {canEdit && (
-                          <Button
-                            variant="ghost"
-                            size="iconSm"
-                            onClick={() => remove(doc)}
-                            aria-label={label}
-                            className="text-clay-600 hover:bg-clay-100"
-                          >
-                            <Trash2 aria-hidden />
-                          </Button>
-                        )}
-                      </li>
+                      </div>
                     );
                   })}
-                </ul>
+                </div>
               )}
             </CardContent>
           </Card>
-
-          <p className="flex items-start gap-2 text-sm text-muted">
-            <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
-            {t("studentDocuments.privacyNote")}
-          </p>
         </div>
       )}
 
