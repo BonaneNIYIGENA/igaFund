@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, ShieldAlert, UserCheck, UserX, Shield } from "lucide-react";
+import { Search, ShieldAlert, UserCheck, UserX, Shield, ArrowUpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { endpoints, type Role, type User } from "@/lib/api";
 import { formatRelative } from "@/lib/format";
@@ -35,6 +35,8 @@ export function AdminUsers() {
   const [suspendNote, setSuspendNote] = useState("");
   const [suspendLoading, setSuspendLoading] = useState(false);
 
+  const [promotingId, setPromotingId] = useState<number | null>(null);
+
   function loadUsers() {
     setLoading(true);
     endpoints
@@ -60,6 +62,19 @@ export function AdminUsers() {
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: res.user.role } : u)));
     } catch (err: any) {
       toast.error(err.message || t("adminUsers.roleUpdateFailed"));
+    }
+  }
+
+  async function handlePromote(u: User) {
+    setPromotingId(u.id);
+    try {
+      const res = await endpoints.promoteAmbassador(u.id);
+      toast.success(t("adminUsers.promoteSucceeded", { name: u.full_name }));
+      setUsers((prev) => prev.map((p) => (p.id === u.id ? { ...p, role: res.user.role } : p)));
+    } catch (err: any) {
+      toast.error(err.message || t("adminUsers.promoteFailed"));
+    } finally {
+      setPromotingId(null);
     }
   }
 
@@ -184,26 +199,39 @@ export function AdminUsers() {
                             {u.created_at ? formatRelative(u.created_at) : "—"}
                           </td>
                           <td className="py-3 pr-2 text-right">
-                            <Button
-                              variant={u.is_suspended ? "secondary" : "dangerSoft"}
-                              size="sm"
-                              onClick={() => {
-                                setSuspendTarget(u);
-                                setSuspendNote("");
-                              }}
-                            >
-                              {u.is_suspended ? (
-                                <>
-                                  <UserCheck className="size-3.5 text-accent-ink" aria-hidden />
-                                  {t("adminUsers.action.reactivate")}
-                                </>
-                              ) : (
-                                <>
-                                  <UserX className="size-3.5" aria-hidden />
-                                  {t("adminUsers.action.deactivate")}
-                                </>
+                            <div className="flex justify-end gap-2">
+                              {u.role === "student" && (
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  loading={promotingId === u.id}
+                                  onClick={() => handlePromote(u)}
+                                >
+                                  <ArrowUpCircle className="size-3.5 text-accent-ink" aria-hidden />
+                                  {t("adminUsers.action.promote")}
+                                </Button>
                               )}
-                            </Button>
+                              <Button
+                                variant={u.is_suspended ? "secondary" : "dangerSoft"}
+                                size="sm"
+                                onClick={() => {
+                                  setSuspendTarget(u);
+                                  setSuspendNote("");
+                                }}
+                              >
+                                {u.is_suspended ? (
+                                  <>
+                                    <UserCheck className="size-3.5 text-accent-ink" aria-hidden />
+                                    {t("adminUsers.action.reactivate")}
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserX className="size-3.5" aria-hidden />
+                                    {t("adminUsers.action.deactivate")}
+                                  </>
+                                )}
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}

@@ -190,6 +190,8 @@ def promote_ambassador(user_id):
     user = db.session.get(User, user_id)
     if not user:
         return jsonify({"error": "User not found."}), 404
+    if user.role != Role.STUDENT.value:
+        return jsonify({"error": "Only students can be promoted to Community Ambassador."}), 400
 
     user.role = Role.AMBASSADOR.value
     db.session.add(AuditLog(

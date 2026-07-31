@@ -50,6 +50,38 @@ def test_change_user_role(client, app):
     assert res.get_json()["user"]["role"] == "ambassador"
 
 
+def test_promote_student_to_ambassador(client, app):
+    token, _ = _admin_token(client, app)
+    target_id = _create_user(app, "promote_me@example.com", "student")
+
+    res = client.post(
+        f"/api/admin/users/{target_id}/promote-ambassador",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["user"]["role"] == "ambassador"
+    assert data["ticket"]["process_type"] == "ambassador_promoted"
+
+    with app.app_context():
+        from app.extensions import db
+        from app.models import Notification
+        notif = Notification.query.filter_by(user_id=target_id).first()
+        assert notif is not None
+        assert notif.link == "/ambassador"
+
+
+def test_promote_ambassador_rejects_non_student(client, app):
+    token, _ = _admin_token(client, app)
+    donor_id = _create_user(app, "not_a_student@example.com", "donor")
+
+    res = client.post(
+        f"/api/admin/users/{donor_id}/promote-ambassador",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 400
+
+
 def test_toggle_suspend_user(client, app):
     token, _ = _admin_token(client, app)
     target_id = _create_user(app, "suspend_me@example.com", "donor")
