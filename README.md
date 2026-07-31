@@ -24,7 +24,10 @@ The production database is seeded with the same demo accounts listed under "Demo
 ### Frontend (Client-side)
 - **Framework:** React 18, TypeScript, Vite
 - **UI & Styling:** Custom CSS Tokens (Earthy/Professional Palette), `lucide-react` for icons, `framer-motion` for micro-animations.
-- **Offline Capabilities:** Uses raw `IndexedDB` to capture Student Profile drafts when offline. They are queued and automatically synced when the user's internet reconnects.
+- **Offline Capabilities:** Uses raw `IndexedDB` (AES-GCM encrypted at rest) to capture Student Profile drafts when offline. They are queued and automatically synced when the user's internet reconnects.
+- **Installable app:** A full Progressive Web App (offline fallback page, manifest, cached assets) plus a Capacitor-wrapped native Android build for students and ambassadors — see [Mobile App](#-mobile-app-android) below.
+- **Live data:** Notification counts, follower counts, funding totals and admin queues refresh themselves in the background (interval + focus + reconnect) — no manual page refresh needed.
+- **Languages:** Full English / Kinyarwanda translation across every page, dashboard and form, with a language toggle in the header.
 
 ### Backend (Server-side)
 - **Framework:** Python 3.10+, Flask 3
@@ -102,6 +105,28 @@ npm run dev
 ```
 *The frontend is now running on `http://localhost:5173`.*
 
+### Optional configuration
+Nothing above requires it, but if you want to point the backend at real cloud storage or a real mail server instead of the local-disk/console-output fallbacks, copy `backend/.env.example` to `backend/.env` and fill in `CLOUDINARY_*` (document/photo storage) or `MAIL_*` (SMTP) — every field left blank is handled automatically by a free, local fallback.
+
+---
+
+## 📱 Mobile App (Android)
+Students and ambassadors — the two roles most likely to be on a phone with patchy connectivity — can install a native Android build of the exact same app:
+
+- **In the app:** signed in as a student or ambassador, a "Get the Android app" button appears in the header (web only — it hides itself once you're already inside the native app).
+- **Directly in this repo:** the built APK is committed at [`frontend/public/downloads/igaFund.apk`](frontend/public/downloads/igaFund.apk). The raw Gradle output also lives at `frontend/android/app/build/outputs/apk/debug/app-debug.apk`.
+- **What's different inside the app:** it opens straight to the sign-in screen instead of the public marketing landing page, since everyone using it is already a registered student or ambassador.
+
+To rebuild it yourself from source (Android SDK + JDK 17 required):
+```bash
+cd frontend
+npm run build
+npx cap sync android
+cd android
+./gradlew assembleDebug
+```
+The signed debug APK is written to `frontend/android/app/build/outputs/apk/debug/app-debug.apk`.
+
 ---
 
 ## 🔐 Demo Credentials (Seeded Data)
@@ -122,7 +147,7 @@ If you ran `flask seed-demo` during setup, you can immediately log in with the f
 This project adheres to strict testing standards to guarantee business logic constraints are met. 
 
 **Backend Testing (Pytest):**
-We maintain a robust suite of 56 unit tests covering authentication, session security, profiles, documents, contributions, institutions, audit trails, and user management.
+We maintain a robust suite of 64 unit tests covering authentication, session security, profiles, documents, contributions, institutions, audit trails, and user management.
 ```bash
 cd backend
 pytest
