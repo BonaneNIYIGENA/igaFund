@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { StatTile } from "@/components/ui/Stat";
 import { FundingProgress } from "@/components/ui/Progress";
-import { Alert, EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedback";
+import { EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedback";
 import { AXIS, STATUS_COLOR, SEQUENTIAL, chartFont } from "./chartTheme";
 
 function ChartTooltip({
@@ -439,10 +439,6 @@ export function AdminAnalytics() {
               )}
             </CardContent>
           </Card>
-
-          <Alert tone="info" title={t("adminAnalytics.aboutData.title")}>
-            {t("adminAnalytics.aboutData.body")}
-          </Alert>
         </div>
       )}
     </AppShell>

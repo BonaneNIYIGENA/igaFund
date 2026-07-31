@@ -8,7 +8,7 @@ import { AppShell } from "@/app/shell/AppShell";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Input, NativeSelect, Label } from "@/components/ui/Field";
-import { Alert, EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedback";
+import { EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedback";
 
 const PAGE_SIZE = 10;
 
@@ -97,10 +97,6 @@ export function AdminAudit() {
       }
     >
       <div className="space-y-5">
-        <Alert tone="info" title={t("adminAudit.appendOnlyTitle")}>
-          {t("adminAudit.appendOnlyBody")}
-        </Alert>
-
         {error ? (
           <ErrorState description={error} onRetry={load} />
         ) : loading ? (

@@ -134,10 +134,6 @@ export function AdminInstitutions() {
       }
     >
       <div className="space-y-5">
-        <Alert tone="info" title={t("adminInstitutions.allowListTitle")}>
-          {t("adminInstitutions.allowListBody")}
-        </Alert>
-
         {/* Stats cards — shown whenever data is loaded */}
         {!loading && !error && institutions.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

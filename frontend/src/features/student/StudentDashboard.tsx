@@ -27,7 +27,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { FundingProgress } from "@/components/ui/Progress";
 import { StatTile } from "@/components/ui/Stat";
 import { RoutingRail, type RailStep } from "@/components/ui/RoutingRail";
-import { Alert, EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedback";
+import { EmptyState, ErrorState, Skeleton } from "@/components/ui/Feedback";
 
 export function StudentDashboard() {
   const { user } = useAuth();
@@ -79,66 +79,6 @@ export function StudentDashboard() {
     { key: "funded", label: "Donors fund your fees", icon: HeartHandshake, state: j.funded },
   ];
 
-  /** The one thing worth doing next, given where the profile stands. */
-  function nextStep() {
-    if (!profile) {
-      return {
-        title: t("dash.student.step.noProfile.title"),
-        body: t("dash.student.step.noProfile.body"),
-        cta: { to: "/student/profile", label: "Create my profile" },
-        tone: "warning" as const,
-      };
-    }
-    if (profile.status === "rejected") {
-      return {
-        title: t("dash.student.step.rejected.title"),
-        body: profile.review_note ?? t("dash.student.step.rejected.bodyFallback"),
-        cta: { to: "/student/profile", label: "Make the changes" },
-        tone: "danger" as const,
-      };
-    }
-    if (profile.is_minor && !profile.has_guardian_consent_document) {
-      return {
-        title: "Guardian Consent PDF Required (Rwandan Law)",
-        body: "Because you are under 18 years old, Rwandan law requires an official Guardian Consent PDF signed by your parent/guardian and stamped by local officials (Umurenge / Akagari) before your application can be verified.",
-        cta: { to: "/student/documents", label: "Upload Guardian Consent" },
-        tone: "warning" as const,
-      };
-    }
-    if (profile.document_count === 0) {
-      return {
-        title: t("dash.student.step.uploadDocs.title"),
-        body: t("dash.student.step.uploadDocs.body"),
-        cta: { to: "/student/documents", label: "Upload documents" },
-        tone: "warning" as const,
-      };
-    }
-    if (profile.status === "draft") {
-      return {
-        title: t("dash.student.step.sendReview.title"),
-        body: t("dash.student.step.sendReview.body"),
-        cta: { to: "/student/profile?tab=progress", label: "Review and submit" },
-        tone: "warning" as const,
-      };
-    }
-    if (profile.status === "pending") {
-      return {
-        title: t("dash.student.step.pending.title"),
-        body: t("dash.student.step.pending.body"),
-        cta: { to: "/student/profile?tab=progress", label: "See progress" },
-        tone: "info" as const,
-      };
-    }
-    return {
-      title: t("dash.student.step.live.title"),
-      body: t("dash.student.step.live.body"),
-      cta: { to: "/student/profile?tab=progress", label: "See your progress" },
-      tone: "success" as const,
-    };
-  }
-
-  const step = nextStep();
-
   return (
     <AppShell
       title={t("dash.hello", { name: firstName })}
@@ -166,20 +106,6 @@ export function StudentDashboard() {
         </div>
       ) : (
         <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
-          <motion.div variants={fadeUp}>
-            <Alert tone={step.tone} title={step.title}>
-              {step.body}
-              <div className="mt-3.5">
-                <Button size="sm" variant={step.tone === "warning" ? "fund" : "primary"} asChild>
-                  <Link to={step.cta.to}>
-                    {step.cta.label}
-                    <ArrowRight aria-hidden />
-                  </Link>
-                </Button>
-              </div>
-            </Alert>
-          </motion.div>
-
           {profile ? (
             <>
               <motion.div variants={fadeUp} className="grid gap-4 sm:grid-cols-3">
