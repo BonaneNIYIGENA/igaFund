@@ -66,11 +66,15 @@ class StudentProfile(db.Model):
         age = today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
         return age < 18
 
-    def to_dict(self, public=False, viewer_may_see_minor_media=False):
+    def to_dict(self, public=False, viewer_may_see_minor_media=False, viewer_may_see_payment_details=False):
         """`viewer_may_see_minor_media` only relaxes photo/video visibility for a
         minor — never their name, which stays masked for every viewer regardless
         of role. It's set by the caller for an authenticated donor or admin, and
-        left False for anonymous/public requests (NFR3)."""
+        left False for anonymous/public requests (NFR3).
+
+        `viewer_may_see_payment_details` adds the institution's routing account
+        reference — shown to a signed-in donor right before they contribute,
+        never to an anonymous visitor."""
         d = {
             "id": self.id,
             "status": self.status,
@@ -79,7 +83,7 @@ class StudentProfile(db.Model):
             "field_of_study": self.field_of_study,
             "funding_goal": self.funding_goal,
             "funded_amount": self.funded_amount,
-            "institution": self.institution.to_dict() if self.institution else None,
+            "institution": self.institution.to_dict(include_payment_details=viewer_may_see_payment_details) if self.institution else None,
             "document_count": self.documents.count(),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "is_minor": self.is_minor(),

@@ -275,6 +275,28 @@ export function ContributeDialog({
                 )}
               </Field>
 
+              {/* Where the money actually goes, before asking for proof it was sent. */}
+              <div className="rounded-md border border-line bg-surface p-4">
+                <p className="flex items-center gap-2 text-sm font-medium text-ink">
+                  <Building2 className="size-4 shrink-0 text-accent-ink" aria-hidden />
+                  {t("contributeDialog.payTo.title")}
+                </p>
+                {profile.institution?.bank_reference ? (
+                  <dl className="mt-3 space-y-2 text-sm">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <dt className="text-muted">{t("contributeDialog.payTo.accountName")}</dt>
+                      <dd className="figure text-right font-medium text-ink">{profile.institution.name}</dd>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <dt className="text-muted">{t("contributeDialog.payTo.accountRef")}</dt>
+                      <dd className="figure text-right font-medium text-ink">{profile.institution.bank_reference}</dd>
+                    </div>
+                  </dl>
+                ) : (
+                  <p className="mt-2 text-sm text-muted">{t("contributeDialog.payTo.unavailable")}</p>
+                )}
+              </div>
+
               {/* Proof of payment is required — the record is the whole promise. */}
               <div>
                 <p className="text-sm font-medium text-ink">

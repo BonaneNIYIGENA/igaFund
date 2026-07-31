@@ -15,10 +15,16 @@ class Institution(db.Model):
 
     profiles = db.relationship("StudentProfile", back_populates="institution", lazy="dynamic")
 
-    def to_dict(self):
-        return {
+    def to_dict(self, include_payment_details=False):
+        """`include_payment_details` adds the routing account reference a donor
+        pays into. Kept out of anonymous/public views — only a signed-in donor
+        or admin sees it, right before they make a contribution."""
+        d = {
             "id": self.id,
             "name": self.name,
             "location": self.location,
             "type": self.type,
         }
+        if include_payment_details:
+            d["bank_reference"] = self.bank_reference
+        return d

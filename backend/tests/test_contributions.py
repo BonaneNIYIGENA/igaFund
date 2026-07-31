@@ -123,6 +123,25 @@ def test_public_profile_detail_is_reachable_and_masked(client):
     assert client.get(f"/api/profiles/public/{pid}").status_code == 404
 
 
+def test_institution_payment_reference_hidden_from_anonymous_visible_to_donor(client):
+    """A donor about to contribute needs the routing account; an anonymous
+    browser never should (it's not PII, but it's not public marketing copy either)."""
+    pid, inst_id, donor_token = _setup_approved_profile(client)
+    inst = db.session.get(Institution, inst_id)
+    inst.bank_reference = "BK-TEST-99001"
+    db.session.commit()
+
+    anon_res = client.get(f"/api/profiles/public/{pid}")
+    assert anon_res.status_code == 200
+    assert "bank_reference" not in anon_res.get_json()["profile"]["institution"]
+
+    donor_res = client.get(
+        f"/api/profiles/public/{pid}", headers={"Authorization": f"Bearer {donor_token}"}
+    )
+    assert donor_res.status_code == 200
+    assert donor_res.get_json()["profile"]["institution"]["bank_reference"] == "BK-TEST-99001"
+
+
 def test_contribution_requires_payment_proof(client):
     """FR4.3: a contribution cannot be recorded without evidence of the transfer."""
     pid, _, donor_token = _setup_approved_profile(client)

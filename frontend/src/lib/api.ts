@@ -123,6 +123,8 @@ export type Institution = {
   name: string;
   location: string;
   type: string;
+  /** Only present when the viewer is a signed-in donor or admin. */
+  bank_reference?: string | null;
 };
 
 export type Profile = {

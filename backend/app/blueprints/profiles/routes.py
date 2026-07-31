@@ -137,7 +137,10 @@ def list_public_profiles():
     pagination = q.order_by(StudentProfile.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
     may_see_minor_media = _viewer_may_see_minor_media()
     return jsonify({
-        "profiles": [p.to_dict(public=True, viewer_may_see_minor_media=may_see_minor_media) for p in pagination.items],
+        "profiles": [
+            p.to_dict(public=True, viewer_may_see_minor_media=may_see_minor_media, viewer_may_see_payment_details=may_see_minor_media)
+            for p in pagination.items
+        ],
         "total": pagination.total,
         "pages": pagination.pages,
         "current_page": page
@@ -151,7 +154,13 @@ def get_public_profile(profile_id):
     if not profile or profile.status != ProfileStatus.APPROVED.value:
         return jsonify({"error": "Not found."}), 404
     may_see_minor_media = _viewer_may_see_minor_media()
-    return jsonify({"profile": profile.to_dict(public=True, viewer_may_see_minor_media=may_see_minor_media)}), 200
+    return jsonify({
+        "profile": profile.to_dict(
+            public=True,
+            viewer_may_see_minor_media=may_see_minor_media,
+            viewer_may_see_payment_details=may_see_minor_media,
+        )
+    }), 200
 
 
 @profiles_bp.post("/")
@@ -576,5 +585,8 @@ def list_watched_profiles():
         .all()
     )
     watched_ids = {r.profile_id for r in rows}
-    profiles = [r.profile.to_dict(public=True, viewer_may_see_minor_media=True) for r in rows if r.profile]
+    profiles = [
+        r.profile.to_dict(public=True, viewer_may_see_minor_media=True, viewer_may_see_payment_details=True)
+        for r in rows if r.profile
+    ]
     return jsonify({"profiles": profiles, "watched_ids": list(watched_ids)}), 200
