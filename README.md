@@ -117,6 +117,8 @@ Students and ambassadors — the two roles most likely to be on a phone with pat
 - **Directly in this repo:** the built APK is committed at [`frontend/public/downloads/igaFund.apk`](frontend/public/downloads/igaFund.apk). The raw Gradle output also lives at `frontend/android/app/build/outputs/apk/debug/app-debug.apk`.
 - **What's different inside the app:** it opens straight to the sign-in screen instead of the public marketing landing page, since everyone using it is already a registered student or ambassador.
 
+> The app talks to the same live backend as the web version (`https://igafund-api.onrender.com`), so the same free-tier cold-start delay applies: if the backend has been idle, the very first sign-in attempt after installing can take 30-60 seconds. Not a bug — see the note at the top of this file.
+
 To rebuild it yourself from source (Android SDK + JDK 17 required):
 ```bash
 cd frontend
